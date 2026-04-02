@@ -1,0 +1,70 @@
+services:
+  # 1. Base de données PostgreSQL
+  syndify_db:
+    image: postgres:15
+    container_name: syndify_db
+    environment:
+      POSTGRES_DB: syndify_db
+      POSTGRES_USER: syndify_admin
+      POSTGRES_PASSWORD: SyndifySecretPassword123
+    volumes:
+      - syndify_db_data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432" # 👈 Port jdid 5435
+    networks:
+      - syndify_network
+
+  # 2. Backend Laravel
+  syndify_backend:
+    build:
+      context: ./Syndify-Backend 
+      dockerfile: Dockerfile
+    container_name: syndify_backend
+    volumes:
+      - ./Syndify-Backend:/var/www/html
+    environment:
+      APP_ENV: local
+      APP_DEBUG: true
+      DB_CONNECTION: pgsql
+      DB_HOST: syndify_db
+      DB_PORT: 5432
+      DB_DATABASE: syndify_db
+      DB_USERNAME: syndify_admin
+      DB_PASSWORD: SyndifySecretPassword123
+    depends_on:
+      - syndify_db
+    networks:
+      - syndify_network
+
+  # 3. Frontend Angular
+  syndify_frontend:
+    build:
+      context: ./Syndify-Frontend
+      dockerfile: Dockerfile
+    container_name: syndify_frontend
+    volumes:
+      - ./Syndify-Frontend:/app
+      - /app/node_modules
+    networks:
+      - syndify_network
+  
+  syndify_proxy:
+    image: nginx:alpine
+    container_name: syndify_proxy
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "8085:80"
+    depends_on:
+      - syndify_frontend
+      - syndify_backend
+    networks:
+      - syndify_network
+
+networks:
+  syndify_network:
+    driver: bridge
+
+volumes:
+  syndify_db_data:
+  syndify_backend_vendor:

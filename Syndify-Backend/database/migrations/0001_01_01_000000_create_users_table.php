@@ -12,11 +12,24 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
+            // 1. Identifiant personnalisé kima f l'Cahier des charges (Primary Key)
+            $table->string('identifier')->primary(); // Ex: SU-1729084354
+
+            // 2. Les informations de base
+            $table->string('full_name');
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->string('phone')->nullable();
+            $table->string('password')->nullable();
+
+            // 3. Code d'activation (String 3adiya bach t-hzz l'Hash dyal 60 7erf bla erreur 500)
+            $table->string('activation_code')->nullable();
+            $table->timestamp('otp_expires_at')->nullable();
+
+            // 4. Les booléens w l'statut
+            $table->boolean('agreed_on_terms')->default(false);
+            $table->boolean('mailing_subs')->default(false);
+            $table->enum('status', ['En attente d’activation', 'Actif', 'Inactif'])->default('En attente d’activation');
+
             $table->rememberToken();
             $table->timestamps();
         });
@@ -29,7 +42,10 @@ return new class extends Migration
 
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
+            
+            // ⚠️ MODIFICATION MOHIMA: rddinaha string() 7it l'identifier dyal l'user wlla string (SU-...)
+            $table->string('user_id')->nullable()->index(); 
+            
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
             $table->longText('payload');

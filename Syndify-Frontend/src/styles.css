@@ -1,3 +1,19 @@
-/* You can add global styles to this file, and also import other style files */
+/* L'importation dyal Tailwind v4 */
 
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
+
+/* Configuration dyal les couleurs (Design System Syndify) */
+@theme {
+  --color-syndify-dark: #1B3B32;
+  --color-syndify-light: #E8EFEA;
+  --color-syndify-bg: #F8F9F8;
+  --color-syndify-text: #111815;
+  --color-syndify-accent: #F4B840;
+}
+
+/* L'application dyal loun lkhalfiya w lktaba par défaut */
+body {
+  background-color: var(--color-syndify-bg);
+  color: var(--color-syndify-text);
+}

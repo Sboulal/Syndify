@@ -1,0 +1,122 @@
+<div class="flex h-screen bg-syndify-bg font-['Poppins'] overflow-hidden">
+
+  <aside class="bg-syndify-dark text-white flex flex-col h-full relative z-20 shadow-2xl transition-all duration-300 ease-in-out"
+         [ngClass]="isSidebarCollapsed ? 'w-[88px]' : 'w-[320px]'">
+    
+    <button (click)="toggleSidebar()" 
+            class="absolute -right-3 top-8 bg-syndify-dark border border-gray-600 rounded-full p-1.5 z-30 shadow-lg cursor-pointer">
+      <svg class="w-3.5 h-3.5 text-white transition-transform duration-300" [ngClass]="{'rotate-180': isSidebarCollapsed}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+    </button>
+
+    <div class="p-6 flex flex-col items-center" [ngClass]="{'items-center': isSidebarCollapsed, 'items-start': !isSidebarCollapsed}">
+      <div class="w-10 h-10 bg-white rounded-lg flex shrink-0 items-center justify-center mb-4 shadow-md">
+        <svg class="w-6 h-6 text-syndify-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15l4-4 4 4 5-5 5 5"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18"></path></svg>
+      </div>
+      <div [class.hidden]="isSidebarCollapsed" class="transition-opacity duration-200 w-full whitespace-nowrap">
+        <p class="text-[11px] text-gray-400 mb-1">Vous consultez</p>
+        <h2 class="text-sm font-bold tracking-wide truncate">Résidence les jardins</h2>
+      </div>
+    </div>
+
+    <div class="px-4 space-y-1 mb-6">
+      <a href="#" class="flex items-center gap-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+         [ngClass]="isSidebarCollapsed ? 'justify-center px-0' : 'px-3'">
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        <span [class.hidden]="isSidebarCollapsed" class="truncate">Retour à la page d'accueil</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+         [ngClass]="isSidebarCollapsed ? 'justify-center px-0' : 'px-3'">
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728M16.95 7.05a7 7 0 010 9.9m-2.828-2.828a3 3 0 010-4.242M12 12v.01"></path></svg>
+        <span [class.hidden]="isSidebarCollapsed" class="truncate">Contacter le support</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+         [ngClass]="isSidebarCollapsed ? 'justify-center px-0' : 'px-3'">
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <span [class.hidden]="isSidebarCollapsed" class="truncate">Guide d'utilisation</span>
+      </a>
+    </div>
+
+    <div class="flex-1 overflow-y-auto px-4 custom-scrollbar">
+      <p [class.hidden]="isSidebarCollapsed" class="text-[11px] font-semibold text-gray-400 mb-2 px-3 uppercase tracking-wider whitespace-nowrap">Menu principal</p>
+      
+      <nav class="space-y-1">
+        <a href="#" class="flex items-center gap-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+           [ngClass]="isSidebarCollapsed ? 'justify-center px-0' : 'px-3'">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+          <span [class.hidden]="isSidebarCollapsed" class="truncate">Tableau de bord</span>
+        </a>
+
+        <div>
+        <button (click)="toggleMenu('copropriete')" class="w-full flex items-center justify-between py-2.5 text-sm rounded-lg transition-all" 
+                  [ngClass]="[
+                    isSidebarCollapsed ? 'justify-center px-0' : 'px-3',
+                    openMenus['copropriete'] && !isSidebarCollapsed ? 'text-white font-medium' : 'text-gray-300 hover:bg-white/5'
+                  ]">
+            <div class="flex items-center gap-3">
+              <svg class="w-5 h-5 shrink-0" [ngClass]="{'text-syndify-accent': openMenus['copropriete'] && isSidebarCollapsed}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+              
+              <div [class.hidden]="isSidebarCollapsed" class="flex items-center gap-1.5">
+                <span class="truncate">Ma copropriété</span>
+                <span *ngIf="openMenus['copropriete']" class="w-1.5 h-1.5 bg-syndify-accent rounded-full shrink-0"></span>
+              </div>
+
+            </div>
+            <svg *ngIf="!isSidebarCollapsed" class="w-4 h-4 shrink-0 transition-transform duration-200" [ngClass]="{'rotate-180': openMenus['copropriete']}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </button>
+          
+          <div *ngIf="openMenus['copropriete'] && !isSidebarCollapsed" class="pl-11 pr-3 py-2 space-y-3 overflow-hidden">
+            <a href="#" (click)="setActive('gestion-lots')" class="flex items-center gap-3 text-[13px] transition-colors" [ngClass]="activeItem === 'gestion-lots' ? 'text-syndify-accent font-medium' : 'text-gray-400 hover:text-gray-200'">
+              <svg *ngIf="activeItem === 'gestion-lots'" class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+              <svg *ngIf="activeItem !== 'gestion-lots'" class="w-3.5 h-3.5 shrink-0 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="4"></circle></svg>
+              <span class="truncate">Gestion des lots</span>
+            </a>
+            <a href="#" (click)="setActive('liste-copros')" class="flex items-center gap-3 text-[13px] transition-colors" [ngClass]="activeItem === 'liste-copros' ? 'text-syndify-accent font-medium' : 'text-gray-400 hover:text-gray-200'">
+              <svg *ngIf="activeItem === 'liste-copros'" class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+              <svg *ngIf="activeItem !== 'liste-copros'" class="w-3.5 h-3.5 shrink-0 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="4"></circle></svg>
+              <span class="truncate">Liste des copropriétaires</span>
+            </a>
+            <a href="#" (click)="setActive('cles')" class="flex items-center gap-3 text-[13px] transition-colors" [ngClass]="activeItem === 'cles' ? 'text-syndify-accent font-medium' : 'text-gray-400 hover:text-gray-200'">
+              <svg *ngIf="activeItem === 'cles'" class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+              <svg *ngIf="activeItem !== 'cles'" class="w-3.5 h-3.5 shrink-0 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="4"></circle></svg>
+              <span class="truncate">Clés de répartition</span>
+            </a>
+            <a href="#" (click)="setActive('impayes')" class="flex items-center gap-3 text-[13px] transition-colors" [ngClass]="activeItem === 'impayes' ? 'text-syndify-accent font-medium' : 'text-gray-400 hover:text-gray-200'">
+              <svg *ngIf="activeItem === 'impayes'" class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+              <svg *ngIf="activeItem !== 'impayes'" class="w-3.5 h-3.5 shrink-0 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="4"></circle></svg>
+              <span class="truncate">Les impayés</span>
+            </a>
+          </div>
+        </div>
+
+        <button (click)="toggleMenu('financement')" class="w-full flex items-center justify-between py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white rounded-lg transition-all"
+                [ngClass]="isSidebarCollapsed ? 'justify-center px-0' : 'px-3'">
+          <div class="flex items-center gap-3">
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+            <span [class.hidden]="isSidebarCollapsed" class="truncate">Financement</span>
+          </div>
+          <svg *ngIf="!isSidebarCollapsed" class="w-4 h-4 shrink-0" [ngClass]="{'rotate-180': openMenus['financement']}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        </button>
+
+        <a href="#" class="flex items-center gap-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+           [ngClass]="isSidebarCollapsed ? 'justify-center px-0' : 'px-3'">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+          <span [class.hidden]="isSidebarCollapsed" class="relative truncate">
+            Documents
+          </span>
+        </a>
+      </nav>
+    </div>
+
+    <div class="p-6 mt-auto whitespace-nowrap" [ngClass]="{'text-center': isSidebarCollapsed}">
+      <p [class.hidden]="isSidebarCollapsed" class="text-xs font-bold text-white mb-1">Version actuelle</p>
+      <p [class.hidden]="isSidebarCollapsed" class="text-[11px] text-gray-400 truncate">1.12.42 - <a href="#" class="text-syndify-accent hover:underline">voir les notes</a></p>
+      <span *ngIf="isSidebarCollapsed" class="text-[10px] font-bold text-gray-500">v1.12</span>
+    </div>
+
+  </aside>
+
+  <main class="flex-1 overflow-y-auto relative bg-syndify-bg p-8">
+    <router-outlet></router-outlet>
+  </main>
+
+</div>
