@@ -1,38 +1,32 @@
-<div class="bg-syndify-light text-syndify-text pt-5 flex-none relative z-10">
-  
+<div class="bg-syndify-light text-syndify-text pt-5 pb-5 flex-none relative z-10 border-b border-gray-200">
   <div class="px-6 md:px-8">
     <div class="flex justify-between items-center mb-6">
-      <div class="text-[12px] font-medium text-gray-500 tracking-wide">
-        Activité récente > <span class="text-syndify-text font-bold">Modification des informations du compte</span>
+      <div class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+        {{ currentPath }}
       </div>
       <div class="flex gap-3">
-        <button class="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-white transition-colors cursor-pointer">
-          <svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-        </button>
-        <button class="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-white transition-colors cursor-pointer">
-          <svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+        <button class="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors cursor-pointer shadow-sm">
+          <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
         </button>
       </div>
     </div>
 
-    <div class="mb-5">
-      <div class="text-[12px] font-medium tracking-wide mb-1.5 text-gray-400 flex items-center gap-1">
-        Copropriétés <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg> 
-        {{ parentPath }} <svg *ngIf="parentPath" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-        <span class="text-syndify-accent font-semibold">{{ currentPath }}</span>
+    <div class="flex justify-between items-end">
+      <div>
+        <h1 class="text-[22px] font-black tracking-tight text-slate-800">{{ title }}</h1>
+        <p class="text-[12px] text-gray-400 mt-1">Gérez l'ensemble de vos données en toute simplicité.</p>
       </div>
-      <h1 class="text-[28px] font-black tracking-tight text-syndify-dark">{{ title }}</h1>
     </div>
   </div>
+</div>
 
-  <div class="bg-syndify-dark flex justify-between items-center px-6 md:px-8 py-3.5 shadow-md">
-    <div class="text-[13px] font-bold text-white">
-      {{ statsText }} <span *ngIf="statsSubText" class="text-gray-400 font-medium">{{ statsSubText }}</span>
-    </div>
-    
-    <div class="flex items-center gap-4">
-      <ng-content></ng-content>
-    </div>
+<div class="bg-syndify-dark flex justify-between items-center px-6 md:px-8 py-2 relative z-20 shadow-lg">
+  
+  <div class="text-[12px] font-bold text-white tracking-wide">
+    {{ statsText }} <span *ngIf="statsSubText" class="text-gray-300 font-medium ml-1">{{ statsSubText }}</span>
   </div>
-
+  
+  <div class="flex items-center gap-3">
+    <ng-content></ng-content>
+  </div>
 </div>

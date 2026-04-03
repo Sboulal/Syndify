@@ -1,85 +1,72 @@
 <div class="flex flex-col min-h-full font-['Poppins'] bg-syndify-bg">
 
-  <app-page-header 
-    currentPath="Gestion des lots"
+<app-page-header 
+    currentPath="Copropriétés > Résidence les jardins > Gestion des lots"
     title="Gestion des lots"
-    [statsText]="lots.length + ' lots ajoutés en total'"
-    statsSubText="">
+    [statsText]="lots.length + ' lots au total'">
     
-    <button (click)="openModal()" class="flex items-center gap-2 text-[14px] font-semibold text-white cursor-pointer">
-      <svg class="w-4 h-4 text-syndify-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+    <button title="Exporter" class="flex items-center justify-center w-[38px] h-[38px] bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 text-white transition-all cursor-pointer shadow-sm">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+    </button>
+
+    <button (click)="openModal()" class="btn-primary !bg-syndify-accent !text-white border-0 shadow-md">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
       Ajouter un lot
     </button>
-    
-    <button class="flex items-center gap-2 text-[14px] font-semibold text-white cursor-pointer hover:text-gray-200 transition-colors">
-      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-      Exporter la liste
-    </button>
-  </app-page-header>
+
+</app-page-header>
 
   <div class="flex-1 p-6 md:p-8">
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 relative">
       
       <div *ngIf="activeDropdown" (click)="closeDropdown()" class="fixed inset-0 z-30 cursor-default"></div>
 
-      <div class="overflow-x-auto w-full min-h-[260px]">
+<div class="overflow-x-auto w-full min-h-[260px]">
+  <table class="table-syndify w-full text-left">
+    
+    <thead>
+      <tr class="border-b border-gray-100 bg-gray-50/50">
+        <th class="py-3 px-5 font-bold text-gray-500 text-[12px] uppercase tracking-wider">N° du lot (ID)</th>
+        <th class="py-3 px-5 font-bold text-gray-500 text-[12px] uppercase tracking-wider">Type du lot</th>
+        <th class="py-3 px-5 font-bold text-gray-500 text-[12px] uppercase tracking-wider">N° de porte</th>
+        <th class="py-3 px-5 font-bold text-gray-500 text-[12px] uppercase tracking-wider">Bâtiment</th>
+        <th class="py-3 px-5 font-bold text-gray-500 text-[12px] uppercase tracking-wider">Étage</th>
+        <th class="py-3 px-5 text-right"></th>
+      </tr>
+    </thead>
+    
+    <tbody class="text-[13px]">
+      <tr *ngFor="let lot of lots" class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+        <td class="py-3 px-5 font-bold text-syndify-dark">#{{ lot.id }}</td>
+        <td class="py-3 px-5 text-slate-600 font-medium">{{ lot.type }}</td>
+        <td class="py-3 px-5 text-slate-500 font-bold uppercase">{{ lot.numero_porte }}</td>
+        <td class="py-3 px-5 text-slate-500 font-medium">{{ lot.batiment || '--' }}</td>
+        <td class="py-3 px-5 text-slate-500 font-medium">{{ lot.etage || '--' }}</td>
         
-        <table class="table-syndify w-full text-left">
-          
-          <thead>
-            <tr class="border-b border-gray-100 bg-gray-50/50">
-              <th class="py-3 px-4 font-semibold text-gray-600 text-[13px]">N° du lot (ID)</th>
-              <th class="py-3 px-4 font-semibold text-gray-600 text-[13px]">Type du lot</th>
-              <th class="py-3 px-4 font-semibold text-gray-600 text-[13px]">N° de porte</th>
-              <th class="py-3 px-4 font-semibold text-gray-600 text-[13px]">Bâtiment</th>
-              <th class="py-3 px-4 font-semibold text-gray-600 text-[13px]">Étage</th>
-              <th class="py-3 px-4 text-right"></th>
-            </tr>
-          </thead>
-          
-          <tbody>
-            <tr *ngFor="let lot of lots" class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-              <td class="py-3 px-4 font-medium text-syndify-dark">#{{ lot.id }}</td>
-              <td class="py-3 px-4">{{ lot.type }}</td>
-              <td class="py-3 px-4 text-gray-500 font-medium">{{ lot.numero_porte }}</td>
-              <td class="py-3 px-4 text-gray-500">{{ lot.batiment || '--' }}</td>
-              <td class="py-3 px-4 text-gray-500">{{ lot.etage || '--' }}</td>
-              
-              <td class="py-3 px-4 text-right relative" [ngClass]="{'z-40': activeDropdown === lot.id}">
-                
-                <button (click)="toggleDropdown(lot.id, $event)" 
-                        [ngClass]="{'bg-gray-100 text-syndify-dark': activeDropdown === lot.id}"
-                        class="p-2 rounded-lg text-gray-400 hover:text-syndify-dark hover:bg-gray-100 transition-colors cursor-pointer relative">
-                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14a2 2 0 100-4 2 2 0 000 4zm-7 0a2 2 0 100-4 2 2 0 000 4zm14 0a2 2 0 100-4 2 2 0 000 4z"></path></svg>
-                </button>
+        <td class="py-3 px-5 text-right relative" [ngClass]="{'z-40': activeDropdown === lot.id}">
+          <button (click)="toggleDropdown(lot.id, $event)" 
+                  [ngClass]="{'bg-gray-100 text-syndify-dark': activeDropdown === lot.id}"
+                  class="p-2 rounded-lg text-gray-400 hover:text-syndify-dark hover:bg-gray-100 transition-colors cursor-pointer relative">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14a2 2 0 100-4 2 2 0 000 4zm-7 0a2 2 0 100-4 2 2 0 000 4zm14 0a2 2 0 100-4 2 2 0 000 4z"></path></svg>
+          </button>
 
-                <div *ngIf="activeDropdown === lot.id" 
-                     class="absolute right-8 top-10 w-44 bg-white rounded-xl shadow-[0_5px_20px_-3px_rgba(0,0,0,0.15)] border border-gray-100 py-2 z-50 transform origin-top-right transition-all">
-                  
-                  <button (click)="openModal(lot)" class="w-full text-left px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 hover:text-syndify-dark flex items-center gap-3 transition-colors cursor-pointer">
-                    <svg class="w-3.5 h-3.5 text-syndify-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                    Modifier
-                  </button>
-                  
-                  <div class="h-px bg-gray-50 my-1"></div>
-                  
-                  <button (click)="supprimerLot(lot)" class="w-full text-left px-4 py-2.5 text-[13px] font-semibold text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors cursor-pointer group">
-                    <svg class="w-3.5 h-3.5 text-red-500 group-hover:text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    Supprimer
-                  </button>
-                  
-                </div>
-              </td>
-            </tr>
-            
-            <tr *ngIf="lots.length === 0 && !isLoading">
-              <td colspan="6" class="text-center py-8 text-gray-400 font-medium text-[14px]">
-                Aucun lot n'a été ajouté pour le moment.
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+          <div *ngIf="activeDropdown === lot.id" 
+               class="absolute right-8 top-10 w-44 bg-white rounded-xl shadow-[0_5px_20px_-3px_rgba(0,0,0,0.15)] border border-gray-100 py-2 z-50 transform origin-top-right transition-all">
+            <button (click)="openModal(lot)" class="w-full text-left px-4 py-2.5 text-[13px] font-bold text-gray-700 hover:bg-gray-50 hover:text-syndify-dark flex items-center gap-3 transition-colors cursor-pointer">
+              <svg class="w-3.5 h-3.5 text-syndify-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+              Modifier
+            </button>
+            <div class="h-px bg-gray-50 my-1"></div>
+            <button (click)="supprimerLot(lot)" class="w-full text-left px-4 py-2.5 text-[13px] font-bold text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors cursor-pointer group">
+              <svg class="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+              Supprimer
+            </button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
       
     </div>
   </div>
@@ -132,7 +119,7 @@
       <button (click)="closeModal()" class="px-5 py-2.5 rounded-xl font-semibold text-[14px] text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer">
         Annuler
       </button>
-      <button (click)="enregistrerLot()" class="px-5 py-2.5 rounded-xl font-semibold text-[14px] text-white bg-syndify-dark hover:bg-syndify-dark/90 flex items-center gap-2 transition-colors cursor-pointer">
+      <button (click)="enregistrerLot()" class="btn-primary">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
         Enregistrer
       </button>
