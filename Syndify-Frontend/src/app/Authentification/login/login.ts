@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectorRef } from '@angular/core'; // 👈 Zidna ChangeDetectorRef
+import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule, HttpHeaders } from '@angular/common/http';
@@ -22,9 +22,9 @@ export class Login {
 
   private http = inject(HttpClient);
   private router = inject(Router);
-  private cdr = inject(ChangeDetectorRef); // 👈 Zidnah hna bach n-forciw l'affichage
+  private cdr = inject(ChangeDetectorRef); 
 
-  private apiUrl = 'http://localhost:8085/api';
+  private apiUrl = 'http://51.178.87.234:8085/api';
 
   private getSecurityHeaders(): HttpHeaders {
     const secret = "SyndifySecretKey123";
@@ -38,22 +38,32 @@ export class Login {
     });
   }
 
+  // ==========================================
+  // CONNEXION DIRECTE (BYPASS OTP)
+  // ==========================================
   sendCode() {
     if (!this.identifier) return;
 
     this.isLoading = true;
     this.errorMessage = '';
-    console.log("Envoi de la requête à Laravel...");
+    console.log("Envoi de la requête à Laravel (Mode Bypass)...");
 
     this.http.post(`${this.apiUrl}/login`, 
       { identifier: this.identifier }, 
       { headers: this.getSecurityHeaders() }
     ).subscribe({
       next: (res: any) => {
-        console.log("Réponse Laravel :", res);
-        this.step = 2; // Kat-bdel l'étape
+        console.log("✅ Connexion réussie, Token reçu :", res.token);
+        
+        // 🛑 N-sajjlou l'Token f LocalStorage nichan
+        localStorage.setItem('auth_token', res.token); 
+        localStorage.setItem('syndify_user', JSON.stringify(res.user));
+        
         this.isLoading = false;
-        this.cdr.detectChanges(); // 👈 Kan-goulou l Angular: "Fiq w bdel l'écran daba!"
+        this.cdr.detectChanges();
+        
+        // 🛑 N-diro redirection nichan l'page dyal l-Lots (awla Dashboard)
+        this.router.navigate(['/gestion-lots']); 
       },
       error: (err) => {
         console.error("Erreur Laravel :", err);
@@ -64,37 +74,9 @@ export class Login {
     });
   }
 
+  // Had l'fonction mabqatch k-tkhdem 7it drna Bypass, walakin n-khlliwha hna l-mn be3d
   verifyCode() {
-    const otpCode = this.otp.join(''); 
-    
-    if (otpCode.length !== 5) {
-      this.errorMessage = 'Veuillez entrer les 5 chiffres.';
-      return;
-    }
-
-    this.isLoading = true;
-    this.errorMessage = '';
-    console.log("Vérification de l'OTP...");
-
-    this.http.post(`${this.apiUrl}/verify-otp`, 
-      { identifier: this.identifier, otp_code: otpCode },
-      { headers: this.getSecurityHeaders() }
-    ).subscribe({
-      next: (res: any) => {
-        console.log("Token reçu :", res.token);
-        localStorage.setItem('syndify_token', res.token);
-        localStorage.setItem('syndify_user', JSON.stringify(res.user));
-        this.isLoading = false;
-        this.cdr.detectChanges();
-        // this.router.navigate(['/dashboard']); 
-      },
-      error: (err) => {
-        console.error("Erreur OTP :", err);
-        this.errorMessage = err.error?.message || "Le code OTP est invalide.";
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      }
-    });
+    // ... Logique OTP jdida mlli t-bghiy t-rddiha mn b3d
   }
 
   moveFocus(e: any, previous: any, current: any, next: any) {

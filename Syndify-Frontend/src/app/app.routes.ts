@@ -3,6 +3,8 @@ import { Login } from './Authentification/login/login';
 import { MainLayout } from './main-layout/main-layout';
 import { guestGuard } from './core/guards/guest-guard';
 import { authGuard } from './core/guards/auth-guard';
+import { GestionLots } from './pages/gestion-lots/gestion-lots';
+import { ListeCoproprietes } from './pages/liste-coproprietes/liste-coproprietes';
 
 export const routes: Routes = [
   { path: 'login', component: Login, canActivate: [guestGuard] },
@@ -15,20 +17,26 @@ export const routes: Routes = [
   {
     path: '', 
     component: MainLayout, 
-    canActivate: [authGuard], 
+    // canActivate: [authGuard], 
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       
       // Hna ghadi t-zidi ga3 les pages dyal l'app li kiy-bano wste l'Layout
       // { path: 'dashboard', component: DashboardComponent },
-      // { path: 'gestion-lots', component: GestionLotsComponent },
+      { path: 'gestion-lots', component: GestionLots },
+      { path: 'liste-coproprietes', component: ListeCoproprietes },
+      { 
+    path: 'residence/:id/coproprietaires', 
+    component: ListeCoproprietes 
+  },
       // { path: 'documents', component: DocumentsComponent },
     ]
+    
   },
-
+{ path: 'gestion-lots/:id', component: GestionLots },
   // ==========================================
   // Erreur 404
   // ==========================================
-  
+
   { path: '**', redirectTo: 'dashboard' } // Wla page 404 ila saybtiha
 ];

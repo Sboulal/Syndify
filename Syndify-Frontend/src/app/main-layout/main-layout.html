@@ -65,16 +65,20 @@
           </button>
           
           <div *ngIf="openMenus['copropriete'] && !isSidebarCollapsed" class="pl-11 pr-3 py-2 space-y-3 overflow-hidden">
-            <a href="#" (click)="setActive('gestion-lots')" class="flex items-center gap-3 text-[13px] transition-colors" [ngClass]="activeItem === 'gestion-lots' ? 'text-syndify-accent font-medium' : 'text-gray-400 hover:text-gray-200'">
+            <a href="/gestion-lots" (click)="setActive('gestion-lots')" class="flex items-center gap-3 text-[13px] transition-colors" [ngClass]="activeItem === 'gestion-lots' ? 'text-syndify-accent font-medium' : 'text-gray-400 hover:text-gray-200'">
               <svg *ngIf="activeItem === 'gestion-lots'" class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
               <svg *ngIf="activeItem !== 'gestion-lots'" class="w-3.5 h-3.5 shrink-0 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="4"></circle></svg>
               <span class="truncate">Gestion des lots</span>
             </a>
-            <a href="#" (click)="setActive('liste-copros')" class="flex items-center gap-3 text-[13px] transition-colors" [ngClass]="activeItem === 'liste-copros' ? 'text-syndify-accent font-medium' : 'text-gray-400 hover:text-gray-200'">
-              <svg *ngIf="activeItem === 'liste-copros'" class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
-              <svg *ngIf="activeItem !== 'liste-copros'" class="w-3.5 h-3.5 shrink-0 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="4"></circle></svg>
-              <span class="truncate">Liste des copropriétaires</span>
-            </a>
+            <a routerLink="/liste-coproprietes" 
+             (click)="setActive('liste-copros')" 
+             class="flex items-center gap-3 text-[13px] transition-colors cursor-pointer" 
+             [ngClass]="activeItem === 'liste-copros' ? 'text-syndify-accent font-medium' : 'text-gray-400 hover:text-gray-200'">
+            
+            <svg *ngIf="activeItem === 'liste-copros'" class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+            <svg *ngIf="activeItem !== 'liste-copros'" class="w-3.5 h-3.5 shrink-0 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="4"></circle></svg>
+            <span class="truncate">Liste des copropriétaires</span>
+          </a>
             <a href="#" (click)="setActive('cles')" class="flex items-center gap-3 text-[13px] transition-colors" [ngClass]="activeItem === 'cles' ? 'text-syndify-accent font-medium' : 'text-gray-400 hover:text-gray-200'">
               <svg *ngIf="activeItem === 'cles'" class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
               <svg *ngIf="activeItem !== 'cles'" class="w-3.5 h-3.5 shrink-0 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="4"></circle></svg>
@@ -115,7 +119,7 @@
 
   </aside>
 
-  <main class="flex-1 overflow-y-auto relative bg-syndify-bg p-8">
+<main class="flex-1 overflow-y-auto relative bg-syndify-bg flex flex-col">
     <router-outlet></router-outlet>
   </main>
 

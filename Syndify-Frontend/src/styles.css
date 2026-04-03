@@ -1,5 +1,4 @@
-/* L'importation dyal Tailwind v4 */
-
+/* L'importation dyal Tailwind v4 w Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
@@ -16,4 +15,57 @@
 body {
   background-color: var(--color-syndify-bg);
   color: var(--color-syndify-text);
+}
+
+/* =========================================================
+   LES CLASSES GLOBALES DYAL SYNDIFY (UI Components)
+   ========================================================= */
+@layer components {
+  
+  /* --- BOUTONS --- */
+  .btn-primary {
+    @apply flex items-center gap-2 text-[14px] font-bold text-syndify-dark hover:brightness-105 px-4 py-2 rounded-lg transition-all shadow-sm cursor-pointer;
+  }
+  
+  .btn-secondary {
+    @apply flex items-center gap-2 text-[14px] font-bold text-gray-500 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:text-syndify-text transition-colors cursor-pointer;
+  }
+
+  .btn-icon-action {
+    @apply text-gray-400 hover:text-syndify-dark bg-gray-50 hover:bg-gray-100 px-2.5 py-1.5 rounded-md transition-colors border border-gray-100 cursor-pointer;
+  }
+
+  /* --- TABLEAUX (Table Syndify) --- */
+  .table-syndify {
+    @apply w-full text-left text-[13px];
+  }
+
+  .table-syndify thead {
+    @apply bg-gray-50/50 border-b border-gray-100;
+  }
+
+  .table-syndify th {
+    @apply py-4 px-5 font-semibold text-gray-500;
+  }
+
+  .table-syndify tbody {
+    @apply divide-y divide-gray-50 text-syndify-text font-medium;
+  }
+
+.table-syndify tr {
+    @apply hover:bg-gray-50/50 transition-colors; 
+  }
+
+  .table-syndify td {
+    @apply py-4 px-5;
+  }
+
+  /* --- FORMULAIRES (Inputs & Labels) --- */
+  .text-label {
+    @apply block text-[12px] font-bold text-syndify-text mb-2;
+  }
+
+  .input-syndify {
+    @apply w-full bg-gray-50 border border-gray-200 text-syndify-text text-[13px] font-medium rounded-xl focus:ring-2 focus:ring-syndify-accent/50 focus:border-syndify-accent focus:bg-white block px-4 py-2.5 outline-none transition-all placeholder-gray-400;
+  }
 }
