@@ -1,14 +1,14 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // 🛑 Zdt ChangeDetectorRef
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; 
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { PageHeader } from '../../components/page-header/page-header';
-import { CoproprietaireService } from '../../services/coproprietaire'; // T2kdi mn l'chemin
-import { FormsModule } from '@angular/forms'; // 🛑 Zdt FormsModule bash t-khdem ngModel
+import { CoproprietaireService } from '../../services/coproprietaire'; 
+import { FormsModule } from '@angular/forms'; 
 
 @Component({
   selector: 'app-liste-coproprietaires',
   standalone: true,
-  imports: [CommonModule, PageHeader, FormsModule], // 🛑 Zdt FormsModule hna
+  imports: [CommonModule, PageHeader, FormsModule], 
   templateUrl: './liste-coproprietes.html',
 })
 export class ListeCoproprietes implements OnInit {
@@ -22,44 +22,64 @@ export class ListeCoproprietes implements OnInit {
   isThereMore: boolean = false;
   isLoading: boolean = false;
 
-  // 🛑 Variables dyal l'Modal dyal l'Ajout
+  // 2. Variables dyal l'Modal dyal l'Ajout
   isAddModalOpen: boolean = false;
-  newCoproEmail: string = '';
   isAdding: boolean = false;
+  
+  newCopro: any = {
+    user_id: '',
+    nom: '',
+    email: '',
+    lots: '',
+    status: 'Actif'
+  };
+
+  // ==========================================
+  // 🛑 FIX: VARIABLES W FONCTIONS DYAL L-DROPDOWN 
+  // ==========================================
+  activeDropdown: string | null = null;
+
+  toggleDropdown(userId: string, event: Event) {
+    event.stopPropagation();
+    this.activeDropdown = this.activeDropdown === userId ? null : userId;
+  }
+
+  closeDropdown() {
+    this.activeDropdown = null;
+  }
+
+  openEditModal(copro: any) {
+    this.closeDropdown(); // N-seddo l-menu 9bel ma n-7ellou l-modal
+    // N-3mmro l-Modal b l-m3loumat dyal l-copropriétaire
+    this.newCopro = { 
+      user_id: copro.user_id, 
+      nom: copro.nom, 
+      email: copro.email, 
+      tel: copro.tel,
+      lots: copro.lots === '-- Non affecté --' ? '' : copro.lots, 
+      status: copro.status 
+    };
+    this.isAddModalOpen = true;
+    this.cdr.detectChanges();
+  }
+  // ==========================================
+
 
   constructor(
     private coproprietaireService: CoproprietaireService,
     private route: ActivatedRoute,
-    private cdr: ChangeDetectorRef // 🛑 L'Injection dyal cdr bash UI t-tjaweb b-zerba
+    private cdr: ChangeDetectorRef 
   ) {}
 
-ngOnInit() {
+  ngOnInit() {
     console.log('🚀 [INIT] Page "Liste Copropriétaires" chargée.');
     
-    // 🛑 KHTWA MO2AQATA: N-7ettou l'ID b-yeddina bash n-testiw d-deqqa l-wla
-    this.proprieteId = 'SP-1775215295'; // 👈 T2kdi blli had l'ID houwa li 3ndk f BDD
-    
+    // ID forcé pour le test
+    this.proprieteId = 'SP-1775215295'; 
     console.log('📌 ID forcé pour le test:', this.proprieteId);
     this.chargerListe(true); 
-    
-    /* 🛑 COMMENTINA HADA MO2A9ATAN BASH MAY-KHRBQNACH
-    this.route.paramMap.subscribe(params => {
-      const id = params.get('id'); 
-      if (id) {
-        this.proprieteId = id;
-        this.chargerListe(true); 
-      } else {
-        const savedId = localStorage.getItem('current_propriete_id');
-        if (savedId) {
-          this.proprieteId = savedId;
-          this.chargerListe(true);
-        } else {
-          console.error("Aucune propriété sélectionnée !");
-        }
-      }
-    });
-    */
   }
+
   changerTab(status: 'actif' | 'inactif' | 'en_attente') {
     if (this.currentStatus !== status) {
       this.currentStatus = status;
@@ -99,26 +119,36 @@ ngOnInit() {
       });
   }
 
-  desactiverCopro(userId: string) {
-    if (confirm('Voulez-vous vraiment désactiver ce copropriétaire ?')) {
-      this.coproprietaireService.desactiver(this.proprieteId, userId).subscribe({
+ supprimerCopro(userId: string) {
+    this.closeDropdown(); // N-seddo l-menu
+    if (confirm('Voulez-vous vraiment supprimer ce copropriétaire ?')) {
+      this.coproprietaireService.supprimer(this.proprieteId, userId).subscribe({
         next: (res: any) => {
           if (res.success) {
             this.chargerListe(true); 
           }
         },
-        error: (err) => {
-          alert(err.error?.message || 'Erreur lors de la désactivation');
+        error: (err: any) => {
+          alert(err.error?.message || 'Erreur lors de la suppression');
         }
       });
     }
   }
 
-  // ==========================================
-  // 🛑 NOUVELLES FONCTIONS : AJOUTER UN COPROPRIÉTAIRE
-  // ==========================================
-  openAddModal() {
-    this.newCoproEmail = ''; // N-khwiw l'input
+openAddModal() {
+
+ 
+
+   
+    this.newCopro = { 
+      user_id: '', 
+      nom: '', 
+      email: '', 
+      tel: '',
+      lots: '', 
+      status: 'Actif' 
+    };
+    
     this.isAddModalOpen = true;
     this.cdr.detectChanges();
   }
@@ -129,16 +159,16 @@ ngOnInit() {
   }
 
   ajouterCopro() {
-    if (!this.newCoproEmail || !this.proprieteId) return;
+    if (!this.newCopro.email || !this.newCopro.nom || !this.proprieteId) return;
 
     this.isAdding = true;
     this.cdr.detectChanges();
 
-    this.coproprietaireService.ajouter(this.proprieteId, this.newCoproEmail).subscribe({
+    this.coproprietaireService.ajouter(this.proprieteId, this.newCopro).subscribe({
       next: (res: any) => {
         if (res.success) {
           this.closeAddModal();
-          this.chargerListe(true); // N-rechargew l'liste bach i-ban j-jdid
+          this.chargerListe(true); 
         }
         this.isAdding = false;
         this.cdr.detectChanges();

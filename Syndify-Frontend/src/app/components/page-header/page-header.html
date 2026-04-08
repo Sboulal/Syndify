@@ -1,42 +1,71 @@
-<div class="bg-syndify-light text-syndify-text pt-5 pb-5 flex-none relative z-10 border-b border-gray-200">
-  <div class="px-6 md:px-8">
+<div class="bg-white border-b border-gray-200 relative z-30">
+  <div class="px-6 md:px-8 py-6">
     
-    <div class="flex justify-between items-center mb-6">
-      <div class="text-[11px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
+    <div class="flex justify-between items-center mb-8">
+      
+      <div class="text-[13px] font-semibold text-gray-400 flex items-center gap-2">
+        <span class="hover:text-gray-600 transition-colors cursor-pointer">Copropriétés</span>
         
-        <span>Copropriétés</span>
-
         <ng-container *ngIf="parentPath">
-          <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
-          <span class="text-gray-400">{{ parentPath }}</span>
+          <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+          <span class="text-gray-500 hover:text-gray-700 transition-colors cursor-pointer">{{ parentPath }}</span>
         </ng-container>
-
-        <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
-        <span class="text-syndify-accent font-black">{{ currentPath }}</span>
         
+        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+        <span class="text-syndify-accent">{{ currentPath }}</span>
       </div>
 
-      <div class="flex gap-3">
-        <button class="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors cursor-pointer shadow-sm">
-          <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+      <div class="flex items-center gap-3 relative z-[60]">
+        
+        <button class="w-10 h-10 rounded-full bg-syndify-dark flex items-center justify-center hover:brightness-110 transition-all cursor-pointer relative shadow-none border-0">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+          <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-syndify-dark"></span>
         </button>
+
+        <div class="relative">
+          <div *ngIf="isProfileDropdownOpen" (click)="isProfileDropdownOpen = false" class="fixed inset-0 z-40 cursor-default"></div>
+
+          <button (click)="isProfileDropdownOpen = !isProfileDropdownOpen" 
+                  [ngClass]="{'brightness-125': isProfileDropdownOpen}"
+                  class="h-10 px-3 rounded-full bg-syndify-dark flex items-center gap-2 hover:brightness-110 transition-all cursor-pointer z-50 relative shadow-none border-0">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <svg class="w-3.5 h-3.5 text-white/70 transition-transform duration-200" 
+                 [ngClass]="{'rotate-180': isProfileDropdownOpen}" 
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </button>
+
+          <div *ngIf="isProfileDropdownOpen" class="absolute right-0 top-12 w-44 bg-white rounded-xl border border-gray-200 py-2 z-50 transform origin-top-right transition-all shadow-none">
+            <a href="#" class="w-full text-left px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 hover:text-syndify-dark flex items-center gap-3 transition-colors">
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+              Support
+            </a>
+            <a href="#" class="w-full text-left px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 hover:text-syndify-dark flex items-center gap-3 transition-colors">
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              Guide
+            </a>
+            <div class="h-px bg-gray-100 my-1"></div>
+            <button class="w-full text-left px-4 py-2.5 text-[13px] font-semibold text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors cursor-pointer">
+              <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+              Déconnexion
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
 
-    <div class="flex justify-between items-end">
-      <div>
-        <h1 class="text-[22px] font-black tracking-tight text-slate-800">{{ title }}</h1>
-        <p class="text-[12px] text-gray-400 mt-1 font-medium">Gérez l'ensemble de vos données en toute simplicité.</p>
-      </div>
+    <div>
+      <h1 class="text-[24px] font-bold tracking-tight text-slate-800">{{ title }}</h1>
+      <p class="text-[14px] text-gray-500 mt-1.5 font-medium">Gérez l'ensemble de vos données en toute simplicité.</p>
     </div>
+
   </div>
 </div>
 
-<div class="bg-syndify-dark flex justify-between items-center px-6 md:px-8 py-2 relative z-20 shadow-lg">
-  <div class="text-[12px] font-bold text-white tracking-wide">
+<div class="bg-syndify-dark flex justify-between items-center px-6 md:px-8 h-[54px] relative z-20">
+  <div class="text-[13px] font-bold text-white tracking-wide">
     {{ statsText }} <span *ngIf="statsSubText" class="text-gray-300 font-medium ml-1">{{ statsSubText }}</span>
   </div>
-  
   <div class="flex items-center gap-3">
     <ng-content></ng-content>
   </div>

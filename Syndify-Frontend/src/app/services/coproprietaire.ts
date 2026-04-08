@@ -30,11 +30,21 @@ export class CoproprietaireService {
     });
   }
 
-  // 3. Ajouter (Invitation)
-  ajouter(proprieteId: string, email: string): Observable<any> {
+ajouter(proprieteId: string, coproData: any) {
+    // 🛑 FIX: 7iydna "coproprietaires" mn l-URL hna 7it aslan kayna f this.apiUrl
     return this.http.post(`${this.apiUrl}/ajouter`, {
       propriete_id: proprieteId,
-      email: email
+      nom: coproData.nom,
+      email: coproData.email,
+      tel: coproData.tel,
+      user_id: coproData.user_id, // Identifiant personnalisé (optional)
+      status: coproData.status
+    });
+  }
+  supprimer(proprieteId: string, userId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/supprimer`, {
+      propriete_id: proprieteId,
+      user_id: userId
     });
   }
 }

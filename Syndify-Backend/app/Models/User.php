@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens; // 👈 Darouri l'token
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
@@ -16,12 +16,12 @@ class User extends Authenticatable
     public $incrementing = false;
     protected $keyType = 'string';
 
-    // 2. Les champs li 3ndna f l'cahier des charges
+    
     protected $fillable = [
         'identifier', 
         'full_name', 
         'email', 
-        'phone', 
+        'tel',
         'password', 
         'activation_code', 
         'otp_expires_at',
@@ -30,7 +30,7 @@ class User extends Authenticatable
         'status'
     ];
 
-    // 3. Les champs li khasshom i-tbeynou (Security)
+   
     protected $hidden = [
         'password', 
         'remember_token', 
@@ -46,5 +46,11 @@ class User extends Authenticatable
             'agreed_on_terms' => 'boolean',
             'mailing_subs' => 'boolean',
         ];
+    }
+    public function coproprietes()
+    {
+        return $this->belongsToMany(Copropriete::class, 'user_as_owner', 'user_id', 'propriete_id')
+                    ->withPivot('status')
+                    ->withTimestamps();
     }
 }

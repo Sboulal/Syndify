@@ -17,7 +17,7 @@ class AuthController extends Controller
         $request->validate([
             'full_name' => 'required|string',
             'email' => 'required|email',
-            'phone' => 'nullable|string', // Nqdro n-zidouh
+            'phone' => 'nullable|string', 
             'agreed_on_terms' => 'required|boolean'
         ]);
 
@@ -38,14 +38,13 @@ class AuthController extends Controller
             'full_name' => $request->full_name,
             'email' => $request->email,
             'phone' => $request->phone,
-            'password' => null, // 👈 BLA PASSWORD
+            'password' => null, 
             'activation_code' => Hash::make($otpCode),
             'otp_expires_at' => now()->addMinutes(15),
             'agreed_on_terms' => $request->agreed_on_terms,
             'status' => 'En attente d’activation'
         ]);
 
-      
         Log::info("OTP d'inscription pour {$user->email} est : {$otpCode}");
 
         return response()->json([
@@ -56,17 +55,16 @@ class AuthController extends Controller
     }
 
     // ==========================================
-    // 2. Demander OTP pour la Connexion (Login)
+    // 2. Connexion Directe (BYPASS OTP MO2A9ATAN)
     // ==========================================
     public function requestLoginOtp(Request $request)
     {
         $request->validate([
-            'identifier' => 'required|string' // Yqder ykoun Email wla Phone
+            'identifier' => 'required|string' 
         ]);
 
         $identifier = $request->identifier;
 
-        // N-qelbou 3la l'user b l'email awla b l'numéro d tel
         $user = User::where('email', $identifier)
                     ->orWhere('phone', $identifier)
                     ->first();
@@ -78,39 +76,53 @@ class AuthController extends Controller
             ], 404);
         }
 
-        // Générer OTP jdid
+        /* 🛑 OTP COMMENTÉ POUR LE TEST 🛑
         $otpCode = rand(10000, 99999);
         $user->activation_code = Hash::make($otpCode);
         $user->otp_expires_at = now()->addMinutes(15);
-        $user->save();
+        */
 
-        Log::info("OTP de connexion pour {$identifier} est : {$otpCode}");
+        // N-activiw l'compte nichan ila kan jdid
+        if ($user->status !== 'Actif') {
+            $user->status = 'Actif';
+            $user->save();
+        }
+
+        // 🛑 N-wldou l'Token nichan w n-siftouh l-Angular
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        Log::info("Connexion DIRECTE (Bypass OTP) pour {$identifier}");
 
         return response()->json([
             'status' => 200,
-            'message' => "Code OTP envoyé avec succès."
+            'message' => "Authentification réussie (Bypass).",
+            'token' => $token, // 👈 Token directement renvoyé
+            'user' => [
+                'identifier' => $user->identifier,
+                'full_name' => $user->full_name,
+                'email' => $user->email,
+                'status' => $user->status
+            ]
         ], 200);
     }
 
     // ==========================================
-    // 3. Vérification de l'OTP (Pour Register w Login)
+    // 3. Vérification de l'OTP (Pour Register)
     // ==========================================
     public function verifyOtp(Request $request)
     {
         $request->validate([
-            'identifier' => 'required|string', // Email awla Phone awla SU-ID
+            'identifier' => 'required|string', 
             'otp_code' => 'required|numeric'
         ]);
 
         $identifier = $request->identifier;
 
-        // N-qelbou 3la l'user b SU-ID awla email awla phone
         $user = User::where('identifier', $identifier)
                     ->orWhere('email', $identifier)
                     ->orWhere('phone', $identifier)
                     ->first();
 
-        // Vérification validité w expiration
         if (!$user || !Hash::check($request->otp_code, $user->activation_code) || now()->greaterThan($user->otp_expires_at)) {
             return response()->json([
                 'status' => 400,
@@ -118,12 +130,10 @@ class AuthController extends Controller
             ], 400);
         }
 
-        // Si l'OTP est correct: N-nqiwh w n-activiw l'compte ila kan baqi jdid
         $user->status = 'Actif';
         $user->activation_code = null; 
         $user->save();
 
-        // Générer l'JWT Token
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([

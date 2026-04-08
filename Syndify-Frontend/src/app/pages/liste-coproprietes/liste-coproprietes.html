@@ -7,53 +7,65 @@
     [statsText]="totalAffichage + ' copropriétaires au total'"
     [statsSubText]="'(' + coproprietaires.length + ' affichés)'">
     
-    <button title="Exporter" class="flex items-center justify-center w-[38px] h-[38px] bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 text-white transition-all cursor-pointer shadow-sm">
+    <button title="Exporter" class="flex items-center justify-center w-[38px] h-[38px] bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 text-white transition-all cursor-pointer">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
     </button>
 
-    <button (click)="openAddModal()" class="btn-primary !bg-syndify-accent !text-white border-0 shadow-md">
+    <button (click)="openAddModal()" class="btn-primary text-[13px] font-semibold !bg-syndify-accent !text-white border-0">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-      Ajouter un copro
+      Ajouter un coproprietaire
     </button>
 
   </app-page-header>
 
-  <div class="px-6 md:px-8 pt-4 border-b border-gray-200 bg-white">
-    <div class="flex items-center gap-8">
-      <button (click)="changerTab('actif')" [ngClass]="currentStatus === 'actif' ? 'text-syndify-dark border-syndify-accent' : 'text-gray-400 border-transparent hover:text-syndify-dark'" class="pb-3 text-[13px] font-bold border-b-[3px] transition-colors cursor-pointer uppercase tracking-wider">
+  <div class="px-6 md:px-8 border-b border-gray-200 bg-white h-[54px]">
+    <div class="flex items-center gap-8 h-full">
+      
+      <button (click)="changerTab('actif')" 
+              [ngClass]="currentStatus === 'actif' ? 'font-bold text-syndify-dark border-syndify-accent' : 'font-medium text-gray-500 border-transparent hover:text-syndify-dark'" 
+              class="h-full flex items-center text-[14px] border-b-[3px] transition-colors cursor-pointer pt-[3px]">
         Copropriétaires Actifs
       </button>
-      <button (click)="changerTab('inactif')" [ngClass]="currentStatus === 'inactif' ? 'text-syndify-dark border-syndify-accent' : 'text-gray-400 border-transparent hover:text-syndify-dark'" class="pb-3 text-[13px] font-bold border-b-[3px] transition-colors cursor-pointer uppercase tracking-wider">
+
+      <button (click)="changerTab('inactif')" 
+              [ngClass]="currentStatus === 'inactif' ? 'font-bold text-syndify-dark border-syndify-accent' : 'font-medium text-gray-500 border-transparent hover:text-syndify-dark'" 
+              class="h-full flex items-center text-[14px] border-b-[3px] transition-colors cursor-pointer pt-[3px]">
         Copropriétaires Inactifs
       </button>
+
     </div>
   </div>
 
   <div class="flex-1 p-6 md:p-8">
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div class="overflow-x-auto">
-        
-        <table class="table-syndify w-full text-left">
+    <div class="bg-white rounded-xl shadow-none border border-gray-200 relative">
+      
+      <div *ngIf="activeDropdown" (click)="closeDropdown()" class="fixed inset-0 z-30 cursor-default"></div>
+
+      <div class="w-full overflow-visible pb-12">
+        <table class="w-full text-left">
           
-          <thead>
-            <tr class="border-b border-gray-100 bg-gray-50/50">
-              <th class="py-3 px-5 font-bold text-gray-500 text-[12px] uppercase tracking-wider">Identifiant</th>
-              <th class="py-3 px-5 font-bold text-gray-500 text-[12px] uppercase tracking-wider">Nom & Prénom</th>
-              <th class="py-3 px-5 font-bold text-gray-500 text-[12px] uppercase tracking-wider">Email</th>
-              <th class="py-3 px-5 font-bold text-gray-500 text-[12px] uppercase tracking-wider">Nbr de lots</th>
-              <th class="py-3 px-5 font-bold text-gray-500 text-[12px] uppercase tracking-wider">Status</th>
-              <th class="py-3 px-5 text-right"></th>
+          <thead class="bg-gray-50">
+            <tr class="border-b border-gray-200">
+              <th class="py-3 px-6 font-semibold text-syndify-dark text-[14px] rounded-tl-xl">Identifiant</th>
+              <th class="py-3 px-6 font-semibold text-syndify-dark text-[14px]">Nom & Prénom</th>
+              <th class="py-3 px-6 font-semibold text-syndify-dark text-[14px]">Téléphone</th>
+              <th class="py-3 px-6 font-semibold text-syndify-dark text-[14px]">Email</th>
+              <th class="py-3 px-6 font-semibold text-syndify-dark text-[14px]">Nbr de lots</th>
+              <th class="py-3 px-6 font-semibold text-syndify-dark text-[14px]">Status</th>
+              <th class="py-3 px-6 text-right font-semibold text-syndify-dark text-[14px] rounded-tr-xl">Outils</th>
             </tr>
           </thead>
           
-          <tbody class="text-[13px]">
-            <tr *ngFor="let copro of coproprietaires" class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-              <td class="py-3 px-5 font-bold text-syndify-dark">{{ copro.user_id }}</td>
-              <td class="py-3 px-5 text-slate-700 font-medium">{{ copro.nom }}</td>
-              <td class="py-3 px-5 text-slate-500 font-medium">{{ copro.email }}</td>
-              <td class="py-3 px-5 text-slate-500 font-medium" [ngClass]="{'italic text-gray-400': copro.lots === '-- Non affecté --'}">{{ copro.lots }}</td>
-              <td class="py-3 px-5">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold"
+          <tbody class="text-[13px] text-gray-700 font-medium">
+            <tr *ngFor="let copro of coproprietaires" class="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+              <td class="py-3 px-6 font-semibold text-syndify-dark">{{ copro.user_id }}</td>
+              <td class="py-3 px-6 text-slate-700 font-semibold">{{ copro.nom }}</td>
+              <td class="py-3 px-6 text-slate-500">{{ copro.tel || '--' }}</td>
+              <td class="py-3 px-6 text-slate-500">{{ copro.email }}</td>
+              <td class="py-3 px-6 text-slate-500" [ngClass]="{'italic text-gray-400': copro.lots === '-- Non affecté --'}">{{ copro.lots }}</td>
+              
+              <td class="py-3 px-6">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold"
                       [ngClass]="{
                         'bg-green-50 text-green-600': copro.status === 'Actif',
                         'bg-gray-100 text-gray-500': copro.status === 'Inactif',
@@ -62,19 +74,38 @@
                   {{ copro.status }}
                 </span>
               </td>
-              <td class="py-3 px-5 text-right">
-                <button class="p-2 rounded-lg text-gray-400 hover:text-syndify-dark hover:bg-gray-100 transition-colors cursor-pointer">
+              
+              <td class="py-3 px-6 text-right" [ngClass]="{'relative z-50': activeDropdown === copro.user_id}">
+                <button (click)="toggleDropdown(copro.user_id, $event)" 
+                        [ngClass]="{'bg-gray-200 text-syndify-dark': activeDropdown === copro.user_id}"
+                        class="p-2 rounded-lg text-gray-400 hover:text-syndify-dark hover:bg-gray-100 transition-colors cursor-pointer inline-block">
                   <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14a2 2 0 100-4 2 2 0 000 4zm-7 0a2 2 0 100-4 2 2 0 000 4zm14 0a2 2 0 100-4 2 2 0 000 4z"></path></svg>
                 </button>
+
+                <div *ngIf="activeDropdown === copro.user_id" 
+                     class="absolute right-8 top-10 w-44 bg-white rounded-xl border border-gray-200 py-2 z-[100] transform origin-top-right transition-all text-left shadow-lg">
+                  
+                  <button (click)="openEditModal(copro)" class="w-full text-left px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 hover:text-syndify-dark flex items-center gap-3 transition-colors cursor-pointer">
+                    <svg class="w-3.5 h-3.5 text-syndify-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    Modifier
+                  </button>
+                  
+                  <div class="h-px bg-gray-50 my-1"></div>
+                  
+                  <button (click)="supprimerCopro(copro.user_id)" class="w-full text-left px-4 py-2.5 text-[13px] font-semibold text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors cursor-pointer group">
+                    <svg class="w-3.5 h-3.5 text-red-500 group-hover:text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    Supprimer
+                  </button>
+                  
+                </div>
               </td>
             </tr>
           </tbody>
-
         </table>
       </div>
       
-      <div *ngIf="isThereMore" class="text-center py-4 border-t border-gray-50 bg-gray-50/30">
-        <button (click)="chargerListe()" [disabled]="isLoading" class="text-syndify-dark font-bold text-[13px] hover:text-syndify-accent transition-colors cursor-pointer disabled:opacity-50">
+      <div *ngIf="isThereMore" class="text-center py-4 border-t border-gray-100 bg-gray-50/50 rounded-b-xl">
+        <button (click)="chargerListe()" [disabled]="isLoading" class="text-syndify-dark font-semibold text-[13px] hover:text-syndify-accent transition-colors cursor-pointer disabled:opacity-50">
           <span *ngIf="!isLoading">Afficher plus</span>
           <span *ngIf="isLoading">Chargement en cours...</span>
         </button>
@@ -82,5 +113,88 @@
 
     </div>
   </div>
+<div *ngIf="isAddModalOpen" class="fixed inset-0 z-[99] flex items-center justify-center bg-[#0B0F24]/40 backdrop-blur-sm transition-opacity p-4">
+  
+  <div class="bg-white rounded-xl w-full max-w-xl overflow-hidden flex flex-col font-['Poppins'] transform transition-all border border-gray-200 shadow-sm">
+    
+    <div class="flex justify-between items-center px-6 py-5 border-b border-gray-100 bg-white">
+      <div>
+        <h3 class="text-[16px] font-bold text-syndify-dark tracking-tight">Ajouter / Modifier un copropriétaire</h3>
+        <p class="text-[12px] text-gray-500 font-medium mt-1">Renseignez les informations du copropriétaire ci-dessous.</p>
+      </div>
+      <button (click)="closeAddModal()" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-syndify-dark transition-colors cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
 
+    <div class="p-6 space-y-5">
+      
+      <div class="grid grid-cols-2 gap-5">
+        <div>
+          <label class="text-[12px] font-semibold text-gray-600 block mb-2 uppercase tracking-wide">Identifiant</label>
+          <input type="text" [(ngModel)]="newCopro.user_id" 
+                 placeholder="Généré automatiquement" 
+                 disabled
+                 class="w-full bg-gray-50 border border-gray-100 text-gray-400 font-medium text-[13px] rounded-lg block px-4 py-2.5 outline-none cursor-not-allowed">
+        </div>
+
+        <div>
+          <label class="text-[12px] font-semibold text-gray-600 block mb-2 uppercase tracking-wide">Nom & Prénom <span class="text-syndify-accent">*</span></label>
+          <input type="text" [(ngModel)]="newCopro.nom" placeholder="Ex: Karim Benali" 
+                 class="w-full bg-white border border-gray-200 text-syndify-dark font-medium text-[13px] rounded-lg focus:ring-2 focus:ring-syndify-accent/20 focus:border-syndify-accent block px-4 py-2.5 outline-none transition-all placeholder-gray-300">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-5">
+        <div>
+          <label class="text-[12px] font-semibold text-gray-600 block mb-2 uppercase tracking-wide">Adresse Email <span class="text-syndify-accent">*</span></label>
+          <input type="email" [(ngModel)]="newCopro.email" placeholder="nom@exemple.com" 
+                 class="w-full bg-white border border-gray-200 text-syndify-dark font-medium text-[13px] rounded-lg focus:ring-2 focus:ring-syndify-accent/20 focus:border-syndify-accent block px-4 py-2.5 outline-none transition-all placeholder-gray-300">
+        </div>
+        
+        <div>
+          <label class="text-[12px] font-semibold text-gray-600 block mb-2 uppercase tracking-wide">Téléphone</label>
+          <input type="tel" [(ngModel)]="newCopro.tel" placeholder="Ex: 06 12 34 56 78" 
+                 class="w-full bg-white border border-gray-200 text-syndify-dark font-medium text-[13px] rounded-lg focus:ring-2 focus:ring-syndify-accent/20 focus:border-syndify-accent block px-4 py-2.5 outline-none transition-all placeholder-gray-300">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-5">
+        <div>
+          <label class="text-[12px] font-semibold text-gray-600 block mb-2 uppercase tracking-wide">Statut <span class="text-syndify-accent">*</span></label>
+          <select [(ngModel)]="newCopro.status" class="w-full bg-white border border-gray-200 text-syndify-dark font-medium text-[13px] rounded-lg focus:ring-2 focus:ring-syndify-accent/20 focus:border-syndify-accent block px-4 py-2.5 outline-none transition-all cursor-pointer">
+            <option value="Actif">Actif</option>
+            <option value="Inactif">Inactif</option>
+            <option value="En attente">En attente</option>
+          </select>
+        </div>
+        
+       <div>
+          <label class="text-[12px] font-semibold text-gray-600 block mb-2 uppercase tracking-wide">Lots affectés</label>
+          <input type="text" [(ngModel)]="newCopro.lots" 
+                 placeholder="Calculé automatiquement" 
+                 disabled
+                 class="w-full bg-gray-50 border border-gray-100 text-gray-400 font-medium text-[13px] rounded-lg block px-4 py-2.5 outline-none cursor-not-allowed">
+        </div>
+      </div>
+
+    </div>
+
+    <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+      <button (click)="closeAddModal()" class="px-5 py-2.5 rounded-lg font-semibold text-[13px] text-gray-600 bg-white border border-gray-200 hover:bg-gray-100 hover:text-syndify-dark transition-colors cursor-pointer shadow-sm">
+        Annuler
+      </button>
+      
+      <button (click)="ajouterCopro()" [disabled]="isAdding || !newCopro.nom || !newCopro.email" 
+              class="flex items-center gap-2 text-[13px] font-semibold px-5 py-2.5 rounded-lg bg-syndify-accent text-white hover:brightness-105 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm border-0">
+        <svg *ngIf="!isAdding" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+        <span *ngIf="!isAdding">Enregistrer</span>
+        
+        <svg *ngIf="isAdding" class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+        <span *ngIf="isAdding">Enregistrement...</span>
+      </button>
+    </div>
+
+  </div>
+</div>
 </div>

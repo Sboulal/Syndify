@@ -9,6 +9,7 @@ import { CommonModule } from '@angular/common';
 })
 export class PageHeader {
   // Les données li ghadi n-siftohom mn l'page (Dashboard, Lots, etc.)
+  isProfileDropdownOpen: boolean = false;
   @Input() parentPath: string = 'Résidence les jardins';
   @Input() currentPath: string = '';
   @Input() title: string = '';
