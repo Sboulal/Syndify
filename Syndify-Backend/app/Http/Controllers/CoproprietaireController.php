@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\UserAsOwner;
-use App\Models\UserOwnerUnit;
-use App\Models\Lot;
 use Illuminate\Support\Facades\DB;
 
 class CoproprietaireController extends Controller
@@ -33,17 +31,23 @@ class CoproprietaireController extends Controller
 
         $formattedData = $users->map(function ($user) use ($request) {
             
-            $lotsCount = UserOwnerUnit::join('units', 'user_owner_unit.unit_id', '=', 'units.id')
+            // 🟢 Hna st3mlna DB::table directe bach ntfadaw ay mouchkil dyal Model
+            $lotIds = DB::table('user_owner_unit')
+                ->join('units', 'user_owner_unit.unit_id', '=', 'units.id')
                 ->where('units.propriete_id', $request->propriete_id)
                 ->where('user_owner_unit.user_id', $user->identifier)
-                ->count();
+                ->pluck('units.id')
+                ->toArray();
+
+            $lotsCount = count($lotIds);
 
             return [
                 'user_id' => $user->identifier, 
                 'nom' => $user->full_name,      
                 'email' => $user->email,
                 'tel' => $user->tel, 
-                'lots' => $lotsCount > 0 ? $lotsCount . ' lots' : '-- Non affecté --',
+                'lots' => $lotsCount, // Kansifto l'nombre exact (0, 1, 2...)
+                'lot_ids' => $lotIds, // L'Angular ghay7tajha bach i-cocher checkboxes
                 'status' => $request->type_affichage == 'en_attente' ? 'En attente' : ucfirst($request->type_affichage)
             ];
         });
@@ -65,7 +69,8 @@ class CoproprietaireController extends Controller
             'tel' => 'nullable|string',
             'user_id' => 'nullable|string', 
             'status' => 'required|string',  
-            // 🛑 ملاحظة: المودال ديالك كيسيفط "lots" ولكن حنا كنتجاهلوه هنا حيت الـ liaison كدار بـ ID ماشي بـ Texte
+            'selectedLots' => 'nullable|array',
+            'selectedLots.*' => 'integer|exists:units,id' // T2kked anahoum ar9am
         ]);
 
         $statusMapping = [
@@ -112,6 +117,40 @@ class CoproprietaireController extends Controller
                 $message = 'Copropriétaire ajouté avec succès.';
             }
 
+            // ==========================================
+            // 🟢 SAUVEGARDE DES LOTS AFFECTÉS (100% GARANTIE)
+            // ==========================================
+            
+            // a. Njbdo ga3 IDs dyal les unités (lots) f had l'imara
+            $unitIds = DB::table('units')->where('propriete_id', $request->propriete_id)->pluck('id')->toArray();
+
+            // b. Nms7o l'affectations l9dam dyal had l'coproprietaire (ghir f had l'imara)
+            if (!empty($unitIds)) {
+                DB::table('user_owner_unit')
+                    ->where('user_id', $user->identifier)
+                    ->whereIn('unit_id', $unitIds)
+                    ->delete();
+            }
+
+            // c. N-inseriw les lots jdad b Query Builder (kay-by-passi l'fillable dyal Model)
+            if ($request->has('selectedLots') && is_array($request->selectedLots)) {
+                $insertData = [];
+                foreach ($request->selectedLots as $lotId) {
+                    $insertData[] = [
+                        'user_id' => $user->identifier,
+                        'unit_id' => $lotId,
+                        'status' => 1, // Actif
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ];
+                }
+                
+                // Ila kano des lots mt-selectionneen, kaysjjelhom f d9a w7da
+                if (count($insertData) > 0) {
+                    DB::table('user_owner_unit')->insert($insertData);
+                }
+            }
+
             DB::commit();
             return response()->json(['success' => true, 'message' => $message]);
 
@@ -131,14 +170,20 @@ class CoproprietaireController extends Controller
 
         DB::beginTransaction();
         try {
+            // Msi7 mn l'imara
             UserAsOwner::where('user_id', $request->user_id)
                        ->where('propriete_id', $request->propriete_id)
                        ->delete();
 
-            $unitIds = Lot::where('propriete_id', $request->propriete_id)->pluck('id');
-            UserOwnerUnit::where('user_id', $request->user_id)
-                         ->whereIn('unit_id', $unitIds)
-                         ->delete();
+            // Msi7 l'affectation dyal les lots
+            $unitIds = DB::table('units')->where('propriete_id', $request->propriete_id)->pluck('id')->toArray();
+            
+            if (!empty($unitIds)) {
+                DB::table('user_owner_unit')
+                    ->where('user_id', $request->user_id)
+                    ->whereIn('unit_id', $unitIds)
+                    ->delete();
+            }
 
             DB::commit();
             return response()->json(['success' => true, 'message' => 'Copropriétaire supprimé avec succès.']);

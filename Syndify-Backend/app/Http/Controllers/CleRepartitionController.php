@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\CleRepartition;
 use App\Models\Lot;
-use App\Models\UnitToKey;
+// 7eyedna UnitToKey mn hna hit mab9inach m7tajino b l'utilisation dyal attach/sync
 use Illuminate\Support\Facades\DB;
 
 class CleRepartitionController extends Controller
@@ -15,10 +15,8 @@ class CleRepartitionController extends Controller
     {
         $request->validate(['propriete_id' => 'required']);
 
-      
         $cles = CleRepartition::where('propriete_id', $request->propriete_id)
             ->with(['lots' => function ($query) {
-               
                 $query->select('units.*', 'unit_to_key.tantieme as tantieme_applied')
                       ->with(['owners' => function ($q) {
                           $q->where('user_owner_unit.status', 1); // Propriétaire Actif فقط
@@ -32,7 +30,7 @@ class CleRepartitionController extends Controller
         ]);
     }
 
-    // 2. Ajouter une nouvelle clé de répartition
+   // 2. Ajouter une nouvelle clé de répartition
     public function ajouter(Request $request)
     {
         $request->validate([
@@ -41,11 +39,10 @@ class CleRepartitionController extends Controller
             'tantiemes_total' => 'required|numeric',
             'notes' => 'nullable|string',
             'unites' => 'required|array',
-            'unites.*.unit_id' => 'required|exists:units,id',
-            'unites.*.tantieme_applied' => 'required|numeric|min:0'
+            'unites.*.id_unite' => 'required|exists:units,id',
+            'unites.*.tantieme_applique' => 'required|numeric|min:0'
         ]);
 
-   
         $existe = CleRepartition::where('propriete_id', $request->propriete_id)
                                 ->where('nom', $request->nom_cle)
                                 ->exists();
@@ -53,8 +50,7 @@ class CleRepartitionController extends Controller
             return response()->json(['success' => false, 'message' => 'Le nom de cette clé existe déjà.'], 400);
         }
 
-        
-        $sommeTantiemes = collect($request->unites)->sum('tantieme_applied');
+        $sommeTantiemes = collect($request->unites)->sum('tantieme_applique');
         if ($sommeTantiemes != $request->tantiemes_total) {
             return response()->json([
                 'success' => false, 
@@ -72,14 +68,13 @@ class CleRepartitionController extends Controller
                 'notes' => $request->notes
             ]);
 
-           
+            $pivotData = [];
             foreach ($request->unites as $unite) {
-                UnitToKey::create([
-                    'unit_id' => $unite['unit_id'],
-                    'key_id' => $cle->id,
-                    'tantieme' => $unite['tantieme_applied']
-                ]);
+                $pivotData[$unite['id_unite']] = ['tantieme' => $unite['tantieme_applique']];
             }
+            
+            // L'ajout b attach() mzyan 
+            $cle->lots()->attach($pivotData);
 
             DB::commit();
             return response()->json(['success' => true, 'message' => 'Clé de répartition ajoutée avec succès.']);
@@ -95,17 +90,19 @@ class CleRepartitionController extends Controller
     {
         $request->validate([
             'propriete_id' => 'required',
-            'scr_identifier' => 'required', // l'ID dyal l'clé
+            'scr_identifier' => 'required', 
             'nom_cle' => 'required|string',
             'tantiemes_total' => 'required|numeric',
-            'unites' => 'required|array'
+            'unites' => 'required|array',
+            // Zedt l'validation hta l'modifier bach ntfadaw l'machakil
+            'unites.*.id_unite' => 'required|exists:units,id',
+            'unites.*.tantieme_applique' => 'required|numeric|min:0'
         ]);
 
         $cle = CleRepartition::where('id', $request->scr_identifier)
                              ->where('propriete_id', $request->propriete_id)
                              ->firstOrFail();
 
-        // Vérification 1: واش السمية تعاودات لشي Clé أخرى؟
         $existe = CleRepartition::where('propriete_id', $request->propriete_id)
                                 ->where('nom', $request->nom_cle)
                                 ->where('id', '!=', $cle->id)
@@ -114,8 +111,7 @@ class CleRepartitionController extends Controller
             return response()->json(['success' => false, 'message' => 'Le nom de cette clé existe déjà.'], 400);
         }
 
-       
-        $sommeTantiemes = collect($request->unites)->sum('tantieme_applique'); // f l'cahier des charges semitiha applique f modifier
+        $sommeTantiemes = collect($request->unites)->sum('tantieme_applique');
         if ($sommeTantiemes != $request->tantiemes_total) {
             return response()->json(['success' => false, 'message' => "La somme des tantièmes est incorrecte."], 400);
         }
@@ -129,15 +125,17 @@ class CleRepartitionController extends Controller
                 'notes' => $request->notes ?? $cle->notes
             ]);
 
-            // Sync les tantièmes (kanms7o l9dam w nzido jdad)
-            UnitToKey::where('key_id', $cle->id)->delete();
+            // =======================================================
+            // FIX IS HERE FOR MODIFIER: use sync() instead of manual delete/create
+            // =======================================================
+            $pivotData = [];
             foreach ($request->unites as $unite) {
-                UnitToKey::create([
-                    'unit_id' => $unite['id_unite'],
-                    'key_id' => $cle->id,
-                    'tantieme' => $unite['tantieme_applique']
-                ]);
+                // Kanwjdou tableau bhal dyal 'ajouter'
+                $pivotData[$unite['id_unite']] = ['tantieme' => $unite['tantieme_applique']];
             }
+
+            // Sync katkhdem automatiquent: katms7 li mab9ach w katzid jdid ola kadiir update l'l9dim!
+            $cle->lots()->sync($pivotData);
 
             DB::commit();
             return response()->json(['success' => true, 'message' => 'Clé de répartition modifiée avec succès.']);
@@ -145,6 +143,39 @@ class CleRepartitionController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    // 4. Supprimer une clé de répartition
+    public function supprimer(Request $request)
+    {
+        $request->validate([
+            'propriete_id' => 'required',
+            'cle_id' => 'required'
+        ]);
+
+        $cle = CleRepartition::where('id', $request->cle_id)
+                             ->where('propriete_id', $request->propriete_id)
+                             ->first();
+
+        if (!$cle) {
+            return response()->json(['success' => false, 'message' => 'Clé introuvable.'], 404);
+        }
+
+        DB::beginTransaction();
+        try {
+            // Kanms7o les liaisons f table 'unit_to_key' (pivot) 3ad kanms7o l'clé
+            $cle->lots()->detach(); 
+            
+            // Kanms7o l'clé
+            $cle->delete();
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'Clé de répartition supprimée avec succès.']);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Erreur lors de la suppression: ' . $e->getMessage()], 500);
         }
     }
 }

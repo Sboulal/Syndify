@@ -34,11 +34,7 @@ class CoproprieteController extends Controller
                 'address' => $request->address
             ]);
 
-            // (Optionnel): Hna nqdro n-zidou s-Syndic (l'user li m-connecté) 
-            // l table user_as_owner b status 1 bach ywlli houwa l-Gérant dyalha.
-            // if (auth()->check()) {
-            //     UserAsOwner::create(['user_id' => auth()->id(), 'propriete_id' => $identifier, 'status' => 1]);
-            // }
+          
 
             DB::commit();
 

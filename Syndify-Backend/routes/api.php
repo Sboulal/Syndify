@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LotController;
 use App\Http\Controllers\CoproprietaireController;
 use App\Http\Controllers\CoproprieteController;
+use App\Http\Controllers\CleRepartitionController;
 
 // L'inscription
 Route::post('/register', [AuthController::class, 'register']);
