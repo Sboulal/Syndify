@@ -6,6 +6,7 @@ import { authGuard } from './core/guards/auth-guard';
 import { GestionLots } from './pages/gestion-lots/gestion-lots';
 import { ListeCoproprietes } from './pages/liste-coproprietes/liste-coproprietes';
 import { Cle } from './pages/cle/cle';
+import { Dashboard } from './pages/dashboard/dashboard';
 
 export const routes: Routes = [
   // ==========================================
@@ -19,12 +20,12 @@ export const routes: Routes = [
   {
     path: '', 
     component: MainLayout, 
-    // canActivate: [authGuard], // خليتها كومونطير كيفما درتي ليها، ولكن من بعد غتحتاجي تحيدي الكومونطير باش تحمي الصفحات
+    // canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }, // إيلا دخل غير لـ '/' غيمشي لـ dashboard
       
-      // Hna ghadi t-zidi ga3 les pages dyal l'app li kiy-bano wste l'Layout
-      // { path: 'dashboard', component: DashboardComponent },
+     
+      { path: 'dashboard', component: Dashboard },
       
       { path: 'gestion-lots', component: GestionLots },
       { path: 'gestion-lots/:id', component: GestionLots }, // 🛑 هادي كانت برا الـ Layout، دخلتها لداخل باش يبان ليها الـ Sidebar

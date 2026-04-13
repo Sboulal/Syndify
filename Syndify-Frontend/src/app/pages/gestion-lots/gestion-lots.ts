@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { PageHeader } from '../../components/page-header/page-header'; 
 import { LotService } from '../../services/lot';
+import { CoproprietaireService } from '../../services/coproprietaire'; // 🟢 Zidna hada l'affectation
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -15,6 +16,7 @@ export class GestionLots implements OnInit {
   
   proprieteId: string = '';
   lots: any[] = []; 
+  listCoproprietaires: any[] = []; // 🟢 Liste dyal ga3 l'owners
   isLoading: boolean = false;
 
   isModalOpen: boolean = false;
@@ -25,95 +27,131 @@ export class GestionLots implements OnInit {
     type: 'Appartement',
     batiment: '',
     etage: '',
-    numero_porte: ''
+    numero_porte: '',
+    owner_id: null,        // 🟢 ID dyal l'proprietaire
+    owner_status: 'Actif'  // 🟢 Actif wla Inactif
   };
+
+  // Variables dyal Custom Notification (Toast)
+  showNotification: boolean = false;
+  notificationMessage: string = '';
+  notificationType: 'success' | 'error' = 'success';
+  notificationTimeout: any;
+
+  // Variables dyal Modal de Suppression
+  isDeleteModalOpen: boolean = false;
+  lotToDelete: any = null;
 
   constructor(
     private lotService: LotService,
+    private coproprietaireService: CoproprietaireService, 
     private route: ActivatedRoute,
-    private cdr: ChangeDetectorRef // 🛑 Injectit cdr hna
+    private cdr: ChangeDetectorRef 
   ) {}
 
   ngOnInit() {
-    console.log('🚀 [INIT] Page "Gestion des Lots" chargée.');
-    
-    // 🛑 KHTWA MO2AQATA: N-7ettou l'ID b-yeddina bash n-testiw
     this.proprieteId = 'SP-1775215295'; 
-    
-    console.log('📌 ID forcé pour le test:', this.proprieteId);
     this.chargerLots(); 
+    this.chargerUsers(); // 🟢 Njibou nass f lewel
   }
 
-  // ==========================================
-  // 1. CHARGER LA LISTE DES LOTS
-  // ==========================================
-  chargerLots() {
-    if (!this.proprieteId) return;
-    
-    console.log(`📡 [API GET] Demande de la liste des lots...`);
-    this.isLoading = true;
-    this.cdr.detectChanges(); // 🛑 Forcer l'affichage dyal l'état de chargement
-    
-    this.lotService.getListe(this.proprieteId).subscribe({
-      next: (res) => {
-        console.log('✅ [API SUCCESS] Réponse reçue:', res);
+  // 🟢 Fonction bach njibou ga3 les copropriétaires l'Dropdown
+  chargerUsers() {
+    this.coproprietaireService.getListe(this.proprieteId, 'tous').subscribe({
+      next: (res: any) => {
         if (res.success) {
-          this.lots = res.data; 
+          this.listCoproprietaires = res.data;
         }
-        this.isLoading = false;
-        this.cdr.detectChanges(); // 🛑 Forcer l'Angular i-dessiner l-Tableau j-jdid
-      },
-      error: (err) => {
-        console.error("❌ [API ERROR]:", err);
-        this.isLoading = false;
-        this.cdr.detectChanges(); // 🛑 Forcer l'Angular i-7eyyd loading
       }
     });
   }
 
-  // ==========================================
-  // 2. GESTION DES MENUS DROPDOWN
-  // ==========================================
+  showToast(message: string, type: 'success' | 'error' = 'success') {
+    this.notificationMessage = message;
+    this.notificationType = type;
+    this.showNotification = true;
+    this.cdr.detectChanges();
+
+    if (this.notificationTimeout) {
+      clearTimeout(this.notificationTimeout);
+    }
+    this.notificationTimeout = setTimeout(() => {
+      this.showNotification = false;
+      this.cdr.detectChanges();
+    }, 3000);
+  }
+
+  chargerLots() {
+    if (!this.proprieteId) return;
+    
+    this.isLoading = true;
+    this.cdr.detectChanges(); 
+    
+    this.lotService.getListe(this.proprieteId).subscribe({
+      next: (res: any) => {
+        if (res.success) {
+          this.lots = res.data; 
+        }
+        this.isLoading = false;
+        this.cdr.detectChanges(); 
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.showToast("Erreur lors du chargement des lots.", 'error'); 
+        this.cdr.detectChanges(); 
+      }
+    });
+  }
+
   toggleDropdown(numeroId: string, event: Event) {
     event.stopPropagation();
     this.activeDropdown = this.activeDropdown === numeroId ? null : numeroId;
-    this.cdr.detectChanges(); // 🛑 Bash l-Menu i-t-7el wla i-t-sed f l-blassa
+    this.cdr.detectChanges(); 
   }
 
   closeDropdown() {
     if (this.activeDropdown !== null) {
       this.activeDropdown = null;
-      this.cdr.detectChanges(); // 🛑 Forcer l-fermeture
+      this.cdr.detectChanges(); 
     }
   }
 
-  // ==========================================
-  // 3. GESTION DU MODAL (AJOUT & MODIFICATION)
-  // ==========================================
   openModal(lotAModifier: any = null) {
     if (lotAModifier) {
-      console.log('✏️ [MODAL] MODIFICATION:', lotAModifier);
+      // 🟢 Kanjibou l'owner Actif (wla Inactif) lli m-affecté l'had lot
+      let currentOwnerId = null;
+      let currentStatus = 'Actif';
+      
+      if (lotAModifier.owners && lotAModifier.owners.length > 0) {
+          // Kanfdrdo bli l'backend kaysifet array dyal owners
+          currentOwnerId = lotAModifier.owners[0].id;
+          currentStatus = lotAModifier.owners[0].pivot_status == 1 ? 'Actif' : 'Inactif';
+      }
+
       this.lotForm = {
         id: lotAModifier.id,
         type: lotAModifier.type,
         batiment: lotAModifier.batiment,
         etage: lotAModifier.etage,
-        numero_porte: lotAModifier.numero_porte
+        numero_porte: lotAModifier.numero_porte,
+        owner_id: currentOwnerId,
+        owner_status: currentStatus
       };
     } else {
-      console.log('✨ [MODAL] AJOUT.');
-      this.lotForm = { id: null, type: 'Appartement', batiment: '', etage: '', numero_porte: '' };
+      this.lotForm = { 
+        id: null, type: 'Appartement', batiment: '', etage: '', numero_porte: '', 
+        owner_id: null, owner_status: 'Actif' 
+      };
     }
     
     this.isModalOpen = true;
     this.closeDropdown();
-    this.cdr.detectChanges(); // 🛑 Forcer l-Modal bash i-ban
+    this.cdr.detectChanges(); 
   }
 
   closeModal() {
-    console.log('🚪 [MODAL] Fermeture.');
     this.isModalOpen = false;
-    this.cdr.detectChanges(); // 🛑 Forcer l-Modal bash i-gheber
+    this.cdr.detectChanges(); 
   }
 
   enregistrerLot() {
@@ -123,53 +161,57 @@ export class GestionLots implements OnInit {
       batiment: this.lotForm.batiment,
       etage: this.lotForm.etage,
       numero_porte: this.lotForm.numero_porte,
+      owner_id: this.lotForm.owner_id,         // 🟢 ID dyal l'owner
+      owner_status: this.lotForm.owner_status, // 🟢 Statut (Actif/Inactif)
       ...(this.lotForm.id && { lot_id: this.lotForm.id }) 
     };
-
-    console.log('📤 [API POST] Envoi...', payload);
 
     const action = this.lotForm.id 
       ? this.lotService.modifier(payload) 
       : this.lotService.ajouter(payload);
 
     action.subscribe({
-      next: (res) => {
-        console.log('✅ [API SUCCESS] Enregistré:', res);
+      next: (res: any) => {
         if (res.success) {
-          this.closeModal(); // Kat-3iyyet aslan 3la detectChanges l-dakhel
-          this.chargerLots(); // Kat-3iyyet 3la detectChanges l-dakhel
+          this.closeModal(); 
+          this.chargerLots(); 
+          this.showToast(res.message || "Opération réussie !", 'success'); 
         }
       },
       error: (err) => {
-        console.error("❌ [API ERROR]:", err);
-        alert(err.error?.message || "Une erreur est survenue.");
-        this.cdr.detectChanges(); // 🛑 Ila w93at erreur t-ban l'alerte
+        this.showToast(err.error?.message || "Une erreur est survenue.", 'error'); 
       }
     });
   }
 
-  // ==========================================
-  // 4. SUPPRIMER UN LOT
-  // ==========================================
   supprimerLot(lot: any) {
     this.closeDropdown();
-    
-    if (confirm(`Voulez-vous vraiment supprimer le lot N° ${lot.numero_porte} ?`)) {
-      console.log(`📡 [API DELETE] Suppression...`);
-      
-      this.lotService.supprimer(this.proprieteId, lot.id).subscribe({
-        next: (res) => {
-          console.log('✅ [API SUCCESS] Supprimé:', res);
-          if (res.success) {
-            this.chargerLots(); 
-          }
-        },
-        error: (err) => {
-          console.error("❌ [API ERROR]:", err);
-          alert(err.error?.message || "Erreur suppression");
-          this.cdr.detectChanges(); 
+    this.lotToDelete = lot;
+    this.isDeleteModalOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  closeDeleteModal() {
+    this.isDeleteModalOpen = false;
+    this.lotToDelete = null;
+    this.cdr.detectChanges();
+  }
+
+  confirmerSuppression() {
+    if (!this.lotToDelete) return;
+
+    this.lotService.supprimer(this.proprieteId, this.lotToDelete.id).subscribe({
+      next: (res: any) => {
+        if (res.success) {
+          this.chargerLots(); 
+          this.showToast("Lot supprimé avec succès.", 'success');
+          this.closeDeleteModal();
         }
-      });
-    }
+      },
+      error: (err) => {
+        this.showToast(err.error?.message || "Erreur lors de la suppression.", 'error');
+        this.closeDeleteModal();
+      }
+    });
   }
 }

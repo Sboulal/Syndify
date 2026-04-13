@@ -1,0 +1,252 @@
+<div class="flex flex-col min-h-full font-['Poppins'] bg-syndify-bg overflow-x-hidden">
+
+  <div class="bg-white border-b border-gray-200 relative z-30">
+    <div class="px-6 md:px-8 py-6">
+      
+      <div class="flex justify-between items-center mb-8">
+        
+        <div class="text-[13px] font-semibold text-gray-400 flex items-center gap-2">
+          <span class="hover:text-gray-600 transition-colors cursor-pointer">Copropriétés</span>
+          <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+          <span class="text-gray-500 hover:text-gray-700 transition-colors cursor-pointer">{{ residence.nom }}</span>
+          <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+          <span class="text-[#F4B840] font-semibold">Tableau de bord</span>
+        </div>
+
+        <div class="flex items-center gap-3 relative z-[60]">
+          <button class="w-10 h-10 rounded-full bg-syndify-dark flex items-center justify-center hover:brightness-110 transition-all cursor-pointer relative shadow-none border-0">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+            <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-syndify-dark"></span>
+          </button>
+
+          <div class="relative">
+            <div *ngIf="isProfileDropdownOpen" (click)="isProfileDropdownOpen = false" class="fixed inset-0 z-40 cursor-default"></div>
+
+            <button (click)="isProfileDropdownOpen = !isProfileDropdownOpen" 
+                    [ngClass]="{'brightness-125': isProfileDropdownOpen}"
+                    class="h-10 px-3 rounded-full bg-syndify-dark flex items-center gap-2 hover:brightness-110 transition-all cursor-pointer z-50 relative shadow-none border-0">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <svg class="w-3.5 h-3.5 text-white/70 transition-transform duration-200" 
+                   [ngClass]="{'rotate-180': isProfileDropdownOpen}" 
+                   fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+
+            <div *ngIf="isProfileDropdownOpen" class="absolute right-0 top-12 w-44 bg-white rounded-xl border border-gray-200 py-2 z-50 transform origin-top-right transition-all shadow-none">
+              <a href="#" class="w-full text-left px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 hover:text-syndify-dark flex items-center gap-3 transition-colors">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                Support
+              </a>
+              <a href="#" class="w-full text-left px-4 py-2.5 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 hover:text-syndify-dark flex items-center gap-3 transition-colors">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Guide
+              </a>
+              <div class="h-px bg-gray-100 my-1"></div>
+              <button class="w-full text-left px-4 py-2.5 text-[13px] font-semibold text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors cursor-pointer">
+                <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                Déconnexion
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div>
+        <div class="flex items-center gap-3">
+          <h1 class="text-[24px] font-bold tracking-tight text-slate-800">{{ residence.nom }}</h1>
+          <button class="w-8 h-6 flex items-center justify-center rounded-md bg-gray-100 hover:bg-gray-200 transition-colors text-gray-500 cursor-pointer border-0">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14a2 2 0 100-4 2 2 0 000 4zm-7 0a2 2 0 100-4 2 2 0 000 4zm14 0a2 2 0 100-4 2 2 0 000 4z"></path></svg>
+          </button>
+        </div>
+        <p class="text-[14px] text-gray-500 mt-1.5 font-medium">{{ residence.adresse }}</p>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="bg-syndify-dark flex items-center px-6 md:px-8 h-[54px] relative z-20 overflow-x-auto whitespace-nowrap custom-scrollbar">
+    <div class="flex items-center justify-start min-w-max gap-8 md:gap-12">
+      <div class="flex items-center gap-2">
+        <span class="text-[14px] text-gray-400 font-medium">Exercice courant:</span>
+        <span class="text-[13px] font-bold text-white tracking-wide">{{ residence.exercice }}</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-[14px] text-gray-400 font-medium">Trimestre:</span>
+        <span class="text-[13px] font-bold text-white tracking-wide">{{ residence.periode }}</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-[14px] text-gray-400 font-medium">Géré par:</span>
+        <span class="text-[13px] font-bold text-white tracking-wide">{{ residence.gerant }}</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-[14px] text-gray-400 font-medium">Rôle:</span>
+        <span class="text-[13px] font-bold text-white tracking-wide">{{ residence.role }}</span>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="flex-1 p-6 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+    
+    <div class="lg:col-span-2 space-y-8">
+      
+      <div>
+        <div class="mb-4">
+          <h2 class="text-[18px] font-bold text-syndify-dark">Soldes des copropriétaires</h2>
+          <p class="text-[13px] text-gray-500 font-medium mt-1">Consultez et gérez vos propriétés en un clic.</p>
+        </div>
+        
+        <div class="bg-white rounded-xl border border-gray-200 shadow-none relative">
+          <div class="w-full overflow-x-auto">
+            <table class="w-full text-left">
+              <thead class="bg-gray-50">
+                <tr class="border-b border-gray-200">
+                  <th class="py-3 px-6 font-semibold text-syndify-dark text-[14px] rounded-tl-xl">Identifiant</th>
+                  <th class="py-3 px-6 font-semibold text-syndify-dark text-[14px]">Nom du copropriétaire</th>
+                  <th class="py-3 px-6 font-semibold text-syndify-dark text-[14px] text-right rounded-tr-xl">Solde actuelle</th>
+                </tr>
+              </thead>
+              <tbody class="text-[13px] text-gray-700 font-medium">
+                <tr *ngFor="let s of soldes" class="border-b border-gray-200 last:border-0 hover:bg-gray-50 transition-colors">
+                  <td class="py-4 px-6 font-semibold text-syndify-dark">{{ s.id }}</td>
+                  <td class="py-4 px-6 text-slate-700 font-semibold">
+                    <div class="flex items-center gap-2">
+                      <span>{{ s.nom }}</span>
+                      
+                      <ng-container *ngIf="s.isNegatif">
+                        <span class="w-1 h-1 rounded-full" style="background-color: #1544b4;"></span>
+                        <button style="color: #1544b4;" class="text-[13.5px] hover:brightness-110 flex items-center font-normal transition-colors hover:underline">
+                          {{ s.action }}
+                        </button>
+                      </ng-container>
+
+                    </div>
+                  </td>
+                  <td class="py-4 px-6 text-right font-bold text-[14px]" [ngClass]="s.isNegatif ? 'text-red-600' : 'text-syndify-dark'">
+                    {{ s.solde }} Dhs
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="bg-gray-50 py-3 px-6 flex items-center justify-between border-t border-gray-200 rounded-b-xl">
+            <a routerLink="/liste-coproprietes" style="color: #1544b4;" class="text-[13px] font-medium hover:brightness-110 transition-all cursor-pointer hover:underline">Voir toute la liste</a>
+            <div class="text-[14px] font-bold text-syndify-dark">
+              <span class="text-gray-500 font-medium mr-2">Total dû:</span>
+              <span class="text-red-600">{{ totalDu }} Dhs</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="mb-4">
+          <h2 class="text-[18px] font-bold text-syndify-dark">Communication / Evenements</h2>
+          <p class="text-[13px] text-gray-500 font-medium mt-1">Consultez les annonces et événements récents.</p>
+        </div>
+        
+        <div class="bg-white rounded-xl border border-gray-200 shadow-none p-6">
+          <div class="flex flex-col items-center justify-center py-10 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+            <div class="w-16 h-16 bg-white border border-gray-100 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
+               <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
+            </div>
+            <p class="text-[13px] font-medium text-gray-400">Aucun événement récent pour l'instant.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+
+    <div class="space-y-8">
+      
+      <div>
+        <div class="mb-4">
+          <h2 class="text-[18px] font-bold text-syndify-dark">Budget & dépenses</h2>
+          <p class="text-[13px] text-gray-500 font-medium mt-1">Suivez les dépenses de l'année en cours.</p>
+        </div>
+
+        <div class="space-y-6">
+          <div class="bg-white rounded-xl border border-gray-200 shadow-none overflow-hidden">
+            <div class="flex items-center justify-between py-3 px-6 border-b border-gray-200 bg-gray-50">
+              <h3 class="text-[14px] font-bold text-syndify-dark">Vue générale</h3>
+              <button class="text-gray-400 hover:text-syndify-dark">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>
+              </button>
+            </div>
+            
+            <div class="p-6">
+              <div class="flex items-center justify-between mb-8">
+                
+                <div class="text-left">
+                  <div class="flex items-center gap-2.5 mb-1">
+                    <span class="w-2 h-2 rounded-full bg-gray-200"></span>
+                    <span class="text-[13px] font-semibold text-gray-500">Budget de l'année</span>
+                  </div>
+                  <p class="text-[18px] font-bold text-syndify-dark pl-[18px]">{{ budget.totalAnnee }} Dhs</p>
+                </div>
+
+                <div class="text-left">
+                  <div class="flex items-center gap-2.5 mb-1">
+                    <span class="w-2 h-2 rounded-full bg-[#F4B840]"></span>
+                    <span class="text-[13px] font-semibold text-gray-500">Total des dépenses</span>
+                  </div>
+                  <p class="text-[18px] font-bold text-syndify-dark pl-[18px]">{{ budget.depenses }} Dhs</p>
+                </div>
+
+              </div>
+
+              <div class="flex justify-center py-4 relative">
+                <svg viewBox="0 0 100 100" class="w-64 h-64 transform -rotate-90">
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#f3f4f6" stroke-width="12"></circle>
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#F4B840" stroke-width="12" stroke-linecap="round" 
+                          class="transition-all duration-1000 ease-out" 
+                          [attr.stroke-dasharray]="(budget.pourcentage * 251.2 / 100) + ' 251.2'"></circle>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  <span class="text-[32px] font-bold text-syndify-dark">{{ budget.pourcentage }}%</span>
+                  <span class="text-[13px] text-gray-500 font-medium mt-1">Consommé</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl border border-gray-200 shadow-none overflow-hidden">
+            <div class="flex items-center justify-between py-3 px-6 border-b border-gray-200 bg-gray-50">
+              <h3 class="text-[14px] font-bold text-syndify-dark">Consommation du budget</h3>
+              <button class="text-gray-400 hover:text-syndify-dark">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>
+              </button>
+            </div>
+            
+            <div class="p-6 space-y-5">
+              <div *ngFor="let trim of trimestres" class="flex items-center gap-4">
+                
+                <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100">
+                  <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                </div>
+                
+                <div class="w-24 shrink-0">
+                  <p class="text-[13px] font-bold text-syndify-dark">{{ trim.nom }}</p>
+                  <p class="text-[12px] text-gray-500 font-medium mt-0.5">{{ trim.montant }} Dhs</p>
+                </div>
+                
+                <div class="flex-1 px-1">
+                  <div class="w-full bg-gray-100 rounded-full h-1.5 flex items-center">
+                    <div class="bg-[#F4B840] h-1.5 rounded-full" [style.width.%]="trim.pourcentage"></div>
+                  </div>
+                </div>
+                
+                <span class="text-[12px] font-bold text-syndify-dark shrink-0 w-12 text-right">{{ trim.pourcentage }}%</span>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>

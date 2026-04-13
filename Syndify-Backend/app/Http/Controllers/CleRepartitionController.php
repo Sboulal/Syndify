@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\CleRepartition;
 use App\Models\Lot;
-// 7eyedna UnitToKey mn hna hit mab9inach m7tajino b l'utilisation dyal attach/sync
 use Illuminate\Support\Facades\DB;
 
 class CleRepartitionController extends Controller
@@ -50,11 +49,14 @@ class CleRepartitionController extends Controller
             return response()->json(['success' => false, 'message' => 'Le nom de cette clé existe déjà.'], 400);
         }
 
-        $sommeTantiemes = collect($request->unites)->sum('tantieme_applique');
-        if ($sommeTantiemes != $request->tantiemes_total) {
+        // 🟢 HNA: L'modification dyal la comparaison
+        $sommeTantiemes = round(collect($request->unites)->sum('tantieme_applique'), 4);
+        $totalAttendu = round($request->tantiemes_total, 4);
+
+        if ($sommeTantiemes != $totalAttendu) {
             return response()->json([
                 'success' => false, 
-                'message' => "La somme des tantièmes ($sommeTantiemes) ne correspond pas au total spécifié ({$request->tantiemes_total})."
+                'message' => "La somme des tantièmes ($sommeTantiemes) ne correspond pas au total spécifié ($totalAttendu)."
             ], 400);
         }
 
@@ -64,7 +66,7 @@ class CleRepartitionController extends Controller
             $cle = CleRepartition::create([
                 'propriete_id' => $request->propriete_id,
                 'nom' => $request->nom_cle,
-                'tantiemes_total' => $request->tantiemes_total,
+                'tantiemes_total' => $totalAttendu,
                 'notes' => $request->notes
             ]);
 
@@ -73,7 +75,6 @@ class CleRepartitionController extends Controller
                 $pivotData[$unite['id_unite']] = ['tantieme' => $unite['tantieme_applique']];
             }
             
-            // L'ajout b attach() mzyan 
             $cle->lots()->attach($pivotData);
 
             DB::commit();
@@ -94,7 +95,6 @@ class CleRepartitionController extends Controller
             'nom_cle' => 'required|string',
             'tantiemes_total' => 'required|numeric',
             'unites' => 'required|array',
-            // Zedt l'validation hta l'modifier bach ntfadaw l'machakil
             'unites.*.id_unite' => 'required|exists:units,id',
             'unites.*.tantieme_applique' => 'required|numeric|min:0'
         ]);
@@ -111,8 +111,11 @@ class CleRepartitionController extends Controller
             return response()->json(['success' => false, 'message' => 'Le nom de cette clé existe déjà.'], 400);
         }
 
-        $sommeTantiemes = collect($request->unites)->sum('tantieme_applique');
-        if ($sommeTantiemes != $request->tantiemes_total) {
+        // 🟢 HNA: L'modification dyal la comparaison hta f modifier
+        $sommeTantiemes = round(collect($request->unites)->sum('tantieme_applique'), 4);
+        $totalAttendu = round($request->tantiemes_total, 4);
+
+        if ($sommeTantiemes != $totalAttendu) {
             return response()->json(['success' => false, 'message' => "La somme des tantièmes est incorrecte."], 400);
         }
 
@@ -121,20 +124,15 @@ class CleRepartitionController extends Controller
            
             $cle->update([
                 'nom' => $request->nom_cle,
-                'tantiemes_total' => $request->tantiemes_total,
+                'tantiemes_total' => $totalAttendu,
                 'notes' => $request->notes ?? $cle->notes
             ]);
 
-            // =======================================================
-            // FIX IS HERE FOR MODIFIER: use sync() instead of manual delete/create
-            // =======================================================
             $pivotData = [];
             foreach ($request->unites as $unite) {
-                // Kanwjdou tableau bhal dyal 'ajouter'
                 $pivotData[$unite['id_unite']] = ['tantieme' => $unite['tantieme_applique']];
             }
 
-            // Sync katkhdem automatiquent: katms7 li mab9ach w katzid jdid ola kadiir update l'l9dim!
             $cle->lots()->sync($pivotData);
 
             DB::commit();
@@ -164,10 +162,7 @@ class CleRepartitionController extends Controller
 
         DB::beginTransaction();
         try {
-            // Kanms7o les liaisons f table 'unit_to_key' (pivot) 3ad kanms7o l'clé
             $cle->lots()->detach(); 
-            
-            // Kanms7o l'clé
             $cle->delete();
 
             DB::commit();

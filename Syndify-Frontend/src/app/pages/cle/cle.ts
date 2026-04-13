@@ -2,7 +2,6 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PageHeader } from '../../components/page-header/page-header';
 import { FormsModule } from '@angular/forms';
-// خاصك تكييري service جديد سميتو CleRepartitionService و LotService
 import { CleRepartitionService } from '../../services/cle-repartition'; 
 import { LotService } from '../../services/lot'; 
 
@@ -17,24 +16,28 @@ export class Cle implements OnInit {
   proprieteId: string = 'SP-1775215295'; 
   currentTab: 'lots' | 'coproprietaires' = 'lots';
   isLoading: boolean = false;
- activeDropdown: string | number | null = null;
-
-  // الداتا ديال الطابلو
-  clesList: any[] = []; // العناوين الفوقانية (Charges générales, etc)
-  lignesTableau: any[] = []; // السطورة ديال الطابلو (Lots)
+  activeDropdown: string | number | null = null;
   
-  // الداتا ديال المودال
+  clesList: any[] = []; 
+  lignesTableau: any[] = []; 
+  
   isAddModalOpen: boolean = false;
   isSaving: boolean = false;
-  tousLesLots: any[] = []; // باش نعرضوهم فالمودال ونكتبو ليهم Tantième
+  tousLesLots: any[] = []; 
   
   cleForm: any = {
     id: null,
     nom_cle: '',
     tantiemes_total: null,
     notes: '',
-    unites: [] // غتكون فيها { id_unite, tantieme_applique }
+    unites: [] 
   };
+
+  isDeleteModalOpen: boolean = false;
+  cleToDelete: number | null = null;
+
+  // 🟢 Bach ngeddou n-st3mlo parseFloat f HTML
+  parseFloat = parseFloat;
 
   constructor(
     private cleService: CleRepartitionService,
@@ -50,82 +53,86 @@ export class Cle implements OnInit {
     this.currentTab = tab;
   }
 
-  // ==========================================
-  // 1. CHARGEMENT DES DONNÉES
-  // ==========================================
   chargerDonnees() {
     this.isLoading = true;
     
-    // كنجيبو ليستة الشقق باش نعمرو بيهم المودال
-    this.lotService.getListe(this.proprieteId).subscribe(res => {
-      if (res.success) this.tousLesLots = res.data;
+    this.lotService.getListe(this.proprieteId).subscribe({
+      next: (res) => {
+        if (res.success) this.tousLesLots = res.data;
+      },
+      error: (err) => console.error('Erreur API Lot :', err)
     });
 
-    // كنجيبو ليستة Les clés
     this.cleService.getListe(this.proprieteId).subscribe({
       next: (res: any) => {
         if (res.success) {
           this.clesList = res.data;
-          this.formaterTableau(); // هادي لي كتقاد الطابلو
+          this.formaterTableau();
         }
         this.isLoading = false;
         this.cdr.detectChanges();
       },
-      error: () => this.isLoading = false
+      error: (err) => {
+        console.error('Erreur API Cle :', err);
+        this.isLoading = false;
+      }
     });
   }
 
-  // هاد الدالة كتشد الداتا من الباكاند وكتردها على شكل "سطورة" ديال الطابلو
   formaterTableau() {
     const lotsMap = new Map();
 
     this.clesList.forEach(cle => {
-      cle.lots.forEach((lot: any) => {
-        if (!lotsMap.has(lot.id)) {
-          // إيلا كان مالك، كنجيبو سميتو
-          const proprio = lot.owners && lot.owners.length > 0 ? lot.owners[0].full_name : '-- Non affecté --';
-          
-          lotsMap.set(lot.id, {
-            id: lot.id,
-            numero_porte: lot.numero_porte,
-            details: `${lot.type} ${lot.numero_porte} / ${lot.batiment || ''} / ${lot.etage || ''}`,
-            coproprietaire: proprio,
-            tantiemes: {} // غنخبيو فيه الحسابات ديال كل Clé
-          });
-        }
-        // كنزيدو Tantième لي مطبق على هاد Clé
-        lotsMap.get(lot.id).tantiemes[cle.id] = lot.tantieme_applied;
-      });
+      if (cle.lots && Array.isArray(cle.lots)) {
+        cle.lots.forEach((lot: any) => {
+          if (!lotsMap.has(lot.id)) {
+            const proprio = lot.owners && lot.owners.length > 0 ? lot.owners[0].full_name : '-- Non affecté --';
+            
+            lotsMap.set(lot.id, {
+              id: lot.id,
+              numero_porte: lot.numero_porte,
+              details: `${lot.type} ${lot.numero_porte} / ${lot.batiment || ''} / ${lot.etage || ''}`,
+              coproprietaire: proprio,
+              tantiemes: {} 
+            });
+          }
+          lotsMap.get(lot.id).tantiemes[cle.id] = lot.tantieme_applied;
+        });
+      }
     });
 
     this.lignesTableau = Array.from(lotsMap.values());
   }
 
-  // ==========================================
-  // 2. GESTION DU MODAL
-  // ==========================================
   openAddModal(cleAModifier: any = null) {
+    this.closeDropdown();
+
     if (cleAModifier) {
+      const unitesFormatees = this.tousLesLots.map(lot => {
+        const lotTrouve = cleAModifier.lots.find((l: any) => l.id === lot.id);
+        return {
+          id_unite: lot.id,
+          numero_porte: lot.numero_porte,
+          tantieme_applique: lotTrouve ? parseFloat(lotTrouve.tantieme_applied) : 0 
+        };
+      });
+
       this.cleForm = {
         id: cleAModifier.id,
         nom_cle: cleAModifier.nom,
-        tantiemes_total: cleAModifier.tantiemes_total,
+        tantiemes_total: parseFloat(cleAModifier.tantiemes_total),
         notes: cleAModifier.notes,
-        unites: cleAModifier.lots.map((l: any) => ({
-          id_unite: l.id,
-          tantieme_applique: l.tantieme_applied
-        }))
+        unites: unitesFormatees
       };
     } else {
-      // مودال جديد: كنحطو فيه كاع الشقق بـ Tantieme = 0
       this.cleForm = {
         id: null,
         nom_cle: '',
-        tantiemes_total: 1000, // مثال
+        tantiemes_total: 10000, 
         notes: '',
         unites: this.tousLesLots.map(l => ({
           id_unite: l.id,
-          numero_porte: l.numero_porte, // ghir bach n-affichiwha f html
+          numero_porte: l.numero_porte, 
           tantieme_applique: 0
         }))
       };
@@ -134,43 +141,34 @@ export class Cle implements OnInit {
     this.isAddModalOpen = true;
   }
 
-toggleDropdown(cleId: string | number, event: Event) {
-    event.stopPropagation();
-    this.activeDropdown = this.activeDropdown === cleId ? null : cleId;
-  }
- closeDropdown() {
-    this.activeDropdown = null;
-  }
-
-  // وزيدي حتى هادي إيلا ماكانتش
-  supprimerCle(id: number) {
-    this.closeDropdown();
-    if (confirm('Voulez-vous vraiment supprimer cette clé ?')) {
-       // عيطي للـ service ديالك باش تمسحيها وديري chargerDonnees()
-    }
-  }
-
   closeAddModal() {
     this.isAddModalOpen = false;
   }
 
+  // 🟢 HNA: L'modification dyal la sauvegarde
   enregistrerCle() {
-    // Vérification Locale
-    const totalSaisi = this.cleForm.unites.reduce((sum: number, u: any) => sum + Number(u.tantieme_applique), 0);
-    
-    if (totalSaisi != this.cleForm.tantiemes_total) {
-      alert(`La somme des tantièmes (${totalSaisi}) ne correspond pas au total (${this.cleForm.tantiemes_total}).`);
+    const totalSaisi = this.getSommeTantiemes();
+    const totalAttendu = parseFloat(Number(this.cleForm.tantiemes_total).toFixed(4));
+
+    if (totalSaisi !== totalAttendu) {
+      alert(`La somme des tantièmes (${totalSaisi}) ne correspond pas au total (${totalAttendu}).`);
       return;
     }
 
     this.isSaving = true;
     
-    const payload = {
+    const payload: any = {
       propriete_id: this.proprieteId,
-      ...this.cleForm
+      nom_cle: this.cleForm.nom_cle,
+      tantiemes_total: totalAttendu, // Kan-sifto l'vrai decimal
+      notes: this.cleForm.notes,
+      unites: this.cleForm.unites
     };
 
-    // Api Call (Ajouter wla Modifier)
+    if (this.cleForm.id) {
+      payload.scr_identifier = this.cleForm.id;
+    }
+
     const action = this.cleForm.id 
       ? this.cleService.modifier(payload) 
       : this.cleService.ajouter(payload);
@@ -179,19 +177,55 @@ toggleDropdown(cleId: string | number, event: Event) {
       next: (res: any) => {
         if (res.success) {
           this.closeAddModal();
-          this.chargerDonnees(); // Recharge la liste
+          this.chargerDonnees();
         }
         this.isSaving = false;
       },
       error: (err) => {
-        alert(err.error?.message || "Erreur.");
+        alert(err.error?.message || "Une erreur s'est produite.");
         this.isSaving = false;
       }
     });
   }
-  // هادي كتحسب المجموع ديال Tantième باش تشوف واش مقاد مع Total
+
+  // 🟢 HNA: L'modification dyal la somme avec arrondi 4 chiffres
   getSommeTantiemes(): number {
     if (!this.cleForm.unites) return 0;
-    return this.cleForm.unites.reduce((sum: number, u: any) => sum + (Number(u.tantieme_applique) || 0), 0);
+    const sum = this.cleForm.unites.reduce((acc: number, u: any) => acc + (parseFloat(u.tantieme_applique) || 0), 0);
+    return parseFloat(sum.toFixed(4)); 
+  }
+
+  supprimerCle(id: number) {
+    this.closeDropdown();
+    this.cleToDelete = id;
+    this.isDeleteModalOpen = true;
+  }
+
+  closeDeleteModal() {
+    this.isDeleteModalOpen = false;
+    this.cleToDelete = null;
+  }
+
+  confirmerSuppression() {
+    if (!this.cleToDelete) return;
+
+    this.cleService.supprimer(this.proprieteId, this.cleToDelete).subscribe({
+      next: (res: any) => {
+        if (res.success) {
+          this.closeDeleteModal();
+          this.chargerDonnees();
+        }
+      },
+      error: (err) => alert("Erreur lors de la suppression.")
+    });
+  }
+
+  toggleDropdown(cleId: string | number, event: Event) {
+    event.stopPropagation();
+    this.activeDropdown = this.activeDropdown === cleId ? null : cleId;
+  }
+
+  closeDropdown() {
+    this.activeDropdown = null;
   }
 }

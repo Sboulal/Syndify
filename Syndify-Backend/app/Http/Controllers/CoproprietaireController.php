@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\UserAsOwner;
+use App\Models\UserOwnerUnit;
+use App\Models\Lot;
 use Illuminate\Support\Facades\DB;
 
 class CoproprietaireController extends Controller
@@ -31,11 +33,11 @@ class CoproprietaireController extends Controller
 
         $formattedData = $users->map(function ($user) use ($request) {
             
-            // 🟢 Hna st3mlna DB::table directe bach ntfadaw ay mouchkil dyal Model
+            // 🟢 Rje3na khdemna b $user->identifier hit hya li kayna f DB
             $lotIds = DB::table('user_owner_unit')
                 ->join('units', 'user_owner_unit.unit_id', '=', 'units.id')
                 ->where('units.propriete_id', $request->propriete_id)
-                ->where('user_owner_unit.user_id', $user->identifier)
+                ->where('user_owner_unit.user_id', $user->identifier) 
                 ->pluck('units.id')
                 ->toArray();
 
@@ -46,8 +48,8 @@ class CoproprietaireController extends Controller
                 'nom' => $user->full_name,      
                 'email' => $user->email,
                 'tel' => $user->tel, 
-                'lots' => $lotsCount, // Kansifto l'nombre exact (0, 1, 2...)
-                'lot_ids' => $lotIds, // L'Angular ghay7tajha bach i-cocher checkboxes
+                'lots' => $lotsCount, 
+                'lot_ids' => $lotIds, 
                 'status' => $request->type_affichage == 'en_attente' ? 'En attente' : ucfirst($request->type_affichage)
             ];
         });
@@ -59,7 +61,7 @@ class CoproprietaireController extends Controller
         ]);
     }
 
-    // 2. Ajouter ou Modifier un Copropriétaire (Automatique)
+    // 2. Ajouter ou Modifier un Copropriétaire
     public function ajouter(Request $request)
     {
         $request->validate([
@@ -70,7 +72,7 @@ class CoproprietaireController extends Controller
             'user_id' => 'nullable|string', 
             'status' => 'required|string',  
             'selectedLots' => 'nullable|array',
-            'selectedLots.*' => 'integer|exists:units,id' // T2kked anahoum ar9am
+            'selectedLots.*' => 'integer|exists:units,id'
         ]);
 
         $statusMapping = [
@@ -118,34 +120,30 @@ class CoproprietaireController extends Controller
             }
 
             // ==========================================
-            // 🟢 SAUVEGARDE DES LOTS AFFECTÉS (100% GARANTIE)
+            // 🟢 SAUVEGARDE DES LOTS AFFECTÉS (FIXED)
             // ==========================================
             
-            // a. Njbdo ga3 IDs dyal les unités (lots) f had l'imara
             $unitIds = DB::table('units')->where('propriete_id', $request->propriete_id)->pluck('id')->toArray();
 
-            // b. Nms7o l'affectations l9dam dyal had l'coproprietaire (ghir f had l'imara)
             if (!empty($unitIds)) {
                 DB::table('user_owner_unit')
-                    ->where('user_id', $user->identifier)
+                    ->where('user_id', $user->identifier) // 🟢 Rje3na b $user->identifier
                     ->whereIn('unit_id', $unitIds)
                     ->delete();
             }
 
-            // c. N-inseriw les lots jdad b Query Builder (kay-by-passi l'fillable dyal Model)
             if ($request->has('selectedLots') && is_array($request->selectedLots)) {
                 $insertData = [];
                 foreach ($request->selectedLots as $lotId) {
                     $insertData[] = [
-                        'user_id' => $user->identifier,
+                        'user_id' => $user->identifier, // 🟢 Rje3na b $user->identifier
                         'unit_id' => $lotId,
-                        'status' => 1, // Actif
+                        'status' => 1, 
                         'created_at' => now(),
                         'updated_at' => now()
                     ];
                 }
                 
-                // Ila kano des lots mt-selectionneen, kaysjjelhom f d9a w7da
                 if (count($insertData) > 0) {
                     DB::table('user_owner_unit')->insert($insertData);
                 }
@@ -180,7 +178,7 @@ class CoproprietaireController extends Controller
             
             if (!empty($unitIds)) {
                 DB::table('user_owner_unit')
-                    ->where('user_id', $request->user_id)
+                    ->where('user_id', $request->user_id) // 🟢 $request->user_id fih deja 'SU-...'
                     ->whereIn('unit_id', $unitIds)
                     ->delete();
             }

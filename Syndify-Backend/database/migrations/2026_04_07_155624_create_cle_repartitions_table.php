@@ -8,7 +8,6 @@ return new class extends Migration
 {
   public function up()
     {
-        // 🛑 كنزيدو هاد السطورة باش نمسحو الطابلوات القدام إيلا كانو ديجا كاينين
         Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('unit_to_key');
         Schema::dropIfExists('cle_repartitions');

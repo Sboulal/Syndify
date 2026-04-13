@@ -12,7 +12,7 @@ export class CoproprietaireService {
 
   constructor(private http: HttpClient) {}
 
-  // 1. Njbdou l-liste (POST kima qaddina f Laravel)
+
   getListe(proprieteId: string, typeAffichage: string, lastId?: number): Observable<any> {
     const body = {
       propriete_id: proprieteId,
@@ -31,14 +31,15 @@ export class CoproprietaireService {
   }
 
 ajouter(proprieteId: string, coproData: any) {
-    // 🛑 FIX: 7iydna "coproprietaires" mn l-URL hna 7it aslan kayna f this.apiUrl
+   
     return this.http.post(`${this.apiUrl}/ajouter`, {
       propriete_id: proprieteId,
       nom: coproData.nom,
       email: coproData.email,
       tel: coproData.tel,
-      user_id: coproData.user_id, // Identifiant personnalisé (optional)
-      status: coproData.status
+      user_id: coproData.user_id, 
+      status: coproData.status,
+      selectedLots: coproData.selectedLots
     });
   }
   supprimer(proprieteId: string, userId: string): Observable<any> {
