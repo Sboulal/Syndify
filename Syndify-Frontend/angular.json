@@ -55,6 +55,12 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "allowedHosts": [
+              ".nomade-cloud.com",
+              "nomade-cloud.com"
+            ]
+          },
           "configurations": {
             "production": {
               "buildTarget": "Syndify-Frontend:build:production"

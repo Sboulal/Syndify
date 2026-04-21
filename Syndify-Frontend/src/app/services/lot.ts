@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class LotService {
- private baseUrl = 'http://51.178.87.234:8085/api';
+ private baseUrl = 'http://nomade-cloud.com:8085/api';
   private apiUrl = `${this.baseUrl}/lots`;
 
   constructor(private http: HttpClient) {}

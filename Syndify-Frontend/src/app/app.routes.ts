@@ -7,6 +7,12 @@ import { GestionLots } from './pages/gestion-lots/gestion-lots';
 import { ListeCoproprietes } from './pages/liste-coproprietes/liste-coproprietes';
 import { Cle } from './pages/cle/cle';
 import { Dashboard } from './pages/dashboard/dashboard';
+import { HistoriqueCoproprietaire } from './pages/historique-coproprietaire/historique-coproprietaire';
+import {  Exercises } from './pages/exercises/exercises';
+import { SimulationBudget } from './pages/simulerbudget/simulerbudget';
+import { BudgetsOperations } from './pages/budgetsdepenses/budgetsdepenses';
+import { Appelsfonds } from './pages/appelsfonds/appelsfonds';
+import { AppelsFondsDetails } from './pages/appels-fonds-details/appels-fonds-details';
 
 export const routes: Routes = [
   // ==========================================
@@ -33,6 +39,13 @@ export const routes: Routes = [
       { path: 'liste-coproprietes', component: ListeCoproprietes },
       { path: 'residence/:id/coproprietaires', component: ListeCoproprietes },
       { path: 'cles-de-repartition', component: Cle },
+      { path: 'coproprietaires/historique/:id', component: HistoriqueCoproprietaire },
+      {path : 'exercice', component: Exercises}, 
+      {path : 'simulation-budget', component: SimulationBudget},
+      {path : 'budgets-depenses', component: BudgetsOperations},
+      {path : 'appels-de-fonds', component: Appelsfonds},
+      { path: 'financement/appels-fonds/details/:id', component: AppelsFondsDetails },
+      { path: 'financement/appels-fonds/details/:id', component: Appelsfonds }
       
       
       // { path: 'documents', component: DocumentsComponent },

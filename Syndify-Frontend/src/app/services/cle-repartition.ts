@@ -8,7 +8,7 @@ import { Observable } from 'rxjs';
 export class CleRepartitionService {
   
   // 🛑 بدلي هاد الـ URL على حساب الـ Backend ديالك (ولا استعملي environment.apiUrl)
-  private apiUrl = 'http://51.178.87.234:8085/api/cles-repartition';
+  private apiUrl = 'http://nomade-cloud.com:8085/api/cles-repartition';
 
   constructor(private http: HttpClient) {}
 

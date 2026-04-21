@@ -15,4 +15,5 @@ export class PageHeader {
   @Input() title: string = '';
   @Input() statsText: string = '';
   @Input() statsSubText: string = '';
+  @Input() description: string = '';
 }

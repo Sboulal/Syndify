@@ -14,16 +14,16 @@ class UserAsOwner extends Model
     protected $fillable = [
         'user_id',
         'propriete_id',
-        'status' // 0: En attente, 1: Actif, 2: Inactif
+        'status', // 0: En attente, 1: Actif, 2: Inactif
+        'balance_prev', // 🟢 Zidnahom hna bach l'Update ykheddemhom
+        'balance_new'
     ];
 
-    // Bach njbdou les infos dyal User b-shoula
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    // Bach njbdou la Propriété
     public function propriete()
     {
         return $this->belongsTo(Copropriete::class, 'propriete_id');

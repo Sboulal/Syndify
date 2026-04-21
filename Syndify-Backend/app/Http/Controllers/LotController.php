@@ -3,76 +3,109 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Lot; 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
 
 class LotController extends Controller
 {
-    // 1. Liste des Lots (Nzidou fiha l'affectation dyal l'owner bach tban f l'modal)
+    // ==========================================
+    // 1. Liste des Lots
+    // ==========================================
     public function liste(Request $request)
     {
         $request->validate(['propriete_id' => 'required']);
         
-        $lots = Lot::where('propriete_id', $request->propriete_id)
-            ->with(['owners' => function($query) {
-                // Kanjibou l'owner w l'status dyalo mn pivot table
-                $query->select('users.id', 'users.full_name', 'user_owner_unit.status as pivot_status');
-            }])
+        $lots = DB::table('units')
+            ->where('propriete_id', $request->propriete_id)
             ->orderBy('id', 'desc')
             ->get();
+
+        $userPk = Schema::hasColumn('users', 'identifier') ? 'identifier' : (Schema::hasColumn('users', 'user_id') ? 'user_id' : 'id');
+        $userNameCol = Schema::hasColumn('users', 'full_name') ? 'full_name' : 'name';
+
+        foreach ($lots as $lot) {
+            try {
+                $lot->owners = DB::table('users')
+                    ->join('user_owner_unit', 'users.' . $userPk, '=', 'user_owner_unit.user_id')
+                    ->where('user_owner_unit.unit_id', $lot->id)
+                    ->select(
+                        'users.' . $userPk . ' as user_id', 
+                        'users.' . $userNameCol . ' as nom', 
+                        'users.email', 
+                        'user_owner_unit.status as pivot_status'
+                    )
+                    ->get();
+            } catch (\Exception $e) {
+                Log::error("Erreur récupération owners pour le lot {$lot->id}: " . $e->getMessage());
+                $lot->owners = []; 
+            }
+        }
 
         return response()->json(['success' => true, 'data' => $lots]);
     }
 
+    // ==========================================
     // 2. Ajouter un lot
+    // ==========================================
     public function ajouter(Request $request)
     {
+        // 🟢 FIX 1 : owner_id wellat 'nullable' bach n9edro n-ziidou lot bla propriétaire
         $request->validate([
             'propriete_id' => 'required',
             'type' => 'required',
-            'numero_porte' => 'required'
+            'numero_porte' => 'required',
+            'owner_id' => 'nullable' 
         ]);
 
         DB::beginTransaction();
         try {
-            // A. Création dyal l'Lot
-            $lot = Lot::create([
+            // A. Ajout dyal l'Unit (Lot)
+            $lotId = DB::table('units')->insertGetId([
                 'propriete_id' => $request->propriete_id,
                 'type' => $request->type,
                 'batiment' => $request->batiment,
                 'etage' => $request->etage,
-                'numero_porte' => $request->numero_porte
+                'numero_porte' => $request->numero_porte,
+                'created_at' => now(),
+                'updated_at' => now()
             ]);
 
-            // B. 🟢 Créer la connexion avec les clés de répartition existantes (Tantième par défaut = 0)
-            $cles = DB::table('cle_repartitions')->where('propriete_id', $request->propriete_id)->get();
-            $insertKeys = [];
-            foreach ($cles as $cle) {
-                $insertKeys[] = [
-                    'unit_id' => $lot->id,
-                    'key_id' => $cle->id,
-                    'tantieme' => 0
-                ];
-            }
-            if (count($insertKeys) > 0) {
-                DB::table('unit_to_key')->insert($insertKeys);
+            // B. Liaison m3a les clés de répartition (b Try-Catch bach may-plantich ila table ma-kynach)
+            try {
+                $cleCol = Schema::hasColumn('cle_repartitions', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
+                $cles = DB::table('cle_repartitions')->where($cleCol, $request->propriete_id)->get();
+                $insertKeys = [];
+                foreach ($cles as $cle) {
+                    $insertKeys[] = [
+                        'unit_id' => $lotId,
+                        'key_id' => $cle->id,
+                        'tantieme' => 0,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ];
+                }
+                if (count($insertKeys) > 0) {
+                    DB::table('unit_to_key')->insert($insertKeys);
+                }
+            } catch (\Exception $e) {
+                Log::warning("Impossible de lier les clés au lot : " . $e->getMessage());
             }
 
-            // C. 🟢 Affectation d'un propriétaire (Si choisi f l'Modal)
-            if ($request->filled('owner_id')) {
+            // C. Affectation dyal le propriétaire GHIIR ila khtar l-user chi wa7ed
+            if ($request->owner_id) {
                 $status = $request->owner_status == 'Actif' ? 1 : 2;
 
                 if ($status == 1) {
-                    // Check: Un seul propriétaire actif maximum
-                    $activeOwners = DB::table('user_owner_unit')->where('unit_id', $lot->id)->where('status', 1)->count();
-                    if ($activeOwners > 0) {
-                        return response()->json(['success' => false, 'message' => "Un autre propriétaire est déjà actif sur ce lot."], 400);
-                    }
+                    DB::table('user_as_owner')
+                        ->where('user_id', $request->owner_id)
+                        ->where('propriete_id', $request->propriete_id)
+                        ->update(['status' => 1]);
                 }
 
                 DB::table('user_owner_unit')->insert([
                     'user_id' => $request->owner_id,
-                    'unit_id' => $lot->id,
+                    'unit_id' => $lotId,
                     'status' => $status,
                     'created_at' => now(),
                     'updated_at' => now()
@@ -88,64 +121,50 @@ class LotController extends Controller
         }
     }
 
+    // ==========================================
     // 3. Modifier un Lot
+    // ==========================================
     public function modifier(Request $request)
     {
-        $request->validate([
-            'propriete_id' => 'required',
-            'lot_id' => 'required'
-        ]);
+        $request->validate(['propriete_id' => 'required', 'lot_id' => 'required']);
 
         DB::beginTransaction();
         try {
-            $lot = Lot::where('id', $request->lot_id)->where('propriete_id', $request->propriete_id)->firstOrFail();
+            DB::table('units')->where('id', $request->lot_id)->update([
+                'type' => $request->type,
+                'batiment' => $request->batiment,
+                'etage' => $request->etage,
+                'numero_porte' => $request->numero_porte,
+                'updated_at' => now()
+            ]);
 
-            // A. Update des informations du lot
-            $lot->update($request->only(['type', 'batiment', 'etage', 'numero_porte']));
+            // N-ms7ou l-propriétaire l-9dim dima
+            DB::table('user_owner_unit')->where('unit_id', $request->lot_id)->delete();
 
-            // B. 🟢 Gestion de l'affectation du propriétaire
-            if ($request->filled('owner_id')) {
+            // Ila khtar l-user propriétaire jdid, n-zidouh
+            if ($request->owner_id) {
                 $status = $request->owner_status == 'Actif' ? 1 : 2;
 
-                // Si on veut AJOUTER ou REACTIVER un propriétaire
                 if ($status == 1) { 
-                    $activeOwnersCount = DB::table('user_owner_unit')
-                        ->where('unit_id', $lot->id)
-                        ->where('status', 1)
-                        ->where('user_id', '!=', $request->owner_id) // Vérifier les AUTRES propriétaires
-                        ->count();
-
-                    if ($activeOwnersCount > 0) {
-                        DB::rollBack();
-                        return response()->json(['success' => false, 'message' => "Erreur : Ce lot a déjà un autre propriétaire actif."], 400);
-                    }
+                    DB::table('user_as_owner')
+                        ->where('user_id', $request->owner_id)
+                        ->where('propriete_id', $request->propriete_id)
+                        ->update(['status' => 1]);
                 } 
-                // Si on veut DESACTIVER un propriétaire
                 elseif ($status == 2) { 
-                    // ⚠️ Vérifier si les soldes sont négatifs (à adapter selon le nom de ta table `soldes` w `montant`)
-                    $soldeNegatif = DB::table('soldes') 
+                    DB::table('user_as_owner')
                         ->where('user_id', $request->owner_id)
                         ->where('propriete_id', $request->propriete_id)
-                        ->where('montant', '<', 0)
-                        ->exists();
-
-                    if ($soldeNegatif) {
-                        DB::rollBack();
-                        return response()->json(['success' => false, 'message' => "Désactivation impossible. Le syndic doit envoyer des rappels pour que l'utilisateur règle les montants en attente."], 400);
-                    }
-
-                    // ⚠️ Réinitialiser les soldes à 0
-                    DB::table('soldes')
-                        ->where('user_id', $request->owner_id)
-                        ->where('propriete_id', $request->propriete_id)
-                        ->update(['montant' => 0]);
+                        ->update(['balance_prev' => 0, 'balance_new' => 0, 'status' => 2]);
                 }
 
-                // Update ou Insert l'association Lot <-> Propriétaire
-                DB::table('user_owner_unit')->updateOrInsert(
-                    ['user_id' => $request->owner_id, 'unit_id' => $lot->id],
-                    ['status' => $status, 'updated_at' => now()]
-                );
+                DB::table('user_owner_unit')->insert([
+                    'user_id' => $request->owner_id, 
+                    'unit_id' => $request->lot_id,
+                    'status' => $status,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
             }
 
             DB::commit();
@@ -157,29 +176,24 @@ class LotController extends Controller
         }
     }
 
+    // ==========================================
     // 4. Supprimer un lot
+    // ==========================================
     public function supprimer(Request $request)
     {
         $request->validate(['propriete_id' => 'required', 'lot_id' => 'required']);
 
-        DB::beginTransaction();
         try {
-            // 🟢 SUPPRESSION EN CASCADE (Delete Cascade Manuel)
-            
-            // A. Supprimer l'association Copropriétaire <-> Lot
+            DB::beginTransaction();
             DB::table('user_owner_unit')->where('unit_id', $request->lot_id)->delete();
-            
-            // B. Supprimer l'association Lot <-> Clés de répartition
-            DB::table('unit_to_key')->where('unit_id', $request->lot_id)->delete();
-
-            // C. Supprimer le Lot
-            Lot::where('id', $request->lot_id)->where('propriete_id', $request->propriete_id)->delete();
-
+            // Try-Catch f l-clés 7it momkin table tkon mzl makynach
+            try { DB::table('unit_to_key')->where('unit_id', $request->lot_id)->delete(); } catch(\Exception $e) {}
+            DB::table('units')->where('id', $request->lot_id)->where('propriete_id', $request->propriete_id)->delete();
             DB::commit();
             return response()->json(['success' => true, 'message' => 'Lot supprimé avec succès.']);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['success' => false, 'message' => 'Erreur lors de la suppression: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Erreur: ' . $e->getMessage()], 500);
         }
     }
 }

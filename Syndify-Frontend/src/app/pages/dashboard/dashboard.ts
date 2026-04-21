@@ -1,53 +1,58 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
+import { PageHeader } from '../../components/page-header/page-header'; // 🟢 ZEDNA HAD L-IMPORT
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, PageHeader], // 🟢 ZIDIH HNAYA
   templateUrl: './dashboard.html',
 })
 export class Dashboard implements OnInit {
+  isProfileDropdownOpen = false;
+  isLoading = false;
+
+  residence = { nom: '...', adresse: '...', exercice: '...', periode: '...', gerant: '...', role: '...' };
+  budget = { totalAnnee: '0', depenses: '0', pourcentage: 0 };
+  trimestres: any[] = [];
+  soldes: any[] = [];
+  totalDu: string = '0';
   
-  isProfileDropdownOpen = false; // 🛑 زدنا هادي باش يخدم المينو الفوقاني
+  constructor(private http: HttpClient) {}
 
-  // 1. معلومات الإقامة (Header)
-  residence = {
-    nom: 'Résidence les jardins',
-    adresse: "123 Rue de l'Exemple, Casablanca, Maroc",
-    exercice: 'Du 01 Jan 2024 au 31 Déc 2024',
-    periode: '4ème trimestre',
-    gerant: 'Jean Dupont (vous)',
-    role: 'Syndic, Copropriétaire'
-  };
+  ngOnInit() {
+    this.chargerDashboard();
+  }
 
-  // 2. أرصدة الملاك
-  soldes = [
-    { id: 'SU021767485', nom: 'Hannah Arendt', solde: 1200, isNegatif: false },
-    { id: 'SU08856992', nom: 'Aline Marcel', solde: -850, isNegatif: true, action: 'Envoyer un rappel' },
-    { id: 'SU04877523', nom: 'Chloé Moreau', solde: 320, isNegatif: false },
-    { id: 'SU06985441', nom: 'Patricia Allen', solde: -1950, isNegatif: true, action: 'Envoyer un 2ème rappel' },
-    { id: 'SU01558744', nom: 'Jean Dupont', solde: 120, isNegatif: false }
-  ];
+  chargerDashboard() {
+    this.isLoading = true;
+    const proprieteId = localStorage.getItem('active_propriete_id') || 'SP-1775215295';
+    const userId = localStorage.getItem('user_id') || '1';
+    const userRole = localStorage.getItem('user_role') || 'syndic';
 
-  totalDu = 2800;
+    const payload = {
+      sp_identifier: proprieteId,
+      user_id: userId,
+      role: userRole
+    };
 
-  // 3. الميزانية
-  budget = {
-    totalAnnee: 13560,
-    depenses: 10305,
-    pourcentage: 76
-  };
-
-  // 4. الاستهلاك
-  trimestres = [
-    { nom: 'Trimestre 1', montant: 3250, pourcentage: 23.96 },
-    { nom: 'Trimestre 2', montant: 3300, pourcentage: 24.33 },
-    { nom: 'Trimestre 3', montant: 2100, pourcentage: 15.48 },
-    { nom: 'Trimestre 4', montant: 1655, pourcentage: 12.20 }
-  ];
-
-  constructor() {}
-  ngOnInit() {}
+    this.http.post('http://51.178.87.234:8085/api/dashboard/data', payload).subscribe({
+      next: (res: any) => {
+        if (res.success) {
+          this.residence = res.data.residence;
+          this.budget = res.data.budget;
+          this.trimestres = res.data.trimestres;
+          this.soldes = res.data.soldes;
+          this.totalDu = res.data.totalDu;
+        }
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error("❌ Erreur Dashboard:", err);
+        this.isLoading = false;
+      }
+    });
+  }
 }

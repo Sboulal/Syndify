@@ -11,14 +11,9 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    // 1. Configuration dyal l'identifiant personnalisé
-    protected $primaryKey = 'identifier';
-    public $incrementing = false;
-    protected $keyType = 'string';
+    // 🟢 7iydna l'override dyal primaryKey, daba ghaykhdem b 'id' oumatiqement
 
-    
     protected $fillable = [
-        'identifier', 
         'full_name', 
         'email', 
         'tel',
@@ -30,7 +25,6 @@ class User extends Authenticatable
         'status'
     ];
 
-   
     protected $hidden = [
         'password', 
         'remember_token', 
@@ -47,9 +41,18 @@ class User extends Authenticatable
             'mailing_subs' => 'boolean',
         ];
     }
+
     public function coproprietes()
     {
         return $this->belongsToMany(Copropriete::class, 'user_as_owner', 'user_id', 'propriete_id')
+                    ->withPivot('status', 'balance_prev', 'balance_new')
+                    ->withTimestamps();
+    }
+
+    // L'Relation m3a Lots
+    public function lots()
+    {
+        return $this->belongsToMany(Lot::class, 'user_owner_unit', 'user_id', 'unit_id')
                     ->withPivot('status')
                     ->withTimestamps();
     }

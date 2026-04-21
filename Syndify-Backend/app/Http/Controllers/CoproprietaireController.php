@@ -3,10 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\User;
-use App\Models\UserAsOwner;
-use App\Models\UserOwnerUnit;
-use App\Models\Lot;
 use Illuminate\Support\Facades\DB;
 
 class CoproprietaireController extends Controller
@@ -16,49 +12,45 @@ class CoproprietaireController extends Controller
     {
         $request->validate([
             'propriete_id' => 'required',
-            'type_affichage' => 'required|in:actif,inactif,en_attente',
+            'type_affichage' => 'required|in:actif,inactif,en_attente,tous',
         ]);
 
-        $statusMapping = [
-            'en_attente' => 0,
-            'actif' => 1,
-            'inactif' => 2
-        ];
-        $status = $statusMapping[$request->type_affichage];
+        $statusMapping = ['en_attente' => 0, 'actif' => 1, 'inactif' => 2];
+        
+        $query = DB::table('users')
+            ->join('user_as_owner', 'users.id', '=', 'user_as_owner.user_id')
+            ->where('user_as_owner.propriete_id', $request->propriete_id);
+        
+        if ($request->type_affichage !== 'tous') {
+            $query->where('user_as_owner.status', $statusMapping[$request->type_affichage]);
+        }
 
-        $users = User::whereHas('coproprietes', function ($query) use ($request, $status) {
-            $query->where('propriete_id', $request->propriete_id)
-                  ->where('user_as_owner.status', $status);
-        })->get();
+        $users = $query->select('users.*', 'user_as_owner.status as pivot_status')->orderBy('users.id', 'desc')->get();
 
         $formattedData = $users->map(function ($user) use ($request) {
-            
-            // 🟢 Rje3na khdemna b $user->identifier hit hya li kayna f DB
             $lotIds = DB::table('user_owner_unit')
                 ->join('units', 'user_owner_unit.unit_id', '=', 'units.id')
                 ->where('units.propriete_id', $request->propriete_id)
-                ->where('user_owner_unit.user_id', $user->identifier) 
+                ->where('user_owner_unit.user_id', $user->id)
                 ->pluck('units.id')
                 ->toArray();
 
-            $lotsCount = count($lotIds);
+            $statusStr = 'Actif';
+            if($user->pivot_status == 0) $statusStr = 'En attente';
+            if($user->pivot_status == 2) $statusStr = 'Inactif';
 
             return [
-                'user_id' => $user->identifier, 
+                'user_id' => $user->id,
                 'nom' => $user->full_name,      
                 'email' => $user->email,
                 'tel' => $user->tel, 
-                'lots' => $lotsCount, 
+                'lots' => count($lotIds), 
                 'lot_ids' => $lotIds, 
-                'status' => $request->type_affichage == 'en_attente' ? 'En attente' : ucfirst($request->type_affichage)
+                'status' => $statusStr
             ];
         });
 
-        return response()->json([
-            'success' => true,
-            'data' => $formattedData,
-            'is_there_more' => false
-        ]);
+        return response()->json(['success' => true, 'data' => $formattedData, 'is_there_more' => false]);
     }
 
     // 2. Ajouter ou Modifier un Copropriétaire
@@ -69,89 +61,74 @@ class CoproprietaireController extends Controller
             'email' => 'required|email',
             'nom' => 'required|string',
             'tel' => 'nullable|string',
-            'user_id' => 'nullable|string', 
+            'user_id' => 'nullable', 
             'status' => 'required|string',  
-            'selectedLots' => 'nullable|array',
-            'selectedLots.*' => 'integer|exists:units,id'
+            'selectedLots' => 'nullable|array'
         ]);
 
-        $statusMapping = [
-            'En attente' => 0,
-            'Actif' => 1,
-            'Inactif' => 2
-        ];
-        $mappedStatus = $statusMapping[$request->status] ?? 1;
+        $mappedStatus = ['En attente' => 0, 'Actif' => 1, 'Inactif' => 2][$request->status] ?? 1;
 
         DB::beginTransaction();
         try {
-            $user = User::where('email', $request->email)->first();
-
-            if (!$user) {
-                $identifier = $request->filled('user_id') ? $request->user_id : 'SU-' . time();
-
-                $user = User::create([
-                    'identifier' => $identifier,
-                    'full_name' => $request->nom,
-                    'email' => $request->email,
-                    'tel' => $request->tel,
-                    'password' => bcrypt('password123'),
-                ]);
+            $userId = $request->user_id;
+            
+            if (!$userId) {
+                $existingUser = DB::table('users')->where('email', $request->email)->first();
+                if ($existingUser) {
+                    $userId = $existingUser->id;
+                    DB::table('users')->where('id', $userId)->update([
+                        'full_name' => $request->nom, 'tel' => $request->tel, 'updated_at' => now()
+                    ]);
+                } else {
+                    $userId = DB::table('users')->insertGetId([
+                        'full_name' => $request->nom, 
+                        'email' => $request->email,
+                        'tel' => $request->tel, 
+                        'password' => bcrypt('password123'),
+                        'created_at' => now(), 
+                        'updated_at' => now()
+                    ]);
+                }
             } else {
-                $user->update([
-                    'full_name' => $request->nom,
-                    'tel' => $request->tel,
+                DB::table('users')->where('id', $userId)->update([
+                    'full_name' => $request->nom, 'tel' => $request->tel, 'updated_at' => now()
                 ]);
             }
 
-            $liaison = UserAsOwner::where('user_id', $user->identifier)
-                                  ->where('propriete_id', $request->propriete_id)
-                                  ->first();
-
+            $liaison = DB::table('user_as_owner')->where('user_id', $userId)->where('propriete_id', $request->propriete_id)->first();
             if ($liaison) {
-                $liaison->update(['status' => $mappedStatus]);
+                DB::table('user_as_owner')->where('id', $liaison->id)->update(['status' => $mappedStatus, 'updated_at' => now()]);
                 $message = 'Le copropriétaire a été mis à jour avec succès.';
             } else {
-                UserAsOwner::create([
-                    'user_id' => $user->identifier,
-                    'propriete_id' => $request->propriete_id,
-                    'status' => $mappedStatus
+                DB::table('user_as_owner')->insert([
+                    'user_id' => $userId, 'propriete_id' => $request->propriete_id, 'status' => $mappedStatus,
+                    'created_at' => now(), 'updated_at' => now()
                 ]);
                 $message = 'Copropriétaire ajouté avec succès.';
             }
 
-            // ==========================================
-            // 🟢 SAUVEGARDE DES LOTS AFFECTÉS (FIXED)
-            // ==========================================
-            
+            // Liaison Lots
             $unitIds = DB::table('units')->where('propriete_id', $request->propriete_id)->pluck('id')->toArray();
-
             if (!empty($unitIds)) {
-                DB::table('user_owner_unit')
-                    ->where('user_id', $user->identifier) // 🟢 Rje3na b $user->identifier
-                    ->whereIn('unit_id', $unitIds)
-                    ->delete();
+                DB::table('user_owner_unit')->where('user_id', $userId)->whereIn('unit_id', $unitIds)->delete();
             }
 
-            if ($request->has('selectedLots') && is_array($request->selectedLots)) {
+            if ($request->has('selectedLots') && is_array($request->selectedLots) && count($request->selectedLots) > 0) {
+                // 🟢 FIX IMPORTANT: Nms7ou les anciens propriétaires dyal had les lots bach mayw9e3ch doublon
+                DB::table('user_owner_unit')->whereIn('unit_id', $request->selectedLots)->delete();
+
                 $insertData = [];
                 foreach ($request->selectedLots as $lotId) {
                     $insertData[] = [
-                        'user_id' => $user->identifier, // 🟢 Rje3na b $user->identifier
-                        'unit_id' => $lotId,
-                        'status' => 1, 
-                        'created_at' => now(),
-                        'updated_at' => now()
+                        'user_id' => $userId, 'unit_id' => $lotId, 'status' => 1, 
+                        'created_at' => now(), 'updated_at' => now()
                     ];
                 }
-                
-                if (count($insertData) > 0) {
-                    DB::table('user_owner_unit')->insert($insertData);
-                }
+                DB::table('user_owner_unit')->insert($insertData);
             }
 
             DB::commit();
             return response()->json(['success' => true, 'message' => $message]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -161,31 +138,19 @@ class CoproprietaireController extends Controller
     // 3. Supprimer un Copropriétaire
     public function supprimer(Request $request)
     {
-        $request->validate([
-            'propriete_id' => 'required',
-            'user_id' => 'required'
-        ]);
-
+        $request->validate(['propriete_id' => 'required', 'user_id' => 'required']);
+        
         DB::beginTransaction();
         try {
-            // Msi7 mn l'imara
-            UserAsOwner::where('user_id', $request->user_id)
-                       ->where('propriete_id', $request->propriete_id)
-                       ->delete();
-
-            // Msi7 l'affectation dyal les lots
-            $unitIds = DB::table('units')->where('propriete_id', $request->propriete_id)->pluck('id')->toArray();
+            DB::table('user_as_owner')->where('user_id', $request->user_id)->where('propriete_id', $request->propriete_id)->delete();
             
+            $unitIds = DB::table('units')->where('propriete_id', $request->propriete_id)->pluck('id')->toArray();
             if (!empty($unitIds)) {
-                DB::table('user_owner_unit')
-                    ->where('user_id', $request->user_id) // 🟢 $request->user_id fih deja 'SU-...'
-                    ->whereIn('unit_id', $unitIds)
-                    ->delete();
+                DB::table('user_owner_unit')->where('user_id', $request->user_id)->whereIn('unit_id', $unitIds)->delete();
             }
-
+            
             DB::commit();
             return response()->json(['success' => true, 'message' => 'Copropriétaire supprimé avec succès.']);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);

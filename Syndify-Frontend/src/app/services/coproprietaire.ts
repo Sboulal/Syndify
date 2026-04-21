@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 })
 export class CoproprietaireService {
   
-  private baseUrl = 'http://51.178.87.234:8085/api';
+  private baseUrl = 'http://nomade-cloud.com:8085/api';
   private apiUrl = `${this.baseUrl}/coproprietaires`;
 
   constructor(private http: HttpClient) {}

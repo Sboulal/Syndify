@@ -34,16 +34,28 @@ export class MainLayout implements OnInit {
 
       this.openMenus['copropriete'] = true; 
     }
-    // 3. Menu: Financement (Zdnaah Hna)
-    else if (currentUrl.includes('/budgets-depenses') || currentUrl.includes('/appels-fonds') || currentUrl.includes('/simuler-budget')) {
+   
+    else if (currentUrl.includes('/budgets-depenses') || currentUrl.includes('/appels-de-fonds') || currentUrl.includes('/simulation-budget')) {
       
       if (currentUrl.includes('/budgets-depenses')) this.activeItem = 'budgets-depenses';
-      if (currentUrl.includes('/appels-fonds')) this.activeItem = 'appels-fonds';
-      if (currentUrl.includes('/simuler-budget')) this.activeItem = 'simuler-budget';
+      if (currentUrl.includes('/appels-de-fonds')) this.activeItem = 'appels-de-fonds';
+      if (currentUrl.includes('/simulation-budget')) this.activeItem = 'simulation-budget';
 
       this.openMenus['financement'] = true; 
     }
+
+    
+    else if (currentUrl.includes('/exercice') ) {
+      
+      if (currentUrl.includes('/exercice')) this.activeItem = 'exercice';
+     
+
+      this.openMenus['Exercice & clôtures'] = true; 
+    }
+
+   
   }
+
 
   toggleSidebar() {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;

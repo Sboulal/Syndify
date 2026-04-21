@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; 
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { PageHeader } from '../../components/page-header/page-header';
 import { CoproprietaireService } from '../../services/coproprietaire'; 
 import { LotService } from '../../services/lot'; 
@@ -23,7 +23,6 @@ export class ListeCoproprietes implements OnInit {
   isLoading: boolean = false;
 
   tousLesLots: any[] = [];
-  isLotsDropdownOpen: boolean = false;
 
   isAddModalOpen: boolean = false;
   isAdding: boolean = false;
@@ -33,27 +32,29 @@ export class ListeCoproprietes implements OnInit {
     nom: '',
     email: '',
     tel: '',
-    lots: '',
     selectedLots: [], 
     status: 'Actif'
   };
 
+
+  isLotsModalOpen: boolean = false;
+  selectedCoproName: string = '';
+  selectedCoproLots: any[] = [];
   activeDropdown: string | null = null;
 
-  // 🟢 Variables dyal Custom Notification (Toast)
   showNotification: boolean = false;
   notificationMessage: string = '';
   notificationType: 'success' | 'error' = 'success';
   notificationTimeout: any;
 
-  // 🟢 Variables dyal Modal de Suppression
   isDeleteModalOpen: boolean = false;
   coproToDeleteId: string | null = null;
 
   constructor(
     private coproprietaireService: CoproprietaireService,
-    private lotService: LotService, 
+    private lotService: LotService,
     private route: ActivatedRoute,
+    private router: Router,
     private cdr: ChangeDetectorRef 
   ) {}
 
@@ -63,7 +64,6 @@ export class ListeCoproprietes implements OnInit {
     this.chargerLots(); 
   }
 
-  // 🟢 Fonction dyal Notification Toast
   showToast(message: string, type: 'success' | 'error' = 'success') {
     this.notificationMessage = message;
     this.notificationType = type;
@@ -87,21 +87,9 @@ export class ListeCoproprietes implements OnInit {
     });
   }
 
-  toggleLotSelection(lotId: number) {
-    const index = this.newCopro.selectedLots.indexOf(lotId);
-    if (index > -1) {
-      this.newCopro.selectedLots.splice(index, 1); 
-    } else {
-      this.newCopro.selectedLots.push(lotId); 
-    }
-  }
-
-  getSelectedLotsText(): string {
-    if (!this.newCopro.selectedLots || this.newCopro.selectedLots.length === 0) {
-      return 'Sélectionner des lots...';
-    }
-    const selected = this.tousLesLots.filter(l => this.newCopro.selectedLots.includes(l.id));
-    return selected.map(l => 'N° ' + l.numero_porte).join(', ');
+  getSelectedLotObjects(): any[] {
+    if (!this.newCopro.selectedLots || this.newCopro.selectedLots.length === 0) return [];
+    return this.tousLesLots.filter(l => this.newCopro.selectedLots.includes(l.id));
   }
 
   changerTab(status: 'actif' | 'inactif' | 'en_attente') {
@@ -143,7 +131,6 @@ export class ListeCoproprietes implements OnInit {
       });
   }
 
-  // 🟢 HNA: Fonction jdida li kat7el ghir l'Modal dyal Suppression
   supprimerCopro(userId: string) {
     this.closeDropdown(); 
     this.coproToDeleteId = userId;
@@ -151,14 +138,12 @@ export class ListeCoproprietes implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // 🟢 HNA: Fonction katssed l'Modal dyal Suppression
   closeDeleteModal() {
     this.isDeleteModalOpen = false;
     this.coproToDeleteId = null;
     this.cdr.detectChanges();
   }
 
-  // 🟢 HNA: Fonction li katsifet l'Api bash tsouprimi
   confirmerSuppression() {
     if (!this.coproToDeleteId) return;
 
@@ -177,23 +162,48 @@ export class ListeCoproprietes implements OnInit {
     });
   }
 
+  voirHistorique(userId: number) {
+    this.router.navigate(['/coproprietaires/historique', userId]); 
+  }
+
+  // 🟢 Fonction jdida mlli t-clicki 3la l-badge dyal "Nbr de biens"
+voirListeLots(copro: any, event: Event) {
+    event.stopPropagation(); 
+    this.closeDropdown();
+    
+    this.selectedCoproName = copro.nom;
+    
+    // Kan-jebdo les objets dyal les lots mn tousLesLots b l'ID dyalhom
+    if (copro.lot_ids && copro.lot_ids.length > 0) {
+      this.selectedCoproLots = this.tousLesLots.filter(l => copro.lot_ids.includes(l.id));
+    } else {
+      this.selectedCoproLots = [];
+    }
+    
+    this.isLotsModalOpen = true;
+    this.cdr.detectChanges();
+  }
+
   toggleDropdown(userId: string, event: Event) {
     event.stopPropagation();
     this.activeDropdown = this.activeDropdown === userId ? null : userId;
+    this.cdr.detectChanges();
   }
 
   closeDropdown() {
     this.activeDropdown = null;
+    this.cdr.detectChanges();
   }
 
-  openEditModal(copro: any) {
+  openEditModal(copro: any, event?: Event) {
+    if (event) event.stopPropagation(); // 🟢 Zidna hada bach n-mne3 l-click yt-rchercher l-fo9
     this.closeDropdown(); 
     this.newCopro = { 
       user_id: copro.user_id, 
       nom: copro.nom, 
       email: copro.email, 
       tel: copro.tel,
-      selectedLots: copro.lot_ids ? [...copro.lot_ids] : [], 
+      selectedLots: copro.lot_ids ? [...copro.lot_ids] : [],
       status: copro.status 
     };
     this.isAddModalOpen = true;
@@ -214,9 +224,20 @@ export class ListeCoproprietes implements OnInit {
     this.cdr.detectChanges();
   }
 
+  formatCoproId(id: any): string {
+    if (!id) return '';
+    return 'SP-' + id.toString().padStart(8, '0');
+  }
+
   closeAddModal() {
     this.isAddModalOpen = false;
-    this.isLotsDropdownOpen = false; 
+    this.cdr.detectChanges();
+  }
+
+ 
+  closeLotsModal() {
+    this.isLotsModalOpen = false;
+    this.selectedCoproLots = [];
     this.cdr.detectChanges();
   }
 
@@ -226,31 +247,31 @@ export class ListeCoproprietes implements OnInit {
     this.isAdding = true;
     this.cdr.detectChanges();
 
-    this.coproprietaireService.ajouter(this.proprieteId, this.newCopro).subscribe({
+    const payload = {
+      nom: this.newCopro.nom,
+      email: this.newCopro.email,
+      tel: this.newCopro.tel,
+      status: this.newCopro.status,
+      selectedLots: this.newCopro.selectedLots,
+      user_id: this.newCopro.user_id, 
+      owner_id: this.newCopro.user_id 
+    };
+
+    this.coproprietaireService.ajouter(this.proprieteId, payload).subscribe({
       next: (res: any) => {
         if (res.success) {
           this.closeAddModal();
           this.chargerListe(true); 
-          this.showToast(res.message || "Opération réussie !", 'success'); // 🟢 Toast Success
+          this.showToast(res.message || "Opération réussie !", 'success'); 
         }
         this.isAdding = false;
         this.cdr.detectChanges();
       },
       error: (err) => {
-        this.showToast(err.error?.message || "Erreur lors de l'ajout.", 'error'); // 🟢 Toast Error
+        this.showToast(err.error?.message || "Erreur lors de l'ajout.", 'error'); 
         this.isAdding = false;
         this.cdr.detectChanges();
       }
     });
-  }
-  
-  getSelectedLotObjects(): any[] {
-    if (!this.newCopro.selectedLots) return [];
-    return this.tousLesLots.filter(l => this.newCopro.selectedLots.includes(l.id));
-  }
-
-  supprimerLotSelectionne(lotId: number, event: Event) {
-    event.stopPropagation(); 
-    this.toggleLotSelection(lotId);
   }
 }

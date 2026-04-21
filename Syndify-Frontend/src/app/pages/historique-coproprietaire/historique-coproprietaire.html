@@ -1,0 +1,118 @@
+<div class="flex flex-col min-h-full font-['Poppins'] bg-syndify-bg">
+
+  <app-page-header 
+    class="shrink-0"
+    parentPath="Liste des copropriétaires" 
+    currentPath="Historique du compte"
+    title="Historique du compte"
+    [statsText]="''"
+    [statsSubText]="''">
+    
+    <div class="absolute left-6 md:left-8 flex items-center gap-6 md:gap-12">
+      
+      <div class="flex items-center gap-2">
+        <span class="text-gray-400 text-[13.5px] font-medium">Exercice :</span>
+        <div class="relative flex items-center">
+          <select [(ngModel)]="exerciceSelectionne" (change)="chargerHistorique()" class="appearance-none bg-transparent text-white font-bold text-[13.5px] outline-none cursor-pointer pr-5 focus:ring-0 border-none p-0 m-0">
+            <option *ngFor="let ex of exercicesPasses" [value]="ex.id" class="text-syndify-dark bg-white">{{ ex.annee }}</option>
+          </select>
+          <svg class="w-3.5 h-3.5 text-white absolute right-0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="text-gray-400 text-[13.5px] font-medium">Total Encaissements :</span>
+        <span class="text-white font-bold text-[13.5px] tracking-wide">{{ totalEncaissements | number:'1.2-2' }} MAD</span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="text-gray-400 text-[13.5px] font-medium">Total Dépenses :</span>
+        <span class="text-white font-bold text-[13.5px] tracking-wide">{{ totalDepenses | number:'1.2-2' }} MAD</span>
+      </div>
+      
+    </div>
+
+  </app-page-header>
+
+  <div class="flex-1 p-6 md:p-8 flex flex-col gap-5 overflow-hidden">
+    
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
+      
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-full bg-syndify-accent/10 border border-syndify-accent/20 flex items-center justify-center text-syndify-accent font-bold text-[16px] shadow-sm">
+          {{ coproprietaire?.nom ? coproprietaire.nom.charAt(0).toUpperCase() : '?' }}
+        </div>
+        
+        <div class="flex flex-col">
+          <div class="flex items-center gap-2.5">
+            <span class="text-syndify-dark font-extrabold text-[17px] tracking-tight">{{ coproprietaire?.nom || 'Chargement...' }}</span>
+            <div *ngIf="coproprietaire" class="px-2.5 py-0.5 rounded-md font-bold text-[11px] border"
+                 [ngClass]="coproprietaire.status === 'Actif' ? 'bg-green-50 text-green-600 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'">
+              {{ coproprietaire.status }}
+            </div>
+          </div>
+          <span class="text-gray-500 text-[12px] font-medium mt-0.5">Dossier Copropriétaire</span>
+        </div>
+      </div>
+
+      <button (click)="retour()" class="px-4 py-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 text-gray-700 text-[13px] font-semibold transition-all cursor-pointer flex items-center gap-2 shadow-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        Retour à la liste
+      </button>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col flex-1 overflow-hidden relative mt-1">
+      <div class="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+        <h4 class="text-[15px] font-bold text-syndify-dark">Détails des opérations</h4>
+      </div>
+
+      <div class="flex-1 overflow-y-auto custom-scrollbar" style="overflow-x: visible !important;">
+        <table class="w-full text-left min-w-[800px] border-collapse relative">
+          <thead class="bg-white sticky top-0 z-[40] outline outline-1 outline-gray-100">
+            <tr>
+              <th class="py-3.5 px-6 font-semibold text-syndify-dark text-[13px] w-[15%]">Date</th>
+              <th class="py-3.5 px-6 font-semibold text-syndify-dark text-[13px] w-[25%]">Type d'opération</th>
+              <th class="py-3.5 px-6 font-semibold text-syndify-dark text-[13px] w-[30%]">Description</th>
+              <th class="py-3.5 px-6 font-semibold text-syndify-dark text-[13px] w-[15%] text-right">Montant</th>
+              <th class="py-3.5 px-6 text-center font-semibold text-syndify-dark text-[13px] w-[15%]">Document</th>
+            </tr>
+          </thead>
+          <tbody class="text-[13px] text-gray-700 font-medium">
+            <tr *ngIf="isLoading">
+              <td colspan="5" class="py-8 text-center text-syndify-accent">Chargement de l'historique...</td>
+            </tr>
+            <tr *ngIf="!isLoading && operations.length === 0">
+              <td colspan="5" class="py-8 text-center text-gray-400 italic">Aucune opération trouvée pour cet exercice.</td>
+            </tr>
+            <tr *ngFor="let op of operations" class="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
+              <td class="py-4 px-6 text-slate-500 w-[15%]">{{ op.date | date:'dd/MM/yyyy' }}</td>
+              
+              <td class="py-4 px-6 w-[25%]">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-bold" 
+                      [ngClass]="op.type === 'Encaissement' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'">
+                  <svg *ngIf="op.type === 'Encaissement'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 11l5-5m0 0l5 5m-5-5v12"></path></svg>
+                  <svg *ngIf="op.type === 'Appel de fonds'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 13l-5 5m0 0l-5-5m5 5V6"></path></svg>
+                  {{ op.type }}
+                </span>
+              </td>
+              
+              <td class="py-4 px-6 text-slate-700 font-medium w-[30%]">{{ op.description }}</td>
+              
+              <td class="py-4 px-6 text-right font-bold w-[15%]" [ngClass]="op.type === 'Encaissement' ? 'text-green-600' : 'text-syndify-dark'">
+                {{ op.type === 'Encaissement' ? '+' : '-' }} {{ op.montant | number:'1.2-2' }} DH
+              </td>
+              
+              <td class="py-4 px-6 text-center w-[15%]">
+                <button *ngIf="op.document_url" (click)="telechargerDoc(op.document_url)" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 text-gray-500 hover:bg-syndify-accent hover:text-white transition-all cursor-pointer" title="Télécharger le reçu/facture">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                </button>
+                <span *ngIf="!op.document_url" class="text-gray-300 text-[12px] italic">Aucun</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+  </div>
+</div>

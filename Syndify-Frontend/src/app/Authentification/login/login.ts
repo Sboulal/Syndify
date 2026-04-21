@@ -24,7 +24,7 @@ export class Login {
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef); 
 
-  private apiUrl = 'http://51.178.87.234:8085/api';
+  private apiUrl = 'http://nomade-cloud.com:8085/api';
 
   private getSecurityHeaders(): HttpHeaders {
     const secret = "SyndifySecretKey123";

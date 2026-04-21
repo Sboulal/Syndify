@@ -36,7 +36,6 @@ export class Cle implements OnInit {
   isDeleteModalOpen: boolean = false;
   cleToDelete: number | null = null;
 
-  // 🟢 Bach ngeddou n-st3mlo parseFloat f HTML
   parseFloat = parseFloat;
 
   constructor(
@@ -113,6 +112,9 @@ export class Cle implements OnInit {
         return {
           id_unite: lot.id,
           numero_porte: lot.numero_porte,
+          type: lot.type,         // 🟢 ZIDNA HADCHI
+          batiment: lot.batiment, // 🟢 ZIDNA HADCHI
+          etage: lot.etage,       // 🟢 ZIDNA HADCHI
           tantieme_applique: lotTrouve ? parseFloat(lotTrouve.tantieme_applied) : 0 
         };
       });
@@ -133,6 +135,9 @@ export class Cle implements OnInit {
         unites: this.tousLesLots.map(l => ({
           id_unite: l.id,
           numero_porte: l.numero_porte, 
+          type: l.type,         // 🟢 ZIDNA HADCHI
+          batiment: l.batiment, // 🟢 ZIDNA HADCHI
+          etage: l.etage,       // 🟢 ZIDNA HADCHI
           tantieme_applique: 0
         }))
       };
@@ -145,7 +150,6 @@ export class Cle implements OnInit {
     this.isAddModalOpen = false;
   }
 
-  // 🟢 HNA: L'modification dyal la sauvegarde
   enregistrerCle() {
     const totalSaisi = this.getSommeTantiemes();
     const totalAttendu = parseFloat(Number(this.cleForm.tantiemes_total).toFixed(4));
@@ -160,7 +164,7 @@ export class Cle implements OnInit {
     const payload: any = {
       propriete_id: this.proprieteId,
       nom_cle: this.cleForm.nom_cle,
-      tantiemes_total: totalAttendu, // Kan-sifto l'vrai decimal
+      tantiemes_total: totalAttendu,
       notes: this.cleForm.notes,
       unites: this.cleForm.unites
     };
@@ -188,7 +192,6 @@ export class Cle implements OnInit {
     });
   }
 
-  // 🟢 HNA: L'modification dyal la somme avec arrondi 4 chiffres
   getSommeTantiemes(): number {
     if (!this.cleForm.unites) return 0;
     const sum = this.cleForm.unites.reduce((acc: number, u: any) => acc + (parseFloat(u.tantieme_applique) || 0), 0);

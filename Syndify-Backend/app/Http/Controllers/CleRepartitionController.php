@@ -16,9 +16,10 @@ class CleRepartitionController extends Controller
 
         $cles = CleRepartition::where('propriete_id', $request->propriete_id)
             ->with(['lots' => function ($query) {
-                $query->select('units.*', 'unit_to_key.tantieme as tantieme_applied')
+                // 🟢 Zidna 'unit_to_key.key_id' bach Laravel y3ref ydir la liaison s7i7a f l'array
+               $query->select('units.*', 'unit_to_key.tantieme as tantieme_applied', 'unit_to_key.cle_repartition_id') 
                       ->with(['owners' => function ($q) {
-                          $q->where('user_owner_unit.status', 1); // Propriétaire Actif فقط
+                          $q->where('user_owner_unit.status', 1); // Propriétaire Actif uniquement
                       }]);
             }])
             ->get();
@@ -49,7 +50,7 @@ class CleRepartitionController extends Controller
             return response()->json(['success' => false, 'message' => 'Le nom de cette clé existe déjà.'], 400);
         }
 
-        // 🟢 HNA: L'modification dyal la comparaison
+        // L'arrondissement des doubles bach ntfadaw les bugs dyal les virgules
         $sommeTantiemes = round(collect($request->unites)->sum('tantieme_applique'), 4);
         $totalAttendu = round($request->tantiemes_total, 4);
 
@@ -72,9 +73,11 @@ class CleRepartitionController extends Controller
 
             $pivotData = [];
             foreach ($request->unites as $unite) {
+                // 🟢 Hna kanwjdo data l'table 'unit_to_key' (katmchi b id_unite li hwa Integer)
                 $pivotData[$unite['id_unite']] = ['tantieme' => $unite['tantieme_applique']];
             }
             
+            // 🟢 L'attach() kay-inserer f pivot table b l'ID dyal l'clé w l'ID dyal lot automatiqement
             $cle->lots()->attach($pivotData);
 
             DB::commit();
@@ -91,7 +94,7 @@ class CleRepartitionController extends Controller
     {
         $request->validate([
             'propriete_id' => 'required',
-            'scr_identifier' => 'required', 
+            'scr_identifier' => 'required', // 🟢 Hada ghaywssel l'ID Integer (Ex: 1, 2, 3) 
             'nom_cle' => 'required|string',
             'tantiemes_total' => 'required|numeric',
             'unites' => 'required|array',
@@ -111,7 +114,6 @@ class CleRepartitionController extends Controller
             return response()->json(['success' => false, 'message' => 'Le nom de cette clé existe déjà.'], 400);
         }
 
-        // 🟢 HNA: L'modification dyal la comparaison hta f modifier
         $sommeTantiemes = round(collect($request->unites)->sum('tantieme_applique'), 4);
         $totalAttendu = round($request->tantiemes_total, 4);
 
@@ -133,6 +135,7 @@ class CleRepartitionController extends Controller
                 $pivotData[$unite['id_unite']] = ['tantieme' => $unite['tantieme_applique']];
             }
 
+            // 🟢 L'sync() kaymss7 l9dam w kay7et jdad aw kaydir Update automatiqement.
             $cle->lots()->sync($pivotData);
 
             DB::commit();
@@ -149,7 +152,7 @@ class CleRepartitionController extends Controller
     {
         $request->validate([
             'propriete_id' => 'required',
-            'cle_id' => 'required'
+            'cle_id' => 'required' // 🟢 Integer
         ]);
 
         $cle = CleRepartition::where('id', $request->cle_id)
@@ -162,6 +165,7 @@ class CleRepartitionController extends Controller
 
         DB::beginTransaction();
         try {
+            // 🟢 wakha 3ndna Cascade Delete f BDD, ndiro detach() bash nkonou n9iyin f code
             $cle->lots()->detach(); 
             $cle->delete();
 

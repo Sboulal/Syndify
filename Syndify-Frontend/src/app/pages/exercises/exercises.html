@@ -1,0 +1,224 @@
+<div class="flex flex-col min-h-full font-['Poppins'] bg-syndify-bg">
+
+  <app-page-header 
+    class="shrink-0"
+    parentPath="Exercices & clôtures" 
+    currentPath="Exercices"
+    title="Exercices"
+    [statsText]="exercices.length + ' exercices au total'"
+    [statsSubText]="''">
+    
+    <button (click)="openAddModal()" class="flex items-center gap-2 px-5 py-2.5 bg-syndify-accent text-white rounded-xl text-[13px] font-semibold hover:brightness-110 transition-all cursor-pointer border-0">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg> 
+      Ouvrir un exercice
+    </button>
+  </app-page-header>
+
+  <div class="flex-1 p-6 md:p-8 flex flex-col gap-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col relative">
+      
+      <div *ngIf="activeDropdown" (click)="closeDropdown()" class="fixed inset-0 z-30 cursor-default"></div>
+
+      <div class="w-full">
+        <table class="w-full text-left border-collapse table-fixed">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[60%]">Exercice</th>
+              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[20%]">Status</th>
+              <th class="py-4 px-6 text-right font-semibold text-syndify-dark text-[13px] w-[20%]">Outils</th>
+            </tr>
+          </thead>
+          <tbody class="text-[13px] text-gray-700 font-medium">
+            
+            <tr *ngIf="isLoading">
+              <td colspan="3" class="py-8 text-center text-syndify-accent">Chargement...</td>
+            </tr>
+            <tr *ngIf="!isLoading && exercices.length === 0">
+              <td colspan="3" class="py-8 text-center text-gray-400 italic">Aucun exercice trouvé.</td>
+            </tr>
+
+            <tr *ngFor="let ex of exercices" class="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
+              
+              <td class="py-4 px-6 font-semibold text-slate-700 truncate">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                  </div>
+                  <span class="truncate">Du {{ ex.start_date | date:'dd MMMM yyyy' }} au {{ ex.end_date | date:'dd MMMM yyyy' }}</span>
+                </div>
+              </td>
+              
+              <td class="py-4 px-6">
+                <span class="inline-flex items-center px-3 py-1 rounded-md text-[11px] font-bold tracking-wide capitalize" 
+                      [ngClass]="{
+                        'bg-green-50 text-green-600': ex.status === 'Clos' || ex.status === 'clos',
+                        'bg-blue-50 text-blue-600': ex.status === 'en cours',
+                        'bg-orange-50 text-orange-600': ex.status === 'en attente' || ex.status === 'A clore'
+                      }">
+                  <span class="w-1.5 h-1.5 rounded-full mr-2" 
+                        [ngClass]="{
+                          'bg-green-500': ex.status === 'Clos' || ex.status === 'clos',
+                          'bg-blue-500': ex.status === 'en cours',
+                          'bg-orange-500': ex.status === 'en attente' || ex.status === 'A clore'
+                        }"></span>
+                  {{ ex.status }}
+                </span>
+              </td>
+              
+              <td class="py-4 px-6 text-right relative">
+                
+                <button (click)="$event.stopPropagation(); toggleDropdown(ex.se_identifier, $event)" 
+                        [ngClass]="{'bg-syndify-accent/10 text-syndify-accent': activeDropdown === ex.se_identifier}" 
+                        class="flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-syndify-dark hover:bg-gray-100 transition-all cursor-pointer ml-auto relative z-40 border-0 bg-transparent">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14a2 2 0 100-4 2 2 0 000 4zm-7 0a2 2 0 100-4 2 2 0 000 4zm14 0a2 2 0 100-4 2 2 0 000 4z"></path></svg>
+                </button>
+
+                <div *ngIf="activeDropdown === ex.se_identifier" 
+                     class="absolute right-6 mt-2 w-48 bg-white rounded-2xl border border-gray-100 py-2 z-[999] shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)] origin-top-right transition-all">
+                  
+                  <button *ngIf="ex.status === 'en cours' || ex.status === 'A clore'" (click)="$event.stopPropagation(); cloturerExercice(ex.se_identifier)" class="w-full text-left px-4 py-2.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 hover:text-syndify-accent flex items-center gap-3 transition-colors cursor-pointer border-0 bg-transparent group">
+                    <div class="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    </div>
+                    Clôturer
+                  </button>
+                  <div *ngIf="ex.status === 'en cours' || ex.status === 'A clore'" class="h-px bg-gray-50 my-1 mx-2"></div>
+                  
+                  <button (click)="$event.stopPropagation(); openEditModal(ex)" class="w-full text-left px-4 py-2.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 hover:text-syndify-accent flex items-center gap-3 transition-colors cursor-pointer border-0 bg-transparent group">
+                    <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-syndify-accent group-hover:bg-syndify-accent group-hover:text-white transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    </div>
+                    Modifier
+                  </button>
+                  <div class="h-px bg-gray-50 my-1 mx-2"></div>
+
+                  <button (click)="$event.stopPropagation(); supprimerExercice(ex.se_identifier)" class="w-full text-left px-4 py-2.5 text-[13px] font-bold text-red-500 hover:bg-red-50 flex items-center gap-3 transition-colors cursor-pointer group border-0 bg-transparent">
+                    <div class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-500 group-hover:bg-red-500 group-hover:text-white transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </div>
+                    Supprimer
+                  </button>
+
+                </div>
+              </td>
+
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="isAddModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-[#0B0F24]/50 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl w-full max-w-3xl flex flex-col max-h-[90vh] shadow-2xl overflow-hidden font-['Poppins']">
+      
+      <div class="px-8 py-5 border-b border-gray-100 flex justify-between items-center bg-white shrink-0">
+        <h3 class="text-[19px] font-bold text-syndify-dark">{{ newExercice.se_identifier ? 'Modifier l\'exercice' : 'Nouvel Exercice' }}</h3>
+        <button (click)="closeAddModal()" class="w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all border-0 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <div class="p-8 overflow-y-auto custom-scrollbar space-y-8 bg-gray-50/30">
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div>
+            <label class="text-[13px] font-bold text-gray-700 block mb-2">Début de l'exercice</label>
+            <input type="date" [(ngModel)]="newExercice.start_date" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:border-syndify-accent bg-white">
+          </div>
+          <div>
+            <label class="text-[13px] font-bold text-gray-700 block mb-2">Fin de l'exercice</label>
+            <input type="date" [(ngModel)]="newExercice.end_date" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:border-syndify-accent bg-white">
+          </div>
+          <div>
+            <label class="text-[13px] font-bold text-gray-700 block mb-2">Période</label>
+            <select [(ngModel)]="newExercice.periode" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:border-syndify-accent bg-white">
+              <option value="trimestre">Trimestriel</option>
+              <option value="quadrimestre">Quadrimestriel</option>
+              <option value="mensuel">Mensuel</option>
+            </select>
+          </div>
+        </div>
+
+        <hr class="border-gray-100">
+
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-[15px] font-bold text-syndify-dark">1. Budget Prévisionnel Total</h4>
+            <div class="flex items-center gap-2">
+                <input type="number" [(ngModel)]="newExercice.budget_previsionnel_total" placeholder="0.00" class="w-32 px-3 py-1.5 rounded-lg border border-gray-200 font-bold text-right outline-none">
+                <span class="text-[12px] font-bold text-gray-400">MAD</span>
+            </div>
+          </div>
+          
+          <div class="bg-white p-5 rounded-xl border border-gray-100 space-y-4 shadow-sm">
+             <div *ngFor="let cle of newExercice.list_cles_previsionnel" class="flex items-center justify-between gap-4">
+                <span class="text-[13.5px] text-gray-600 font-medium">{{ cle.nom }}</span>
+                <input type="number" [(ngModel)]="cle.montant" class="w-28 px-3 py-1.5 rounded-lg bg-gray-50 border-0 text-[13px] font-bold text-right outline-none">
+             </div>
+             <div class="pt-3 border-t border-dashed flex justify-end">
+                <span class="text-[12px] font-bold" [ngClass]="calculateRemaining('previsionnel') === 0 ? 'text-green-500' : 'text-orange-500'">
+                    Reste à répartir: {{ calculateRemaining('previsionnel') | number:'1.2-2' }} MAD
+                </span>
+             </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-[15px] font-bold text-syndify-dark">2. Budget Travaux Total</h4>
+            <div class="flex items-center gap-2">
+                <input type="number" [(ngModel)]="newExercice.budget_travaux_total" placeholder="0.00" class="w-32 px-3 py-1.5 rounded-lg border border-gray-200 font-bold text-right outline-none">
+                <span class="text-[12px] font-bold text-gray-400">MAD</span>
+            </div>
+          </div>
+          
+          <div class="bg-white p-5 rounded-xl border border-gray-100 space-y-4 shadow-sm">
+             <div *ngFor="let cle of newExercice.list_cles_travaux" class="flex items-center justify-between gap-4">
+                <span class="text-[13.5px] text-gray-600 font-medium">{{ cle.nom }}</span>
+                <input type="number" [(ngModel)]="cle.montant" class="w-28 px-3 py-1.5 rounded-lg bg-gray-50 border-0 text-[13px] font-bold text-right outline-none">
+             </div>
+             <div class="pt-3 border-t border-dashed flex justify-end">
+                <span class="text-[12px] font-bold" [ngClass]="calculateRemaining('travaux') === 0 ? 'text-green-500' : 'text-orange-500'">
+                    Reste à répartir: {{ calculateRemaining('travaux') | number:'1.2-2' }} MAD
+                </span>
+             </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="px-8 py-5 border-t border-gray-100 flex justify-end gap-3 bg-white shrink-0">
+        <button (click)="closeAddModal()" class="px-6 py-2.5 rounded-xl font-semibold text-[13.5px] text-gray-500 hover:bg-gray-50 transition-all border-0 bg-transparent cursor-pointer">
+          Annuler
+        </button>
+        <button (click)="submitExercice()" [disabled]="isSubmitting" class="px-8 py-2.5 bg-syndify-accent text-white rounded-xl font-bold text-[13.5px] hover:brightness-110 transition-all border-0 cursor-pointer disabled:opacity-50">
+          <span *ngIf="!isSubmitting">Enregistrer</span>
+          <span *ngIf="isSubmitting" class="flex items-center gap-2">Chargement...</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <div *ngIf="isDeleteModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-[#0B0F24]/50 backdrop-blur-sm transition-opacity p-4">
+    <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden flex flex-col font-['Poppins'] transform transition-all border border-gray-200 shadow-none">
+      <div class="p-6 text-center">
+        <div class="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        </div>
+        <h3 class="text-[18px] font-bold text-syndify-dark mb-2">Confirmer la suppression</h3>
+        <p class="text-[13px] text-gray-500 font-medium">Êtes-vous sûr de vouloir supprimer cet exercice ? Les soldes des propriétaires seront ajustés.</p>
+      </div>
+      <div class="flex justify-center gap-3 px-6 py-4 bg-gray-50/50 border-t border-gray-100 shrink-0">
+        <button (click)="closeDeleteModal()" class="w-full px-5 py-2.5 rounded-xl font-semibold text-[13px] text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer shadow-none border-0">
+          Annuler
+        </button>
+        <button (click)="confirmerSuppression()" class="w-full flex items-center justify-center gap-2 text-[13px] font-semibold px-5 py-2.5 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-all cursor-pointer border-0 shadow-none">
+          Supprimer
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

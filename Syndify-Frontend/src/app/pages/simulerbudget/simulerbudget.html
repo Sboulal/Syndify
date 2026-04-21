@@ -1,0 +1,96 @@
+<div class="flex flex-col min-h-full font-['Poppins'] bg-syndify-bg">
+
+  <app-page-header 
+    class="shrink-0 relative"
+    parentPath="Résidence les jardins" 
+    currentPath="Simuler un budget"
+    title="Simuler un budget"
+    [statsText]="''"
+    [statsSubText]="''">
+    
+    <div class="absolute left-6 right-6 md:left-8 md:right-8 flex items-center gap-6 md:gap-12">
+      
+      <div class="flex items-center gap-2">
+        <span class="text-gray-400 text-[13.5px] font-medium whitespace-nowrap">Clé de répartition :</span>
+  <div class="relative flex items-center">
+          <select [(ngModel)]="cleSelectionnee" class="appearance-none bg-transparent text-white font-bold text-[13.5px] outline-none cursor-pointer pr-5 focus:ring-0 border-none p-0 m-0">
+            <option *ngFor="let cle of listeCles" [value]="cle.id" class="text-syndify-dark bg-white">
+               {{ cle.nom }}
+            </option>
+          </select>
+          <svg class="w-3.5 h-3.5 text-white absolute right-0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="text-gray-400 text-[13.5px] font-medium">Montant :</span>
+        <div class="flex items-center">
+          <input type="number" [(ngModel)]="montantSaisi" placeholder="0.00" 
+                 class="bg-transparent border-none text-white font-bold text-[13.5px] outline-none focus:ring-0 w-24 p-0 shadow-none placeholder-gray-500">
+          <span class="text-white font-bold text-[13.5px] ml-1">MAD</span>
+        </div>
+      </div>
+
+      <button (click)="genererSimulation()" class="ml-auto flex items-center gap-2 text-[13.5px] font-bold text-white hover:text-gray-200 transition-all bg-transparent border-none outline-none cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
+        </svg>
+        Générer le résultat
+      </button>
+
+    </div>
+
+  </app-page-header>
+
+  <div class="flex-1 p-6 md:p-8 flex flex-col gap-5 overflow-visible">
+    
+    <div class="bg-white rounded-xl border border-gray-200 flex flex-col flex-1 overflow-hidden relative">
+      
+      <div class="flex gap-6 px-6 pt-4 border-b border-gray-100">
+        <button (click)="setTab('coproprietaire')" 
+                class="pb-3 text-[13px] font-bold transition-all bg-transparent border-0 cursor-pointer"
+                [ngClass]="activeTab === 'coproprietaire' ? 'text-syndify-dark border-b-[3px] border-syndify-dark' : 'text-gray-400 hover:text-gray-600 border-b-[3px] border-transparent'">
+          Par copropriétaire
+        </button>
+        <button (click)="setTab('lot')" 
+                class="pb-3 text-[13px] font-bold transition-all bg-transparent border-0 cursor-pointer"
+                [ngClass]="activeTab === 'lot' ? 'text-syndify-dark border-b-[3px] border-syndify-dark' : 'text-gray-400 hover:text-gray-600 border-b-[3px] border-transparent'">
+          Par lot
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead class="bg-gray-50/50 border-b border-gray-100">
+            <tr>
+              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px]">
+                {{ activeTab === 'coproprietaire' ? 'Nom du copropriétaire' : 'Identifiant du lot' }}
+              </th>
+              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px]">Budget</th>
+              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px]">Total</th>
+            </tr>
+          </thead>
+         <tbody class="text-[13px] text-gray-700 font-medium">
+            
+            <tr *ngIf="isLoading">
+              <td colspan="3" class="py-8 text-center text-gray-500">Chargement des données...</td>
+            </tr>
+
+            <tr *ngFor="let item of resultatsSimulation" class="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
+              <td class="py-4 px-6">{{ activeTab === 'coproprietaire' ? item.nom : item.identifiant }}</td>
+              <td class="py-4 px-6">{{ item.budget | number:'1.2-2' }} DH</td>
+              <td class="py-4 px-6 font-bold text-syndify-dark">{{ item.total | number:'1.2-2' }} DH</td>
+            </tr>
+            
+            <tr *ngIf="!isLoading && resultatsSimulation.length === 0">
+               <td colspan="3" class="py-8 text-center text-gray-400">Saisissez un montant et générez la simulation.</td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
