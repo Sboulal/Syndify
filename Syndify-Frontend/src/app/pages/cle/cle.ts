@@ -13,13 +13,13 @@ import { LotService } from '../../services/lot';
 })
 export class Cle implements OnInit {
   
-  proprieteId: string = 'SP-1775215295'; 
   currentTab: 'lots' | 'coproprietaires' = 'lots';
   isLoading: boolean = false;
   activeDropdown: string | number | null = null;
   
   clesList: any[] = []; 
   lignesTableau: any[] = []; 
+  residenceInfo = { nom: '...', adresse: '...' };
   
   isAddModalOpen: boolean = false;
   isSaving: boolean = false;
@@ -55,25 +55,34 @@ export class Cle implements OnInit {
   chargerDonnees() {
     this.isLoading = true;
     
-    this.lotService.getListe(this.proprieteId).subscribe({
-      next: (res) => {
+    // 1. Njbdou l-lots
+    this.lotService.getListe().subscribe({
+      next: (res: any) => {
         if (res.success) this.tousLesLots = res.data;
       },
-      error: (err) => console.error('Erreur API Lot :', err)
+      error: (err: any) => console.error('Erreur API Lot :', err)
     });
 
-    this.cleService.getListe(this.proprieteId).subscribe({
+    // 2. Njbdou les Clés
+    this.cleService.getListe().subscribe({
       next: (res: any) => {
         if (res.success) {
           this.clesList = res.data;
+          
+          // 🟢 FIX: 7et d-data dyal l-backend f l-variable lli m-liyya m3a l-Header
+          if (res.residence) {
+            this.residenceInfo = res.residence;
+          }
+          
           this.formaterTableau();
         }
         this.isLoading = false;
         this.cdr.detectChanges();
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Erreur API Cle :', err);
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -112,9 +121,9 @@ export class Cle implements OnInit {
         return {
           id_unite: lot.id,
           numero_porte: lot.numero_porte,
-          type: lot.type,         // 🟢 ZIDNA HADCHI
-          batiment: lot.batiment, // 🟢 ZIDNA HADCHI
-          etage: lot.etage,       // 🟢 ZIDNA HADCHI
+          type: lot.type,        
+          batiment: lot.batiment, 
+          etage: lot.etage,       
           tantieme_applique: lotTrouve ? parseFloat(lotTrouve.tantieme_applied) : 0 
         };
       });
@@ -135,9 +144,9 @@ export class Cle implements OnInit {
         unites: this.tousLesLots.map(l => ({
           id_unite: l.id,
           numero_porte: l.numero_porte, 
-          type: l.type,         // 🟢 ZIDNA HADCHI
-          batiment: l.batiment, // 🟢 ZIDNA HADCHI
-          etage: l.etage,       // 🟢 ZIDNA HADCHI
+          type: l.type,        
+          batiment: l.batiment, 
+          etage: l.etage,       
           tantieme_applique: 0
         }))
       };
@@ -162,7 +171,6 @@ export class Cle implements OnInit {
     this.isSaving = true;
     
     const payload: any = {
-      propriete_id: this.proprieteId,
       nom_cle: this.cleForm.nom_cle,
       tantiemes_total: totalAttendu,
       notes: this.cleForm.notes,
@@ -185,7 +193,7 @@ export class Cle implements OnInit {
         }
         this.isSaving = false;
       },
-      error: (err) => {
+      error: (err: any) => {
         alert(err.error?.message || "Une erreur s'est produite.");
         this.isSaving = false;
       }
@@ -196,6 +204,13 @@ export class Cle implements OnInit {
     if (!this.cleForm.unites) return 0;
     const sum = this.cleForm.unites.reduce((acc: number, u: any) => acc + (parseFloat(u.tantieme_applique) || 0), 0);
     return parseFloat(sum.toFixed(4)); 
+  }
+
+  // 🟢 L-FONCTION JDIDA HNA
+  formatLotId(id: any): string {
+    if (!id) return '';
+    const visualId = Number(id) + 845752; 
+    return 'LOT-' + visualId.toString().padStart(8, '0');
   }
 
   supprimerCle(id: number) {
@@ -212,14 +227,14 @@ export class Cle implements OnInit {
   confirmerSuppression() {
     if (!this.cleToDelete) return;
 
-    this.cleService.supprimer(this.proprieteId, this.cleToDelete).subscribe({
+    this.cleService.supprimer(this.cleToDelete).subscribe({
       next: (res: any) => {
         if (res.success) {
           this.closeDeleteModal();
           this.chargerDonnees();
         }
       },
-      error: (err) => alert("Erreur lors de la suppression.")
+      error: (err: any) => alert("Erreur lors de la suppression.")
     });
   }
 

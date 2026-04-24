@@ -13,6 +13,7 @@ import { SimulationBudget } from './pages/simulerbudget/simulerbudget';
 import { BudgetsOperations } from './pages/budgetsdepenses/budgetsdepenses';
 import { Appelsfonds } from './pages/appelsfonds/appelsfonds';
 import { AppelsFondsDetails } from './pages/appels-fonds-details/appels-fonds-details';
+import { Cloturedetails } from './pages/cloturedetails/cloturedetails';
 
 export const routes: Routes = [
   // ==========================================
@@ -45,7 +46,8 @@ export const routes: Routes = [
       {path : 'budgets-depenses', component: BudgetsOperations},
       {path : 'appels-de-fonds', component: Appelsfonds},
       { path: 'financement/appels-fonds/details/:id', component: AppelsFondsDetails },
-      { path: 'financement/appels-fonds/details/:id', component: Appelsfonds }
+      { path: 'financement/appels-fonds/details/:id', component: Appelsfonds },
+      { path: 'exercices/cloture/:id', component: Cloturedetails },
       
       
       // { path: 'documents', component: DocumentsComponent },

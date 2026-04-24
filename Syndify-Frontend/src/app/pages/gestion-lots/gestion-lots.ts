@@ -14,10 +14,11 @@ import { FormsModule } from '@angular/forms';
 })
 export class GestionLots implements OnInit {
   
-  proprieteId: string = '';
+
   lots: any[] = []; 
   listCoproprietaires: any[] = []; 
   isLoading: boolean = false;
+  residenceInfo = { nom: '...', adresse: '...' };
 
   isModalOpen: boolean = false;
   activeDropdown: number | null = null;
@@ -58,17 +59,16 @@ export class GestionLots implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.proprieteId = 'SP-1775215295'; 
-    console.log('🟢 [ngOnInit] Démarrage... Propriété ID:', this.proprieteId);
+    console.log('🟢 [ngOnInit] Démarrage de Gestion des Lots...');
     this.chargerLots(); 
     this.chargerUsers(); 
   }
 
   chargerUsers() {
     console.log('⏳ [chargerUsers] Chargement des copropriétaires...');
-    this.coproprietaireService.getListe(this.proprieteId, 'tous').subscribe({
+    // 🟢 Modifier l-appel bach y-wafi l-service jdid
+    this.coproprietaireService.getListe('tous').subscribe({
       next: (res: any) => {
-        console.log('📦 [chargerUsers] Réponse Backend:', res);
         if (res.success) {
           this.listCoproprietaires = res.data;
         }
@@ -92,34 +92,19 @@ export class GestionLots implements OnInit {
   }
 
   chargerLots() {
-    if (!this.proprieteId) return;
     this.isLoading = true;
-    this.cdr.detectChanges(); 
-    
-    console.log('⏳ [chargerLots] Chargement des lots depuis le Backend...');
-    this.lotService.getListe(this.proprieteId).subscribe({
+    this.lotService.getListe().subscribe({
       next: (res: any) => {
-        console.log('📦 [chargerLots] Réponse Backend:', res);
         if (res.success) {
-          this.lots = res.data.map((lot: any) => {
-            const randomNum = Math.floor(10000000 + Math.random() * 90000000);
-            lot.random_ref = 'SB-' + randomNum;
-            return lot;
-          });
-          console.log('✅ [chargerLots] Lots formatés:', this.lots);
+          this.lots = res.data;
+          // 🟢 Cheddi s-smiya d-bsse7 mn l-Backend!
+          this.residenceInfo = res.residence;
         }
         this.isLoading = false;
-        this.cdr.detectChanges(); 
-      },
-      error: (err: any) => {
-        console.error('❌ [chargerLots] Erreur Backend:', err);
-        this.isLoading = false;
-        this.showToast("Erreur lors du chargement des lots.", 'error'); 
-        this.cdr.detectChanges(); 
+        this.cdr.detectChanges();
       }
     });
   }
-
   toggleDropdown(lotId: number, event: Event) {
     event.stopPropagation();
     this.activeDropdown = this.activeDropdown === lotId ? null : lotId;
@@ -135,12 +120,11 @@ export class GestionLots implements OnInit {
 
   openModal(lotAModifier: any = null) {
     this.activeDropdown = null;
-    console.log('🟢 [openModal] Clic sur Ajouter/Modifier. Données reçues:', lotAModifier);
     
     if (lotAModifier) {
       let currentOwnerId = null;
       if (lotAModifier.owners && lotAModifier.owners.length > 0) {
-          currentOwnerId = lotAModifier.owners[0].user_id || lotAModifier.owners[0].id; // 🟢 T2kedi mn l'ID wach user_id wla id
+          currentOwnerId = lotAModifier.owners[0].user_id || lotAModifier.owners[0].id; 
       }
 
       this.lotForm = {
@@ -153,13 +137,11 @@ export class GestionLots implements OnInit {
         owner_id: currentOwnerId,
         owner_status: 'Actif'
       };
-      console.log('📝 [openModal] Mode Modification. Formulaire initialisé:', this.lotForm);
     } else {
       this.lotForm = { 
         id: null, type: 'Appartement', batiment: '', etage: '', numero_porte: '', random_ref: '',
         owner_id: null, owner_status: 'Actif' 
       };
-      console.log('📝 [openModal] Mode Ajout. Formulaire vidé:', this.lotForm);
     }
     
     this.isModalOpen = true;
@@ -186,21 +168,18 @@ export class GestionLots implements OnInit {
     if (!this.newOwner.nom || !this.newOwner.email) return;
 
     this.isAddingOwner = true;
-    console.log('🚀 [ajouterProprietaire] Envoi au Backend:', this.newOwner);
     this.cdr.detectChanges();
 
-    this.coproprietaireService.ajouter(this.proprieteId, this.newOwner).subscribe({
+    // 🔴 7iyedna proprieteId
+    this.coproprietaireService.ajouter(this.newOwner).subscribe({
       next: (res: any) => {
-        console.log('✅ [ajouterProprietaire] Réponse:', res);
         if (res.success) {
-          // Recharger les users
-          this.coproprietaireService.getListe(this.proprieteId, 'tous').subscribe({
+          this.coproprietaireService.getListe('tous').subscribe({
             next: (resList: any) => {
               if (resList.success) {
                 this.listCoproprietaires = resList.data;
                 if (resList.data && resList.data.length > 0) {
                   this.lotForm.owner_id = resList.data[0].user_id || resList.data[0].id; 
-                  console.log('🎯 [ajouterProprietaire] Nouveau proprio auto-sélectionné:', this.lotForm.owner_id);
                 }
               }
             }
@@ -212,7 +191,6 @@ export class GestionLots implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err: any) => {
-        console.error('❌ [ajouterProprietaire] Erreur Backend:', err);
         this.showToast(err.error?.message || "Erreur lors de l'ajout.", 'error');
         this.isAddingOwner = false;
         this.cdr.detectChanges();
@@ -227,7 +205,7 @@ export class GestionLots implements OnInit {
     }
 
     const payload = {
-      propriete_id: this.proprieteId,
+      // 🔴 7iyedna proprieteId mn l-payload
       type: this.lotForm.type,
       batiment: this.lotForm.batiment,
       etage: this.lotForm.etage,
@@ -238,13 +216,10 @@ export class GestionLots implements OnInit {
       ...(this.lotForm.id && { lot_id: this.lotForm.id }) 
     };
 
-    console.log('🚀 [enregistrerLot] Envoi au Backend du Payload:', payload);
-
     const action = this.lotForm.id ? this.lotService.modifier(payload) : this.lotService.ajouter(payload);
 
     action.subscribe({
       next: (res: any) => {
-        console.log('✅ [enregistrerLot] Réponse Backend:', res);
         if (res.success) {
           this.closeModal(); 
           this.chargerLots(); 
@@ -252,22 +227,25 @@ export class GestionLots implements OnInit {
         }
       },
       error: (err: any) => {
-        console.error('❌ [enregistrerLot] Erreur Backend:', err);
         this.showToast(err.error?.message || "Une erreur est survenue.", 'error'); 
       }
     });
   }
 
-  formatLotId(id: any): string {
+formatLotId(id: any): string {
     if (!id) return '';
-    return 'SB-' + id.toString().padStart(8, '0');
+    
+    // 🟢 FIX: N-zidou base kbira (matalan 845752) 3la l-ID l-asli
+    // Bash ila kan l-ID f MySQL hwa 32, ghadi y-wlli 845784 f l-Affichage
+    const visualId = Number(id) + 845752; 
+    
+    return 'LOT-' + visualId.toString().padStart(8, '0');
   }
 
   supprimerLot(lot: any) {
     this.closeDropdown();
     this.lotToDelete = lot;
     this.isDeleteModalOpen = true;
-    console.log('🗑️ [supprimerLot] Préparation à la suppression du lot:', lot);
     this.cdr.detectChanges();
   }
 
@@ -280,11 +258,9 @@ export class GestionLots implements OnInit {
   confirmerSuppression() {
     if (!this.lotToDelete) return;
     
-    console.log('🚀 [confirmerSuppression] Envoi de la requête de suppression pour ID:', this.lotToDelete.id);
-
-    this.lotService.supprimer(this.proprieteId, this.lotToDelete.id).subscribe({
+    // 🔴 7iyedna proprieteId
+    this.lotService.supprimer(this.lotToDelete.id).subscribe({
       next: (res: any) => {
-        console.log('✅ [confirmerSuppression] Réponse Backend:', res);
         if (res.success) {
           this.chargerLots(); 
           this.showToast("Lot supprimé avec succès.", 'success');
@@ -292,7 +268,6 @@ export class GestionLots implements OnInit {
         }
       },
       error: (err: any) => {
-        console.error('❌ [confirmerSuppression] Erreur Backend:', err);
         this.showToast(err.error?.message || "Erreur lors de la suppression.", 'error');
         this.closeDeleteModal();
       }

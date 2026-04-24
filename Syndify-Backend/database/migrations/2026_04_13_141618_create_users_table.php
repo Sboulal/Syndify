@@ -6,24 +6,25 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-    $table->id(); 
-    $table->string('full_name');
-    $table->string('email')->unique(); // 🟢 HADA HWA L'MOHIM
-    $table->string('tel')->nullable();
-    $table->string('password');
-    $table->timestamps();
-});
+            $table->id(); 
+            $table->string('identifier')->nullable()->unique(); // L'identifiant (SU-...)
+            $table->string('full_name');
+            $table->string('email')->unique();
+            $table->string('tel')->nullable(); // Awla smitiha phone
+            
+            // 🟢 Colonnes dyal l-OTP (BLA password)
+            $table->string('activation_code')->nullable();
+            $table->timestamp('otp_expires_at')->nullable();
+            $table->boolean('agreed_on_terms')->default(false);
+            $table->string('status')->default('En attente d’activation');
+            
+            $table->timestamps();
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('users');

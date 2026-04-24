@@ -2,7 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PageHeader } from '../../components/page-header/page-header';
-import { HttpClient } from '@angular/common/http'; // 🟢 Zidna HttpClient bach n-3eytou l-API
+import { HttpClient } from '@angular/common/http'; 
 
 @Component({
   selector: 'app-simulation-budget',
@@ -14,12 +14,13 @@ export class SimulationBudget implements OnInit {
   
   proprieteId: string = '';
   montantSaisi: number | null = null;
-  cleSelectionnee: string = ''; // 🟢 Khass t-bda khawya bach t-ched l-lowla mn l-API
+  cleSelectionnee: string = ''; 
   activeTab: 'coproprietaire' | 'lot' = 'coproprietaire';
 
   isLoading: boolean = false;
-  listeCles: any[] = []; // 🟢 Hna ghadi n-khebiw ga3 l-data lli jat mn Laravel
+  listeCles: any[] = []; 
   resultatsSimulation: any[] = [];
+  residenceInfo = { nom: '...', adresse: '...' };
 
   constructor(
     private http: HttpClient,
@@ -27,109 +28,117 @@ export class SimulationBudget implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.proprieteId = localStorage.getItem('active_propriete_id') || 'SP-1775215295';
+    // 🟢 FIX HNA: L-ID d-bsse7 lli lqina f la base de données
+    this.proprieteId = localStorage.getItem('active_propriete_id') || 'SP-87248712';
     this.chargerDonneesSimulation();
   }
 
-// ==========================================
-  // 1. RÉCUPÉRATION DES DONNÉES API (FIX POST)
-  // ==========================================
   chargerDonneesSimulation() {
-    this.isLoading = true;
+   this.isLoading = true;
+    const apiUrl = `http://nomade-cloud.com:8085/api/simulation/charger`; 
     
-    // 🟢 L-URL bla l-paramètre, 7it ghadi n-siftouh f l-payload
-    const apiUrl = `http://nomade-cloud.com:8085/api/simulation/charger`;
-    
-    // 🟢 N-wejdo l-Payload (ID dyal Propriété)
-    const payload = {
-        sp_identifier: this.proprieteId
-    };
-
-    // 🟢 Derna .post blast .get
-    this.http.post(apiUrl, payload).subscribe({
+    // 🟢 FIX HNA: Rje3na kan-ssiftou {} khawya bash l-Backend y-jbed l-ID b-rasso dima
+    this.http.post(apiUrl, {}).subscribe({
       next: (res: any) => {
-        if (res.success && res.data.length > 0) {
-          this.listeCles = res.data;
-          this.cleSelectionnee = this.listeCles[0].id; // N-selectionniw l-clé l-lowla par défaut
-          console.log('✅ Données de simulation chargées:', this.listeCles);
+        if (res.success) {
+          // 🟢 Synchronisation mn l-Backend
+          if (res.residence) {
+            this.residenceInfo = res.residence;
+          }
+
+          if (res.data && res.data.length > 0) {
+            this.listeCles = res.data;
+            
+            const savedMontant = localStorage.getItem('sim_montant');
+            const savedCle = localStorage.getItem('sim_cle');
+            
+            if (savedMontant && savedCle) {
+                this.montantSaisi = Number(savedMontant);
+                this.cleSelectionnee = savedCle;
+                this.genererSimulation(); 
+            } else {
+                this.cleSelectionnee = this.listeCles[0].id;
+            }
+          }
         }
         this.isLoading = false;
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('❌ Erreur API:', err);
+        console.error('❌ Erreur API Simulation:', err);
         this.isLoading = false;
-        alert("Erreur de connexion au serveur.");
+        this.cdr.detectChanges();
       }
     });
   }
 
   setTab(tab: 'coproprietaire' | 'lot') {
     this.activeTab = tab;
-    if (this.montantSaisi) {
-       this.genererSimulation(); // N-3awdou l-calcul ila beddelna l-Tab
+    if (this.montantSaisi && this.cleSelectionnee) {
+       this.genererSimulation(); 
     }
   }
 
-  // ==========================================
-  // 2. GÉNÉRER LE CALCUL
-  // ==========================================
   genererSimulation() {
     if (!this.montantSaisi || !this.cleSelectionnee) {
         alert("Veuillez saisir un montant et sélectionner une clé.");
         return;
     }
 
-    console.log(`🚀 Simulation en cours: ${this.montantSaisi} DH sur la clé ID: ${this.cleSelectionnee}`);
-
-    // N-jebdou l-data dyal l-clé lli khtar l-utilisateur
     const cleActuelle = this.listeCles.find(c => c.id == this.cleSelectionnee);
     if (!cleActuelle || !cleActuelle.lots) return;
 
     this.resultatsSimulation = [];
 
-    // 🟢 LOGIQUE DYAL L-CALCUL
     if (this.activeTab === 'lot') {
-        
-        // Affichage par Lot (Sahl, kol lot w l-7a9 dyalo)
         this.resultatsSimulation = cleActuelle.lots.map((lot: any) => {
-            const part = this.montantSaisi! * (lot.tantieme / lot.tantiemes_total);
+            const part = this.montantSaisi! * (Number(lot.tantieme) / Number(lot.tantiemes_total));
+            
+            const typeBien = lot.type || 'Appartement';
+            const numPorte = lot.numero_porte || lot.lot_id || lot.id;
+            const nomCompletBien = `${typeBien} ${numPorte}`;
+
             return {
-                identifiant: lot.lot_identifiant || `Lot ${lot.lot_id}`,
+                identifiant: nomCompletBien,
                 budget: part,
                 total: part
             };
         });
-
-    } else if (this.activeTab === 'coproprietaire') {
-        
-        // Affichage par Copropriétaire (Khassna n-jem3ou l-lots dyal nfs chakhs)
+    }
+    else if (this.activeTab === 'coproprietaire') {
         const mapProprietaires = new Map<string, any>();
 
         cleActuelle.lots.forEach((lot: any) => {
-            const part = this.montantSaisi! * (lot.tantieme / lot.tantiemes_total);
-            const ownerId = lot.owner_id || 'sans-proprio';
+            const part = this.montantSaisi! * (Number(lot.tantieme) / Number(lot.tantiemes_total));
+            const ownerId = lot.owner_id ? lot.owner_id.toString() : 'sans-proprio';
             const ownerName = lot.owner_name || 'Sans propriétaire';
 
             if (mapProprietaires.has(ownerId)) {
-                // Ila kanch 3ndo lot akhor, n-zidouh 3la l-9dim
                 const existant = mapProprietaires.get(ownerId);
                 existant.budget += part;
-                existant.total += part;
+                existant.total += part; 
             } else {
-                // Ila awel merra n-l9awh
                 mapProprietaires.set(ownerId, {
                     nom: ownerName,
                     budget: part,
-                    total: part
+                    total: part 
                 });
             }
         });
-
-        // N-rddouh tableau bach y-ban f HTML
         this.resultatsSimulation = Array.from(mapProprietaires.values());
     }
 
+    localStorage.setItem('sim_montant', this.montantSaisi.toString());
+    localStorage.setItem('sim_cle', this.cleSelectionnee.toString());
+
     this.cdr.detectChanges();
+  }
+
+  formatLotId(id: any): string {
+    if (!id) return '';
+    const cleanId = String(id).replace(/\D/g, ''); 
+    if (!cleanId) return String(id); 
+    const visualId = Number(cleanId) + 845752; 
+    return 'LOT-' + visualId.toString().padStart(8, '0');
   }
 }

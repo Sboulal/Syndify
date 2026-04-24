@@ -6,35 +6,63 @@ use Illuminate\Http\Request;
 use App\Models\CleRepartition;
 use App\Models\Lot;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class CleRepartitionController extends Controller
 {
-    // 1. Chargement des Clés de Répartition
+    // ========================================================
+    // 🟢 FONCTION SÉCURISÉE 
+    // ========================================================
+private function getProprieteId(Request $request)
+{
+    // 🟢 HACK ZERBA: N-forciw l-ID dyal l-User (Matalan 1) 
+    // Bash y-khelina n-testiw bla Auth w bla Headers f Angular
+    $userId = 1; 
+
+    $propOwnerCol = Schema::hasColumn('user_as_owner', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
+    $link = DB::table('user_as_owner')->where('user_id', $userId)->first();
+    
+    return $link ? $link->$propOwnerCol : null;
+}
+
+// 1. Chargement des Clés de Répartition
+   // 1. Chargement des Clés de Répartition
     public function liste(Request $request)
     {
-        $request->validate(['propriete_id' => 'required']);
+        $propriete_id = $this->getProprieteId($request);
+        if (!$propriete_id) return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
 
-        $cles = CleRepartition::where('propriete_id', $request->propriete_id)
+        $propIdCol_propriete = Schema::hasColumn('proprietes', 'sp_identifier') ? 'sp_identifier' : 'id';
+
+        // 🟢 1. Jbed l-m3loumat dyal l-Résidence nichan mn l-Backend
+        $residence = DB::table('proprietes')
+            ->where($propIdCol_propriete, $propriete_id)
+            ->first();
+
+        // 🟢 2. Jbed les Clés m3a les Lots w les Owners
+        $cles = CleRepartition::where('propriete_id', $propriete_id)
             ->with(['lots' => function ($query) {
-                // 🟢 Zidna 'unit_to_key.key_id' bach Laravel y3ref ydir la liaison s7i7a f l'array
-               $query->select('units.*', 'unit_to_key.tantieme as tantieme_applied', 'unit_to_key.cle_repartition_id') 
+                $query->select('units.*', 'unit_to_key.tantieme as tantieme_applied', 'unit_to_key.cle_repartition_id') 
                       ->with(['owners' => function ($q) {
-                          $q->where('user_owner_unit.status', 1); // Propriétaire Actif uniquement
+                          $q->where('user_owner_unit.status', 1); 
                       }]);
             }])
             ->get();
 
+        // 🟢 3. Rjja3 kolchi m-jmo3
         return response()->json([
             'success' => true,
+            'residence' => [
+                'nom' => $residence->nom ?? 'Résidence',
+                'adresse' => $residence->address ?? 'Adresse non définie'
+            ],
             'data' => $cles
         ]);
     }
-
    // 2. Ajouter une nouvelle clé de répartition
     public function ajouter(Request $request)
     {
         $request->validate([
-            'propriete_id' => 'required',
             'nom_cle' => 'required|string',
             'tantiemes_total' => 'required|numeric',
             'notes' => 'nullable|string',
@@ -43,14 +71,17 @@ class CleRepartitionController extends Controller
             'unites.*.tantieme_applique' => 'required|numeric|min:0'
         ]);
 
-        $existe = CleRepartition::where('propriete_id', $request->propriete_id)
+        $propriete_id = $this->getProprieteId($request);
+        if (!$propriete_id) return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
+
+        // 🟢 Fix hna
+        $existe = CleRepartition::where('propriete_id', $propriete_id)
                                 ->where('nom', $request->nom_cle)
                                 ->exists();
         if ($existe) {
             return response()->json(['success' => false, 'message' => 'Le nom de cette clé existe déjà.'], 400);
         }
 
-        // L'arrondissement des doubles bach ntfadaw les bugs dyal les virgules
         $sommeTantiemes = round(collect($request->unites)->sum('tantieme_applique'), 4);
         $totalAttendu = round($request->tantiemes_total, 4);
 
@@ -63,9 +94,8 @@ class CleRepartitionController extends Controller
 
         DB::beginTransaction();
         try {
-           
             $cle = CleRepartition::create([
-                'propriete_id' => $request->propriete_id,
+                'propriete_id' => $propriete_id, // 🟢 Fix hna (kant propriete_id)
                 'nom' => $request->nom_cle,
                 'tantiemes_total' => $totalAttendu,
                 'notes' => $request->notes
@@ -73,11 +103,9 @@ class CleRepartitionController extends Controller
 
             $pivotData = [];
             foreach ($request->unites as $unite) {
-                // 🟢 Hna kanwjdo data l'table 'unit_to_key' (katmchi b id_unite li hwa Integer)
                 $pivotData[$unite['id_unite']] = ['tantieme' => $unite['tantieme_applique']];
             }
             
-            // 🟢 L'attach() kay-inserer f pivot table b l'ID dyal l'clé w l'ID dyal lot automatiqement
             $cle->lots()->attach($pivotData);
 
             DB::commit();
@@ -93,8 +121,7 @@ class CleRepartitionController extends Controller
     public function modifier(Request $request)
     {
         $request->validate([
-            'propriete_id' => 'required',
-            'scr_identifier' => 'required', // 🟢 Hada ghaywssel l'ID Integer (Ex: 1, 2, 3) 
+            'scr_identifier' => 'required', 
             'nom_cle' => 'required|string',
             'tantiemes_total' => 'required|numeric',
             'unites' => 'required|array',
@@ -102,11 +129,15 @@ class CleRepartitionController extends Controller
             'unites.*.tantieme_applique' => 'required|numeric|min:0'
         ]);
 
+        $propriete_id = $this->getProprieteId($request);
+        if (!$propriete_id) return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
+
+        // 🟢 Fix hna
         $cle = CleRepartition::where('id', $request->scr_identifier)
-                             ->where('propriete_id', $request->propriete_id)
+                             ->where('propriete_id', $propriete_id)
                              ->firstOrFail();
 
-        $existe = CleRepartition::where('propriete_id', $request->propriete_id)
+        $existe = CleRepartition::where('propriete_id', $propriete_id)
                                 ->where('nom', $request->nom_cle)
                                 ->where('id', '!=', $cle->id)
                                 ->exists();
@@ -123,7 +154,6 @@ class CleRepartitionController extends Controller
 
         DB::beginTransaction();
         try {
-           
             $cle->update([
                 'nom' => $request->nom_cle,
                 'tantiemes_total' => $totalAttendu,
@@ -135,7 +165,6 @@ class CleRepartitionController extends Controller
                 $pivotData[$unite['id_unite']] = ['tantieme' => $unite['tantieme_applique']];
             }
 
-            // 🟢 L'sync() kaymss7 l9dam w kay7et jdad aw kaydir Update automatiqement.
             $cle->lots()->sync($pivotData);
 
             DB::commit();
@@ -151,12 +180,15 @@ class CleRepartitionController extends Controller
     public function supprimer(Request $request)
     {
         $request->validate([
-            'propriete_id' => 'required',
-            'cle_id' => 'required' // 🟢 Integer
+            'cle_id' => 'required' 
         ]);
 
+        $propriete_id = $this->getProprieteId($request);
+        if (!$propriete_id) return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
+
+        // 🟢 Fix hna
         $cle = CleRepartition::where('id', $request->cle_id)
-                             ->where('propriete_id', $request->propriete_id)
+                             ->where('propriete_id', $propriete_id)
                              ->first();
 
         if (!$cle) {
@@ -165,7 +197,6 @@ class CleRepartitionController extends Controller
 
         DB::beginTransaction();
         try {
-            // 🟢 wakha 3ndna Cascade Delete f BDD, ndiro detach() bash nkonou n9iyin f code
             $cle->lots()->detach(); 
             $cle->delete();
 

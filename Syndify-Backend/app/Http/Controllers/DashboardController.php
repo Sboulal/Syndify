@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -12,20 +13,31 @@ class DashboardController extends Controller
     public function getDashboardData(Request $request)
     {
         $request->validate([
-            'sp_identifier' => 'required|string',
-            'user_id' => 'required|integer',
+            'user_id' => 'required',
             'role' => 'required|string'
         ]);
 
-        $sp_id = $request->sp_identifier;
         $role = strtolower($request->role);
-        $user_id = $request->user_id;
+        $user_id = $request->user_id; 
 
         try {
+            $userPk = Schema::hasColumn('users', 'identifier') ? 'identifier' : 'id';
+            $userNameCol = Schema::hasColumn('users', 'full_name') ? 'full_name' : 'name';
+            $propOwnerCol = Schema::hasColumn('user_as_owner', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
+            $propIdCol = Schema::hasColumn('proprietes', 'sp_identifier') ? 'sp_identifier' : 'id';
+            $exPropCol = Schema::hasColumn('exercices', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
+
+            $link = DB::table('user_as_owner')->where('user_id', $user_id)->first();
+            if (!$link) {
+                return response()->json(['success' => false, 'message' => 'Utilisateur non lié à une résidence.']);
+            }
+            
+            $sp_id = $link->$propOwnerCol; 
+
             // 1. Njbdou l-Propriété w l-Exercice courant
-            $propriete = DB::table('proprietes')->where('sp_identifier', $sp_id)->first();
+            $propriete = DB::table('proprietes')->where($propIdCol, $sp_id)->first();
             $exercice = DB::table('exercices')
-                          ->where('sp_identifier', $sp_id)
+                          ->where($exPropCol, $sp_id)
                           ->whereIn('status', ['en cours', 'en attente'])
                           ->first();
 
@@ -33,21 +45,18 @@ class DashboardController extends Controller
                 return response()->json(['success' => false, 'message' => 'Aucun exercice actif trouvé.']);
             }
 
-            // 2. Njbdou l-Budgets Planifiés
+            // 2. Njbdou l-Budgets 
             $budgetPrev = DB::table('charges_previsionnelles')
                 ->where('se_identifier', $exercice->se_identifier)
-                ->where('type', 'planifie')
                 ->first();
             
             $budgetTravaux = DB::table('charges_travaux')
                 ->where('se_identifier', $exercice->se_identifier)
-                ->where('type', 'planifie')
                 ->first();
 
             $totalBudget = ($budgetPrev ? $budgetPrev->budget : 0) + ($budgetTravaux ? $budgetTravaux->budget : 0);
             
-            // N7ssbou l-dépenses totales
-            $totalDepenses = DB::table('depenses')->where('se_identifier', $exercice->se_identifier)->sum('montant');
+            $totalDepenses = DB::table('depenses')->where('se_identifier', $exercice->se_identifier)->sum('amount');
             $pourcentage = $totalBudget > 0 ? round(($totalDepenses / $totalBudget) * 100) : 0;
 
             // 3. Trimestres (Consommation)
@@ -63,7 +72,7 @@ class DashboardController extends Controller
                     $depensesTrimestre = DB::table('depenses')
                         ->where('se_identifier', $exercice->se_identifier)
                         ->whereBetween('created_at', [$debutTrimestre, $finTrimestre]) 
-                        ->sum('montant');
+                        ->sum('amount');
 
                     $pourcentageTrimestre = $budgetParTrimestre > 0 ? round(($depensesTrimestre / $budgetParTrimestre) * 100) : 0;
 
@@ -75,12 +84,15 @@ class DashboardController extends Controller
                 }
             }
 
-            // 4. Événements récents (Moins de 5 jours)
+            // 4. Événements récents 
             $dateLimite = Carbon::now()->subDays(5);
-            $evenements = DB::table('assemblees')
-                ->where('sp_identifier', $sp_id)
-                ->where('date_assemblee', '>=', $dateLimite)
-                ->get();
+            $evenements = [];
+            if (Schema::hasTable('assemblees')) {
+                $evenements = DB::table('assemblees')
+                    ->where('propriete_id', $sp_id)
+                    ->where('date_assemblee', '>=', $dateLimite)
+                    ->get();
+            }
 
             // 5. Soldes 3la 7ssab l-Rôle
             $soldes = [];
@@ -88,34 +100,47 @@ class DashboardController extends Controller
 
             if ($role === 'syndic') {
                 $soldesDb = DB::table('user_as_owner')
-                    ->join('users', 'user_as_owner.user_id', '=', 'users.id')
-                    ->where('user_as_owner.propriete_id', $propriete ? $propriete->id : 1)
-                    ->select('users.id', 'users.full_name as nom', 'user_as_owner.solde')
+                    ->join('users', 'user_as_owner.user_id', '=', 'users.id') 
+                    ->where('user_as_owner.' . $propOwnerCol, $sp_id)
+                    ->select('users.' . $userPk . ' as display_id', 'users.' . $userNameCol . ' as nom', 'users.email', 'user_as_owner.*')
                     ->limit(5)
                     ->get();
 
                 foreach ($soldesDb as $s) {
+                    $soldeTotal = $s->balance_prev ?? $s->solde ?? 0; 
+                    
+                    // 🟢 FIX 1 HNA: N-7iydou les strings (SU-...) w n-khdmo dima b user_id (Raqm) + Base 845752
+                    $visualId = (int)$s->user_id + 845752;
+                    $finalId = 'COP-' . str_pad($visualId, 8, '0', STR_PAD_LEFT);
+
                     $soldes[] = [
-                        'id' => 'COP-' . str_pad($s->id, 4, '0', STR_PAD_LEFT),
-                        'nom' => $s->nom ?: 'Sans Nom',
-                        'solde' => number_format($s->solde, 2, '.', ' '),
-                        'isNegatif' => $s->solde < 0,
-                        'action' => $s->solde < 0 ? 'Relancer' : ''
+                        'id' => $finalId,
+                        'nom' => $s->nom ?: $s->email,
+                        'solde' => number_format((float)$soldeTotal, 2, '.', ' '),
+                        'isNegatif' => $soldeTotal < 0,
+                        'action' => $soldeTotal < 0 ? 'Relancer' : ''
                     ];
-                    if ($s->solde < 0) $totalDu += abs($s->solde);
+                    if ($soldeTotal < 0) $totalDu += abs($soldeTotal);
                 }
-            } else {
+            } 
+            else {
                 // Propriétaire
-                $monSolde = DB::table('user_as_owner')->where('user_id', $user_id)->first();
+                $monSolde = DB::table('user_as_owner')->where('user_id', $user_id)->where($propOwnerCol, $sp_id)->first();
                 if ($monSolde) {
+                    $soldeTotal = $monSolde->balance_prev ?? $monSolde->solde ?? 0;
+                    
+                    // 🟢 FIX 2 HNA: Nfs l-Blan l-Propriétaire
+                    $visualId = (int)$user_id + 845752;
+                    $finalId = 'COP-' . str_pad($visualId, 8, '0', STR_PAD_LEFT);
+
                     $soldes[] = [
-                        'id' => 'COP-' . str_pad($user_id, 4, '0', STR_PAD_LEFT),
+                        'id' => $finalId,
                         'nom' => 'Mon Compte',
-                        'solde' => number_format($monSolde->solde, 2, '.', ' '),
-                        'isNegatif' => $monSolde->solde < 0,
-                        'action' => $monSolde->solde < 0 ? 'Régulariser' : ''
+                        'solde' => number_format((float)$soldeTotal, 2, '.', ' '),
+                        'isNegatif' => $soldeTotal < 0,
+                        'action' => $soldeTotal < 0 ? 'Régulariser' : ''
                     ];
-                    $totalDu = $monSolde->solde < 0 ? abs($monSolde->solde) : 0;
+                    $totalDu = $soldeTotal < 0 ? abs($soldeTotal) : 0;
                 }
             }
 
@@ -124,8 +149,8 @@ class DashboardController extends Controller
                 'success' => true,
                 'data' => [
                     'residence' => [
-                        'nom' => $propriete ? $propriete->name : 'Résidence',
-                        'adresse' => $propriete ? $propriete->address : 'Adresse non définie',
+                        'nom' => $propriete->nom ?? 'Résidence',
+                        'adresse' => $propriete->address ?? 'Adresse non définie',
                         'exercice' => date('Y', strtotime($exercice->start_date)),
                         'periode' => $exercice->period ?? 'Trimestre',
                         'gerant' => 'Cabinet Syndic',
@@ -145,7 +170,10 @@ class DashboardController extends Controller
 
         } catch (\Exception $e) {
             Log::error("Erreur Dashboard: " . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Erreur serveur.'], 500);
+            return response()->json([
+                'success' => false, 
+                'message' => 'Erreur s-s7i7a hiya: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

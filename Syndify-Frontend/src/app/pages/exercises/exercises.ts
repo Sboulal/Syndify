@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router'; 
+import { ActivatedRoute, Router } from '@angular/router'; 
 import { PageHeader } from '../../components/page-header/page-header';
 import { FormsModule } from '@angular/forms';
 import { ExerciceService } from '../../services/exercice'; 
@@ -14,7 +14,7 @@ import { CleRepartitionService } from '../../services/cle-repartition';
 })
 export class Exercises implements OnInit {
   
-  proprieteId: string = ''; 
+  // 🔴 7iyedna proprieteId mn hna!
   isLoading: boolean = false;
   isAddModalOpen: boolean = false;
   isSubmitting: boolean = false;
@@ -22,15 +22,16 @@ export class Exercises implements OnInit {
   activeDropdown: string | null = null;
   isDeleteModalOpen: boolean = false;
   exerciceToDeleteId: string | null = null;
+  residenceInfo = { nom: '...', adresse: '...' };
 
   exercices: any[] = []; 
 
   newExercice: any = {
     se_identifier: null, 
-    sp_identifier: '', 
+    // 🔴 7iyedna propriete_id
     start_date: '',
     end_date: '',
-    periode: 'trimestre', // 🟢 Fix: smitha periode f HTML
+    periode: 'trimestre', 
     budget_previsionnel_total: 0,
     budget_travaux_total: 0,
     list_cles_previsionnel: [],
@@ -46,19 +47,13 @@ export class Exercises implements OnInit {
     private cdr: ChangeDetectorRef,
     private exerciceService: ExerciceService,
     private cleService: CleRepartitionService,
-    private route: ActivatedRoute 
+    private route: ActivatedRoute ,
+    private router: Router
   ) {}
 
   ngOnInit() {
-    this.recupererProprieteId();
-  }
-
-  recupererProprieteId() {
-    this.proprieteId = localStorage.getItem('active_propriete_id') || 'SP-1775215295'; 
-    console.log('🟢 [ngOnInit] Propriété active:', this.proprieteId);
-    if (this.proprieteId) {
-      this.chargerExercices(); 
-    }
+    // 🟢 Angular kay-3eyet nichan bla may-tsenna l-localStorage
+    this.chargerExercices();
   }
 
   showToast(message: string, type: 'success' | 'error' = 'success') {
@@ -73,14 +68,20 @@ export class Exercises implements OnInit {
     }, 3000);
   }
 
-  chargerExercices() {
+ chargerExercices() {
     this.isLoading = true;
     console.log('⏳ [chargerExercices] Récupération de la liste...');
-    this.exerciceService.getListe(this.proprieteId).subscribe({
+    
+    this.exerciceService.getListe().subscribe({
       next: (res: any) => {
         console.log('📦 [chargerExercices] Réponse:', res);
         if (res.success) {
           this.exercices = res.data;
+          
+          // 🟢 FIX: Synchro l-Header m3a d-data dyal l-Backend
+          if (res.residence) {
+            this.residenceInfo = res.residence;
+          }
         }
         this.isLoading = false;
         this.cdr.detectChanges();
@@ -92,7 +93,6 @@ export class Exercises implements OnInit {
       }
     });
   }
-
   toggleDropdown(id: string, event: Event) {
     event.stopPropagation();
     this.activeDropdown = this.activeDropdown === id ? null : id;
@@ -109,7 +109,7 @@ export class Exercises implements OnInit {
     this.closeDropdown();
     this.newExercice = {
       se_identifier: null,
-      sp_identifier: this.proprieteId, 
+      // 🔴 7iyedna propriete_id
       start_date: '',
       end_date: '',
       periode: 'trimestre',
@@ -123,17 +123,14 @@ export class Exercises implements OnInit {
     this.fetchClesRepartition();
   }
 
-  // 🟢 FIX: openEditModal m-sowba bach t-jme3 l-totaux l-rasha
   openEditModal(ex: any) {
     this.closeDropdown(); 
     
     console.log("✏️ Exercice brut reçu de la base de données :", ex);
 
-    // 1. N-9addou l-listes dyal les clés bach n-7esbou bihom l-totaux l-rasha
     const prevCles = ex.cles_previsionnel || ex.list_cles_previsionnel || ex.charges_previsionnelles || [];
     const travCles = ex.cles_travaux || ex.list_cles_travaux || ex.charges_travaux || [];
 
-    // 2. N-7esbou l-Totaux b l-Calcul (Math.js sghir f Angular)
     let calculTotalPrev = 0;
     prevCles.forEach((item: any) => {
         calculTotalPrev += Number(item.budget || item.montant || item.amount || 0);
@@ -144,7 +141,6 @@ export class Exercises implements OnInit {
         calculTotalTrav += Number(item.budget || item.montant || item.amount || 0);
     });
 
-    // 3. N-3emmrou l-Formulaire
     this.newExercice = {
       ...ex,
       start_date: ex.start_date ? new Date(ex.start_date).toISOString().split('T')[0] : '',
@@ -152,7 +148,6 @@ export class Exercises implements OnInit {
       
       periode: (ex.periode || ex.period || 'trimestre').toLowerCase(),
 
-      // 🟢 HNA L-FIX: Kan-3tiwh l-Calcul lli drna l-fou9 ila l-Backend majab walo
       budget_previsionnel_total: Number(ex.budget_previsionnel_total || ex.budget_previsionnel || ex.total_previsionnel) || calculTotalPrev,
       budget_travaux_total: Number(ex.budget_travaux_total || ex.budget_travaux || ex.total_travaux) || calculTotalTrav,
       
@@ -171,20 +166,19 @@ export class Exercises implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // 🟢 FIX: Jbed l-flouss dyal les clés mn l'exercice a editer
   fetchClesRepartition(exerciceAEditer: any = null) {
     console.log('⏳ [fetchClesRepartition] Récupération des clés Master...');
-    this.cleService.getListe(this.proprieteId).subscribe({
+    
+    // 🔴 7iyedna proprieteId mn l-appel
+    this.cleService.getListe().subscribe({
       next: (res: any) => {
         if (res.success) {
           const keysFromApi = res.data;
           console.log('🔑 [fetchClesRepartition] Clés trouvées:', keysFromApi);
           
-          // 1. Les clés Prévisionnelles
           this.newExercice.list_cles_previsionnel = keysFromApi.map((k: any) => {
             let montantSauvegardé = 0;
             if (exerciceAEditer) {
-              // N-9elbou 3la s-smiya s7i7a dyal l-array mn l-backend
               const clesPrev = exerciceAEditer.cles_previsionnel || exerciceAEditer.list_cles_previsionnel || exerciceAEditer.charges_previsionnelles || [];
               const findKey = clesPrev.find((item: any) => 
                 (item.cle_repartition_id || item.cle_id || item.id) === k.id
@@ -194,7 +188,6 @@ export class Exercises implements OnInit {
             return { cle_id: k.id, nom: k.nom, montant: montantSauvegardé };
           });
           
-          // 2. Les clés Travaux
           this.newExercice.list_cles_travaux = keysFromApi.map((k: any) => {
             let montantSauvegardé = 0;
             if (exerciceAEditer) {
@@ -276,7 +269,9 @@ export class Exercises implements OnInit {
   confirmerSuppression() {
     if (!this.exerciceToDeleteId) return;
     console.log('🚀 [confirmerSuppression] Envoi suppression ID:', this.exerciceToDeleteId);
-    this.exerciceService.supprimer(this.proprieteId, this.exerciceToDeleteId).subscribe({
+    
+    // 🔴 7iyedna proprieteId mn l-appel
+    this.exerciceService.supprimer(this.exerciceToDeleteId).subscribe({
       next: (res: any) => {
         console.log('✅ [confirmerSuppression] Réponse:', res);
         this.showToast("Exercice supprimé.", 'success');
@@ -287,8 +282,20 @@ export class Exercises implements OnInit {
     });
   }
 
-  cloturerExercice(id: string) {
+cloturerExercice(ex: any) {
     this.closeDropdown();
-    console.log('🔐 [cloturerExercice] Appel clôture pour:', id);
+    
+    // 🟢 N-9ellbou 3la l-ID s-s7i7 kifma bgha y-koun smit'ou f l-API
+    const idS7i7 = ex.se_identifier || ex.id || ex.identifier;
+    
+    console.log('🔐 [cloturerExercice] Exercice kamel:', ex);
+    console.log('🔐 [cloturerExercice] ID li l9ina:', idS7i7);
+
+    if (idS7i7 && String(idS7i7).startsWith('EX-')) {
+       // 🟢 N-ssiftou l-User l-page dyal l-Clôture
+       this.router.navigate(['/exercices/cloture', idS7i7]);
+    } else {
+       this.showToast("Erreur: ID de l'exercice introuvable ou invalide.", 'error');
+    }
   }
 }

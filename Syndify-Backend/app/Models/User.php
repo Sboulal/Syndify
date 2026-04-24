@@ -13,20 +13,19 @@ class User extends Authenticatable
 
     // 🟢 7iydna l'override dyal primaryKey, daba ghaykhdem b 'id' oumatiqement
 
-    protected $fillable = [
-        'full_name', 
-        'email', 
+   protected $fillable = [
+        'identifier',
+        'full_name',
+        'email',
         'tel',
-        'password', 
-        'activation_code', 
+        'activation_code',
         'otp_expires_at',
-        'agreed_on_terms', 
-        'mailing_subs', 
-        'status'
+        'agreed_on_terms',
+        'status',
     ];
 
     protected $hidden = [
-        'password', 
+         
         'remember_token', 
         'activation_code'
     ];

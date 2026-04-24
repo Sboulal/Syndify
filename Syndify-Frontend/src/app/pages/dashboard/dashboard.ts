@@ -1,13 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // 🟢 Zid ChangeDetectorRef hna
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
-import { PageHeader } from '../../components/page-header/page-header'; // 🟢 ZEDNA HAD L-IMPORT
+import { PageHeader } from '../../components/page-header/page-header';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, PageHeader], // 🟢 ZIDIH HNAYA
+  imports: [CommonModule, RouterModule, PageHeader],
   templateUrl: './dashboard.html',
 })
 export class Dashboard implements OnInit {
@@ -20,7 +20,11 @@ export class Dashboard implements OnInit {
   soldes: any[] = [];
   totalDu: string = '0';
   
-  constructor(private http: HttpClient) {}
+  // 🟢 Injecti cdr f l-constructor
+  constructor(
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef 
+  ) {}
 
   ngOnInit() {
     this.chargerDashboard();
@@ -33,12 +37,12 @@ export class Dashboard implements OnInit {
     const userRole = localStorage.getItem('user_role') || 'syndic';
 
     const payload = {
-      sp_identifier: proprieteId,
+      propriete_id: proprieteId,
       user_id: userId,
       role: userRole
     };
 
-    this.http.post('http://51.178.87.234:8085/api/dashboard/data', payload).subscribe({
+    this.http.post('http://nomade-cloud.com:8085/api/dashboard/data', payload).subscribe({
       next: (res: any) => {
         if (res.success) {
           this.residence = res.data.residence;
@@ -48,10 +52,14 @@ export class Dashboard implements OnInit {
           this.totalDu = res.data.totalDu;
         }
         this.isLoading = false;
+        // 🟢 GOUL L-ANGULAR Y-DIR REFRESH L-HTML DABA!
+        this.cdr.detectChanges(); 
       },
       error: (err) => {
         console.error("❌ Erreur Dashboard:", err);
         this.isLoading = false;
+        // 🟢 7ta f l-erreur, khassna n-tfiw l-loading
+        this.cdr.detectChanges(); 
       }
     });
   }

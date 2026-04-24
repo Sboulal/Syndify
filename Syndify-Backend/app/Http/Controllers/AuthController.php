@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -29,34 +30,58 @@ class AuthController extends Controller
             ], 409);
         }
 
-        // Génération Identifiant & OTP
-        $identifier = 'SU-' . time();
+        // 1. Génération dyal l-Identifiers
+        $user_identifier = 'SU-' . time();
+        $propriete_id_string = 'SP-' . rand(10000000, 99999999);
         $otpCode = rand(10000, 99999); 
 
-        $user = User::create([
-            'identifier' => $identifier,
-            'full_name' => $request->full_name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'password' => null, 
-            'activation_code' => Hash::make($otpCode),
-            'otp_expires_at' => now()->addMinutes(15),
-            'agreed_on_terms' => $request->agreed_on_terms,
-            'status' => 'En attente d’activation'
-        ]);
+        DB::beginTransaction();
+        try {
+            // 2. Création dyal l-User
+            $user = User::create([
+                'identifier' => $user_identifier,
+                'full_name' => $request->full_name,
+                'email' => $request->email,
+                'tel' => $request->phone,
+                'activation_code' => Hash::make($otpCode),
+                'otp_expires_at' => now()->addMinutes(15),
+                'agreed_on_terms' => $request->agreed_on_terms,
+                'status' => 'En attente d’activation'
+            ]);
 
-        Log::info("OTP d'inscription pour {$user->email} est : {$otpCode}");
+            // 3. Création dyal Résidence (Match m3a l-Migration dyalek : id)
+            DB::table('proprietes')->insert([
+                'id' => $propriete_id_string, 
+                'nom' => "Ma Résidence",
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
 
-        return response()->json([
-            'status' => 201,
-            'message' => "Compte créé. Un code OTP a été envoyé.",
-            'identifier' => $identifier
-        ], 201);
+            // 4. R-rabt f table user_as_owner
+            DB::table('user_as_owner')->insert([
+                'user_id' => $user->id,
+                'propriete_id' => $propriete_id_string, // String ID
+                'status' => 1, // Actif
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+
+            DB::commit();
+
+            Log::info("OTP d'inscription pour {$user->email} est : {$otpCode}");
+
+            return response()->json([
+                'status' => 201,
+                'message' => "Compte créé et résidence initialisée.",
+                'identifier' => $user_identifier
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 500, 'message' => "Erreur: " . $e->getMessage()], 500);
+        }
     }
 
-    // ==========================================
-    // 2. Connexion Directe (BYPASS OTP MO2A9ATAN)
-    // ==========================================
     public function requestLoginOtp(Request $request)
     {
         $request->validate([
@@ -66,7 +91,7 @@ class AuthController extends Controller
         $identifier = $request->identifier;
 
         $user = User::where('email', $identifier)
-                    ->orWhere('phone', $identifier)
+                    ->orWhere('tel', $identifier) 
                     ->first();
 
         if (!$user) {
@@ -76,39 +101,18 @@ class AuthController extends Controller
             ], 404);
         }
 
-        /* 🛑 OTP COMMENTÉ POUR LE TEST 🛑
         $otpCode = rand(10000, 99999);
         $user->activation_code = Hash::make($otpCode);
         $user->otp_expires_at = now()->addMinutes(15);
-        */
+        $user->save();
 
-        // N-activiw l'compte nichan ila kan jdid
-        if ($user->status !== 'Actif') {
-            $user->status = 'Actif';
-            $user->save();
-        }
-
-        // 🛑 N-wldou l'Token nichan w n-siftouh l-Angular
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        Log::info("Connexion DIRECTE (Bypass OTP) pour {$identifier}");
+        Log::info("Code OTP de Connexion pour {$identifier} est : {$otpCode}");
 
         return response()->json([
             'status' => 200,
-            'message' => "Authentification réussie (Bypass).",
-            'token' => $token, // 👈 Token directement renvoyé
-            'user' => [
-                'identifier' => $user->identifier,
-                'full_name' => $user->full_name,
-                'email' => $user->email,
-                'status' => $user->status
-            ]
+            'message' => "Un code OTP a été envoyé à votre adresse."
         ], 200);
     }
-
-    // ==========================================
-    // 3. Vérification de l'OTP (Pour Register)
-    // ==========================================
     public function verifyOtp(Request $request)
     {
         $request->validate([
@@ -120,8 +124,14 @@ class AuthController extends Controller
 
         $user = User::where('identifier', $identifier)
                     ->orWhere('email', $identifier)
-                    ->orWhere('phone', $identifier)
+                    ->orWhere('tel', $identifier) 
                     ->first();
+
+        // 🟢 R-RADAR:
+        Log::info("--- TEST VERIFY OTP ---");
+        Log::info("OTP recu mn Angular : " . $request->otp_code);
+        Log::info("Wach l-Code s7i7? : " . ($user && Hash::check($request->otp_code, $user->activation_code) ? 'OUI' : 'NON'));
+        Log::info("Wach Expiré? : (Expire le: " . ($user ? $user->otp_expires_at : 'N/A') . " | Daba hya: " . now() . ")");
 
         if (!$user || !Hash::check($request->otp_code, $user->activation_code) || now()->greaterThan($user->otp_expires_at)) {
             return response()->json([
@@ -130,6 +140,7 @@ class AuthController extends Controller
             ], 400);
         }
 
+        // 🔴 HADI HIYA L-PARTIE LLI KNTI MS7TI:
         $user->status = 'Actif';
         $user->activation_code = null; 
         $user->save();
@@ -141,11 +152,14 @@ class AuthController extends Controller
             'message' => "Authentification réussie.",
             'token' => $token,
             'user' => [
+                'id' => $user->id,
                 'identifier' => $user->identifier,
                 'full_name' => $user->full_name,
                 'email' => $user->email,
-                'status' => $user->status
+                'status' => $user->status,
+                'role' => 'syndic' 
             ]
         ], 200);
     }
+
 }

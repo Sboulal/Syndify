@@ -2,11 +2,11 @@
 
   <app-page-header 
     class="shrink-0"
-    parentPath="Résidence les jardins" 
-    currentPath="Gestion des biens"
-    title="Gestion des biens"
-    [statsText]="lots.length + ' biens au total'"
-    [statsSubText]="'(' + lots.length + ' affichés)'">
+   [title]="residenceInfo.nom"
+    [description]="residenceInfo.adresse"
+    parentPath="Ma copropriété" 
+    currentPath="Gestion des lots"
+    >
     
     <div class="flex items-center gap-3">
       <button title="Exporter" class="flex items-center justify-center w-[38px] h-[38px] bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 text-white transition-all cursor-pointer border-0">
@@ -45,10 +45,12 @@
             </tr>
             
             <tr *ngFor="let lot of lots; let isLast = last" 
-                class="border-b border-gray-100 hover:bg-gray-50/50 transition-colors relative"
+                (click)="openModal(lot)" class="border-b border-gray-100 hover:bg-gray-50/50 transition-colors relative cursor-pointer"
                 [ngClass]="{'z-50': activeDropdown === lot.id}">
                 
-              <td class="py-4 px-6 font-semibold text-syndify-dark truncate">{{ formatLotId(lot.id) }}</td>
+              <td class="py-4 px-6 font-semibold text-syndify-accent truncate decoration-syndify-accent/30 underline-offset-2 hover:decoration-syndify-accent">
+                  {{ formatLotId(lot.id) }}
+              </td>
               <td class="py-4 px-6 text-slate-700 font-semibold truncate">{{ lot.type }}</td>
               <td class="py-4 px-6 text-slate-700 truncate">{{ lot.numero_porte }}</td>
               <td class="py-4 px-6 text-slate-500 italic truncate">{{ lot.batiment || 'Aucun ajouté' }}</td>
@@ -98,7 +100,7 @@
       <div class="flex justify-between items-center px-6 py-5 border-b border-gray-100 bg-white rounded-t-2xl z-20">
         <div>
           <h3 class="text-[18px] font-bold text-syndify-dark tracking-tight">
-            {{ lotForm.id ? 'Modifier le lot ' + formatLotId(lotForm.id) : 'Nouveau Bien' }}
+            {{ lotForm.id ? 'Modifier le bien ' + formatLotId(lotForm.id) : 'Nouveau Bien' }}
           </h3>
           <p class="text-[13px] text-gray-500 font-medium mt-1">Gérez les informations et l'affectation du bien.</p>
         </div>

@@ -6,14 +6,14 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class LotService {
- private baseUrl = 'http://nomade-cloud.com:8085/api';
+  private baseUrl = 'http://nomade-cloud.com:8085/api'; // IP unifiée
   private apiUrl = `${this.baseUrl}/lots`;
 
   constructor(private http: HttpClient) {}
 
   // 1. Liste des lots
-  getListe(proprieteId: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/liste`, { propriete_id: proprieteId });
+  getListe(): Observable<any> {
+    return this.http.post(`${this.apiUrl}/liste`, {});
   }
 
   // 2. Ajouter un lot
@@ -27,17 +27,15 @@ export class LotService {
   }
 
   // 4. Supprimer un lot
-  supprimer(proprieteId: string, lotId: number): Observable<any> {
+  supprimer(lotId: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/supprimer`, { 
-      propriete_id: proprieteId, 
       lot_id: lotId 
     });
   }
 
-  // 5. Détails d'un lot (M3a les tantièmes w les propriétaires)
-  getDetails(proprieteId: string, lotId: number): Observable<any> {
+  // 5. Détails d'un lot
+  getDetails(lotId: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/details`, {
-      propriete_id: proprieteId,
       lot_id: lotId
     });
   }

@@ -13,7 +13,7 @@ return new class extends Migration
 {
     Schema::create('exercices', function (Blueprint $table) {
         $table->string('se_identifier')->primary(); // L-ID dyal l-exercice
-        $table->string('sp_identifier'); // FK dyal Propriété
+        $table->string('propriete_id'); // FK dyal Propriété
         
         $table->date('start_date');
         $table->date('end_date');
@@ -23,7 +23,7 @@ return new class extends Migration
         $table->timestamps();
 
         // La relation m3a la table proprietes
-        $table->foreign('sp_identifier')->references('id')->on('proprietes')->onDelete('cascade');
+        $table->foreign('propriete_id')->references('id')->on('proprietes')->onDelete('cascade');
     });
 }
 

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient,  } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -7,23 +7,25 @@ import { Observable } from 'rxjs';
 })
 export class CleRepartitionService {
   
-  // 🛑 بدلي هاد الـ URL على حساب الـ Backend ديالك (ولا استعملي environment.apiUrl)
-  private apiUrl = 'http://nomade-cloud.com:8085/api/cles-repartition';
+  // 🟢 IP Unifiée b7al l-Services l-khrin
+  private baseUrl = 'http://nomade-cloud.com:8085/api';
+  private apiUrl = `${this.baseUrl}/cles-repartition`;
 
   constructor(private http: HttpClient) {}
 
   // ==========================================
   // 1. Récupérer la liste des clés de répartition
   // ==========================================
-  getListe(proprieteId: string): Observable<any> {
-    // الأغلبية كديرو POST باش تصيفطو propriete_id، إيلا كنتو كديرو GET بدليها لـ get()
-    return this.http.post(`${this.apiUrl}/liste`, { propriete_id: proprieteId });
+  getListe(): Observable<any> {
+    // 🔴 7iyedna proprieteId mn l-paramètres w l-payload
+    return this.http.post(`${this.apiUrl}/liste`, {});
   }
 
   // ==========================================
   // 2. Ajouter une nouvelle clé
   // ==========================================
   ajouter(payload: any): Observable<any> {
+    // L-Payload hna (jay mn l-Component) aslan mab9ach fih propriete_id 🚀
     return this.http.post(`${this.apiUrl}/ajouter`, payload);
   }
 
@@ -35,11 +37,11 @@ export class CleRepartitionService {
   }
 
   // ==========================================
-  // 4. Supprimer une clé (au cas où تحتاجيها من بعد)
+  // 4. Supprimer une clé
   // ==========================================
-  supprimer(proprieteId: string, cleId: number): Observable<any> {
+  supprimer(cleId: number): Observable<any> {
+    // 🔴 7iyedna propriete_id mn l-payload
     return this.http.post(`${this.apiUrl}/supprimer`, { 
-      propriete_id: proprieteId, 
       cle_id: cleId 
     });
   }

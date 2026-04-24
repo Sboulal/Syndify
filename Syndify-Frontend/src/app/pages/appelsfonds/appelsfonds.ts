@@ -12,23 +12,25 @@ import { ActivatedRoute, Router } from '@angular/router';
 })
 export class Appelsfonds implements OnInit {
 
-  proprieteId: string = '';
+  // 🔴 7iyedna proprieteId
   activeTab: 'previsionnel' | 'travaux' = 'previsionnel';
   
   appelsDeFonds: any[] = [];
-  
-  // 🟢 ZEDNA HAD J-JOUJ BACH N-FER9OU L-DATA
   appelsPlanifies: any[] = [];
   appelsExceptionnels: any[] = [];
+residenceInfo = { nom: '...', adresse: '...' };
+  isModalOpen = false;
+modalType: 'planifie' | 'exceptionnel' = 'planifie';
+clesRepartition: any[] = [];
+newExceptionnel = { title: '', amount: 0, due_date: '', cle_id: '' };
 
   totalMontant: number = 0;
   isLoading: boolean = false;
 
-  exerciceInfos = {
-    annee: 2023,
-    dateDebut: '01 Janvier 2023',
-    dateFin: '31 Décembre 2023'
-  };
+  exerciceInfos : any = null; 
+
+  // 🟢 IP Unifiée
+  private baseUrl = 'http://nomade-cloud.com:8085/api';
 
   constructor(
     private http: HttpClient,
@@ -37,7 +39,7 @@ export class Appelsfonds implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.proprieteId = localStorage.getItem('active_propriete_id') || 'SP-1775215295';
+    // 🟢 Angular kay-3eyet nichan
     this.chargerListeAppels();
   }
 
@@ -46,35 +48,51 @@ export class Appelsfonds implements OnInit {
     this.chargerListeAppels();
   }
 
-  chargerListeAppels() {
+chargerListeAppels() {
     this.isLoading = true;
-    const apiUrl = `http://51.178.87.234:8085/api/appels-fonds/liste`;
+    const apiUrl = `${this.baseUrl}/appels-fonds/liste`;
     
     const payload = {
-        sp_identifier: this.proprieteId,
         type_charge: this.activeTab
     };
 
     this.http.post(apiUrl, payload).subscribe({
       next: (res: any) => {
         if (res.success) {
-          this.appelsDeFonds = res.data;
-          
-          // 🟢 KAN-FILTRIW L-APPELS (L-Planifiés bou7dhom, w l-Exceptionnels bou7dhom)
-       this.appelsPlanifies = this.appelsDeFonds.filter(a => a.sub_type === 'planifie');
-  this.appelsExceptionnels = this.appelsDeFonds.filter(a => a.sub_type === 'exceptionnel');
+          // 🟢 FIX: Synchro s-smiya mn l-Backend
+          if (res.residence) {
+            this.residenceInfo = res.residence;
+          }
 
-          this.totalMontant = this.appelsDeFonds.reduce((sum, appel) => sum + Number(appel.amount), 0);
+          this.appelsDeFonds = res.data;
+          this.appelsPlanifies = this.appelsDeFonds.filter(a => a.sub_type === 'planifie');
+          this.appelsExceptionnels = this.appelsDeFonds.filter(a => a.sub_type === 'exceptionnel');
+
+          if (res.exercice) {
+            this.exerciceInfos = {
+              annee: new Date(res.exercice.start_date).getFullYear(),
+              dateDebut: this.formaterDate(res.exercice.start_date),
+              dateFin: this.formaterDate(res.exercice.end_date),
+              montant_total: res.exercice.budget_previsionnel_total // Awla l-budget s7i7
+            };
+            this.totalMontant = res.exercice.budget_previsionnel_total || 0;
+          }
         }
         this.isLoading = false;
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('❌ Erreur Chargement Liste:', err);
         this.isLoading = false;
         this.cdr.detectChanges();
       }
     });
+  }
+  
+  // 🟢 3. Fonction sghira bach t-9add chkel dyal d-date b l-Francais
+  formaterDate(dateString: string): string {
+    if (!dateString) return '';
+    const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'long', year: 'numeric' };
+    return new Date(dateString).toLocaleDateString('fr-FR', options);
   }
 
   allerVersDetails(af_identifier: string) {
@@ -84,12 +102,14 @@ export class Appelsfonds implements OnInit {
   genererAppel(appel: any) {
     if (confirm("Voulez-vous vraiment générer les documents pour cet appel de fonds ?")) {
       this.isLoading = true;
+      
+      // 🔴 7iyedna propriete_id mn l-payload
       const payload = {
-          sp_identifier: this.proprieteId,
           se_identifier: appel.se_identifier, 
           af_identifier: appel.af_identifier
       };
-      this.http.post('http://51.178.87.234:8085/api/appels-fonds/generer', payload).subscribe({
+      
+      this.http.post(`${this.baseUrl}/appels-fonds/generer`, payload).subscribe({
           next: (res: any) => { if(res.success) this.chargerListeAppels(); },
           error: (err) => {
               alert(err.error?.message || "Erreur de génération");
@@ -103,7 +123,7 @@ export class Appelsfonds implements OnInit {
   envoyerAppel(appel: any) {
     if (confirm("Êtes-vous sûr de vouloir envoyer cet appel de fonds ?")) {
       this.isLoading = true;
-      this.http.post('http://51.178.87.234:8085/api/appels-fonds/envoyer', { af_identifier: appel.af_identifier }).subscribe({
+      this.http.post(`${this.baseUrl}/appels-fonds/envoyer`, { af_identifier: appel.af_identifier }).subscribe({
           next: (res: any) => { if(res.success) this.chargerListeAppels(); },
           error: (err) => {
               alert(err.error?.message || "Erreur d'envoi");

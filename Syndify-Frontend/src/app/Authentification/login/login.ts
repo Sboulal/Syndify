@@ -24,6 +24,7 @@ export class Login {
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef); 
 
+  // 🟢 1. We7edna l-IP hna
   private apiUrl = 'http://nomade-cloud.com:8085/api';
 
   private getSecurityHeaders(): HttpHeaders {
@@ -34,49 +35,74 @@ export class Login {
     return new HttpHeaders({
       'X-Timestamp': timestamp,
       'X-Signature': signature,
-      'X-Source': 'Web'
+      'X-Source': 'Web',
+      'Content-Type': 'application/json'
     });
   }
 
   // ==========================================
-  // CONNEXION DIRECTE (BYPASS OTP)
+  // ÉTAPE 1: DEMANDER LE CODE OTP
   // ==========================================
   sendCode() {
+    console.log("👉 L-Email lli mktoub:", this.identifier);
+
     if (!this.identifier) return;
 
     this.isLoading = true;
     this.errorMessage = '';
-    console.log("Envoi de la requête à Laravel (Mode Bypass)...");
 
-    this.http.post(`${this.apiUrl}/login`, 
-      { identifier: this.identifier }, 
-      { headers: this.getSecurityHeaders() }
-    ).subscribe({
+    const payload = { identifier: this.identifier };
+    console.log("📦 L-Payload lli ghadi n-siftou:", payload);
+
+    this.http.post(`${this.apiUrl}/login`, payload, { headers: this.getSecurityHeaders() })
+    .subscribe({
       next: (res: any) => {
-        console.log("✅ Connexion réussie, Token reçu :", res.token);
-        
-        // 🛑 N-sajjlou l'Token f LocalStorage nichan
-        localStorage.setItem('auth_token', res.token); 
-        localStorage.setItem('syndify_user', JSON.stringify(res.user));
-        
+        this.step = 2; 
         this.isLoading = false;
         this.cdr.detectChanges();
-        
-        // 🛑 N-diro redirection nichan l'page dyal l-Lots (awla Dashboard)
-        this.router.navigate(['/gestion-lots']); 
       },
       error: (err) => {
-        console.error("Erreur Laravel :", err);
-        this.errorMessage = err.error?.message || "Erreur de connexion. L'identifiant est-il correct ?";
+        console.error("❌ Erreur API:", err);
+        this.errorMessage = err.error?.message || err.error?.errors?.identifier[0] || "Erreur. L'identifiant est-il correct ?";
         this.isLoading = false;
         this.cdr.detectChanges();
       }
     });
   }
 
-  // Had l'fonction mabqatch k-tkhdem 7it drna Bypass, walakin n-khlliwha hna l-mn be3d
+  // ==========================================
+  // ÉTAPE 2: VÉRIFIER L'OTP ET SAUVEGARDER
+  // ==========================================
   verifyCode() {
-    // ... Logique OTP jdida mlli t-bghiy t-rddiha mn b3d
+    const otpCode = this.otp.join('');
+    if (otpCode.length < 5) return;
+
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    this.http.post(`${this.apiUrl}/verify-otp`, 
+      { identifier: this.identifier, otp_code: otpCode }, 
+      { headers: this.getSecurityHeaders() }
+    ).subscribe({
+      next: (res: any) => {
+        
+        // 🟢 2. S-smiya dyal l-Token mw7da m3a l-Interceptor
+        localStorage.setItem('auth_token', res.token); 
+        
+        localStorage.setItem('user_id', res.user.id.toString());
+        localStorage.setItem('user_role', res.user.role);
+        
+        this.isLoading = false;
+        this.cdr.detectChanges();
+        
+        this.router.navigate(['/dashboard']); 
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.message || "Code OTP invalide ou expiré.";
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   moveFocus(e: any, previous: any, current: any, next: any) {

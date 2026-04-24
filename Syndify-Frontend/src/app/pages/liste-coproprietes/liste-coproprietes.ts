@@ -13,9 +13,12 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './liste-coproprietes.html',
 })
 export class ListeCoproprietes implements OnInit {
-  proprieteId: string = ''; 
+  
+  // 🔴 7iyedna proprieteId mn hna f merra!
   currentStatus: 'actif' | 'inactif' | 'en_attente' = 'actif';
   totalAffichage: number = 0;
+
+  residenceInfo = { nom: '...', adresse: '...' };
   
   coproprietaires: any[] = [];
   lastId: number | null = null;
@@ -35,7 +38,6 @@ export class ListeCoproprietes implements OnInit {
     selectedLots: [], 
     status: 'Actif'
   };
-
 
   isLotsModalOpen: boolean = false;
   selectedCoproName: string = '';
@@ -59,7 +61,7 @@ export class ListeCoproprietes implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.proprieteId = 'SP-1775215295'; 
+    // 🟢 Angular kay-3eyet nichan, l-Backend kay-3ref chkoun lli m-connecté!
     this.chargerListe(true); 
     this.chargerLots(); 
   }
@@ -80,7 +82,8 @@ export class ListeCoproprietes implements OnInit {
   }
 
   chargerLots() {
-    this.lotService.getListe(this.proprieteId).subscribe({
+    // 🔴 7iyedna proprieteId mn l-paramètres
+    this.lotService.getListe().subscribe({
       next: (res: any) => {
         if (res.success) this.tousLesLots = res.data;
       }
@@ -100,7 +103,7 @@ export class ListeCoproprietes implements OnInit {
   }
 
   chargerListe(reset: boolean = false) {
-    if (this.isLoading || !this.proprieteId) return; 
+    if (this.isLoading) return; 
 
     if (reset) {
       this.coproprietaires = [];
@@ -110,14 +113,23 @@ export class ListeCoproprietes implements OnInit {
     this.isLoading = true;
     this.cdr.detectChanges(); 
 
-    this.coproprietaireService.getListe(this.proprieteId, this.currentStatus, this.lastId ?? undefined)
+    this.coproprietaireService.getListe(this.currentStatus, this.lastId ?? undefined)
       .subscribe({
         next: (response: any) => {
           if (response.success) {
+            // 🟢 Fix: Response m-appendiya m3a d-data l-9dima (Pagination)
             this.coproprietaires = [...this.coproprietaires, ...response.data];
+            
+            // 🟢 Fix: response.residence (machi res.residence)
+            if (response.residence) {
+              this.residenceInfo = response.residence;
+            }
+
             this.isThereMore = response.is_there_more;
+            
             if (response.data.length > 0) {
-              this.lastId = response.data[response.data.length - 1].id;
+              // T2kkdi blli l-id smitou 'user_id' kifma rj3nah f l-Backend
+              this.lastId = response.data[response.data.length - 1].user_id;
             }
           }
           this.isLoading = false;
@@ -147,7 +159,8 @@ export class ListeCoproprietes implements OnInit {
   confirmerSuppression() {
     if (!this.coproToDeleteId) return;
 
-    this.coproprietaireService.supprimer(this.proprieteId, this.coproToDeleteId).subscribe({
+    // 🔴 7iyedna proprieteId mn l-paramètres
+    this.coproprietaireService.supprimer(this.coproToDeleteId).subscribe({
       next: (res: any) => {
         if (res.success) {
           this.chargerListe(true); 
@@ -166,14 +179,12 @@ export class ListeCoproprietes implements OnInit {
     this.router.navigate(['/coproprietaires/historique', userId]); 
   }
 
-  // 🟢 Fonction jdida mlli t-clicki 3la l-badge dyal "Nbr de biens"
-voirListeLots(copro: any, event: Event) {
+  voirListeLots(copro: any, event: Event) {
     event.stopPropagation(); 
     this.closeDropdown();
     
     this.selectedCoproName = copro.nom;
     
-    // Kan-jebdo les objets dyal les lots mn tousLesLots b l'ID dyalhom
     if (copro.lot_ids && copro.lot_ids.length > 0) {
       this.selectedCoproLots = this.tousLesLots.filter(l => copro.lot_ids.includes(l.id));
     } else {
@@ -196,7 +207,7 @@ voirListeLots(copro: any, event: Event) {
   }
 
   openEditModal(copro: any, event?: Event) {
-    if (event) event.stopPropagation(); // 🟢 Zidna hada bach n-mne3 l-click yt-rchercher l-fo9
+    if (event) event.stopPropagation(); 
     this.closeDropdown(); 
     this.newCopro = { 
       user_id: copro.user_id, 
@@ -226,15 +237,18 @@ voirListeLots(copro: any, event: Event) {
 
   formatCoproId(id: any): string {
     if (!id) return '';
-    return 'SP-' + id.toString().padStart(8, '0');
+    
+    // 🟢 FIX: N-zidou base kbira (matalan 845752) b7al l-Lots
+    // Bash ila kan l-ID hwa 3, ghadi y-wlli 845755 f l-Affichage
+    const visualId = Number(id) + 845752; 
+    
+    return 'COP-' + visualId.toString().padStart(8, '0');
   }
-
   closeAddModal() {
     this.isAddModalOpen = false;
     this.cdr.detectChanges();
   }
 
- 
   closeLotsModal() {
     this.isLotsModalOpen = false;
     this.selectedCoproLots = [];
@@ -242,7 +256,8 @@ voirListeLots(copro: any, event: Event) {
   }
 
   ajouterCopro() {
-    if (!this.newCopro.email || !this.newCopro.nom || !this.proprieteId) return;
+    // 🔴 7iyedna verfication dyal proprieteId
+    if (!this.newCopro.email || !this.newCopro.nom) return;
 
     this.isAdding = true;
     this.cdr.detectChanges();
@@ -257,7 +272,8 @@ voirListeLots(copro: any, event: Event) {
       owner_id: this.newCopro.user_id 
     };
 
-    this.coproprietaireService.ajouter(this.proprieteId, payload).subscribe({
+    // 🔴 7iyedna proprieteId mn l-paramètres
+    this.coproprietaireService.ajouter(payload).subscribe({
       next: (res: any) => {
         if (res.success) {
           this.closeAddModal();

@@ -15,7 +15,6 @@ import { CleRepartitionService } from '../../services/cle-repartition';
 })
 export class BudgetsOperations implements OnInit {
   
-  proprieteId: string = '';
   activeTab: 'previsionnel' | 'travaux' = 'previsionnel';
   
   exercices: any[] = [];
@@ -36,10 +35,8 @@ export class BudgetsOperations implements OnInit {
   lastEncId: number = 0;
   lastDepId: number = 0;
   isThereMore: boolean = false;
+  residenceInfo = { nom: '...', adresse: '...' };
 
-  // ==========================================
-  // VARIABLES DYAL L-MODAL (NOUVEAU)
-  // ==========================================
   isAddModalOpen: boolean = false;
   isSubmitting: boolean = false;
   
@@ -57,9 +54,6 @@ export class BudgetsOperations implements OnInit {
     cle_repartition_id: ''
   };
 
-  // ==========================================
-  // 🟢 VARIABLES DYAL L-MODAL (MODIFICATION)
-  // ==========================================
   isEditModalOpen: boolean = false;
   editMouvement: any = {};
 
@@ -72,15 +66,13 @@ export class BudgetsOperations implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.proprieteId = localStorage.getItem('active_propriete_id') || 'SP-1775215295';
+    // Angular kay-3eyet nichan, l-Backend kay-3ref l-propriété rasso!
     this.chargerExercices();
   }
 
-  // ==========================================
-  // 1. CHARGEMENT DES DONNÉES
-  // ==========================================
   chargerExercices() {
-    this.exerciceService.getListe(this.proprieteId).subscribe({
+    // 🔴 7iyedna proprieteId mn hna
+    this.exerciceService.getListe().subscribe({
       next: (res: any) => {
         if (res.success && res.data.length > 0) {
           this.exercices = res.data;
@@ -91,7 +83,7 @@ export class BudgetsOperations implements OnInit {
     });
   }
 
-  chargerDonnees(reset: boolean = false) {
+chargerDonnees(reset: boolean = false) {
     if (!this.exerciceSelectionne) return;
 
     if (reset) {
@@ -101,8 +93,8 @@ export class BudgetsOperations implements OnInit {
     }
 
     this.isLoading = true;
+    
     const payload = {
-      sp_identifier: this.proprieteId,
       exercise: this.exerciceSelectionne,
       type: this.activeTab,
       last_enc_id: this.lastEncId,
@@ -112,6 +104,11 @@ export class BudgetsOperations implements OnInit {
     this.budgetService.chargerDonnees(payload).subscribe({
       next: (res: any) => {
         if (res.success) {
+          // 🟢 FIX: Synchro l-Header
+          if (res.residence) {
+            this.residenceInfo = res.residence;
+          }
+
           const t = res.data.totaux;
           if (t) {
             this.stats.budgetTotal = t.budget || 0;
@@ -132,7 +129,6 @@ export class BudgetsOperations implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('❌ [chargerDonnees] Erreur:', err);
         this.isLoading = false;
         this.cdr.detectChanges();
       }
@@ -152,9 +148,6 @@ export class BudgetsOperations implements OnInit {
     this.chargerDonnees(false); 
   }
 
-  // ==========================================
-  // 2. NOUVEAU MOUVEMENT
-  // ==========================================
   nouveauMouvement() {
     this.newMouvement = {
       type_mouvement: 'encaissement',
@@ -176,13 +169,15 @@ export class BudgetsOperations implements OnInit {
   }
 
   chargerProprietairesEtCles() {
-    this.coproprietaireService.getListe(this.proprieteId, 'tous').subscribe((res: any) => {
+    // 🟢 HADA HWA L-FIX LI KAN DAYR ERREUR! (7iyedna this.proprieteId)
+    this.coproprietaireService.getListe('tous').subscribe((res: any) => {
       if (res.success) {
         this.proprietairesActifs = res.data.filter((p: any) => p.status === 'Actif');
       }
     });
 
-    this.cleService.getListe(this.proprieteId).subscribe((res: any) => {
+    // 🔴 7iyedna proprieteId mn hna 7ta hwa
+    this.cleService.getListe().subscribe((res: any) => {
       if (res.success) {
         this.clesRepartition = res.data;
       }
@@ -205,8 +200,8 @@ export class BudgetsOperations implements OnInit {
 
     this.isSubmitting = true;
 
+    // 🔴 7iyedna propriete_id mn l-payload
     const payload = {
-      sp_identifier: this.proprieteId,
       se_identifier: this.exerciceSelectionne,
       title: this.newMouvement.title,
       amount: this.newMouvement.amount,
@@ -242,9 +237,6 @@ export class BudgetsOperations implements OnInit {
     console.log('📥 Clic sur Télécharger le relevé');
   }
 
-  // ==========================================
-  // 3. GESTION DES ACTIONS (Kebab Menu)
-  // ==========================================
   toggleMenu(operationActuelle: any) {
     this.operations.forEach(op => {
       if (op !== operationActuelle) {
@@ -254,13 +246,9 @@ export class BudgetsOperations implements OnInit {
     operationActuelle.showMenu = !operationActuelle.showMenu;
   }
 
-  // ==========================================
-  // 🟢 4. MODIFICATION
-  // ==========================================
   modifierOperation(op: any) {
     op.showMenu = false; 
     
-    // N-copiw l-data
     this.editMouvement = { ...op };
     this.editMouvement.montant_absolu = Math.abs(op.montant); 
 
@@ -280,8 +268,8 @@ export class BudgetsOperations implements OnInit {
 
     this.isSubmitting = true;
 
+    // 🔴 7iyedna propriete_id
     const payload = {
-      sp_identifier: this.proprieteId,
       se_identifier: this.exerciceSelectionne,
       origin_id: this.editMouvement.origin_id,
       title: this.editMouvement.libelle,
@@ -290,16 +278,6 @@ export class BudgetsOperations implements OnInit {
       sub_type_charges: this.editMouvement.sub_type_charges
     };
 
-    // F L-MOUSTA9BAL: Hna dir l'appel API dyal l-modification mlli t-creyiha f l-Backend
-    /*
-    const requeteApi = this.editMouvement.type === 'Encaissement' 
-      ? this.budgetService.modifierEncaissement(payload)
-      : this.budgetService.modifierDepense(payload);
-
-    requeteApi.subscribe(...)
-    */
-
-    // Daba n-dirou simulation bima 9additi l-Backend
     setTimeout(() => {
       this.isSubmitting = false;
       this.closeEditModal();
@@ -307,20 +285,13 @@ export class BudgetsOperations implements OnInit {
     }, 800);
   }
 
-  // ==========================================
-  // 🟢 5. SUPPRESSION
-  // ==========================================
- // ==========================================
-  // 🟢 5. SUPPRESSION
-  // ==========================================
   supprimerOperation(op: any) {
     op.showMenu = false; 
     
     if (confirm(`Êtes-vous sûr de vouloir supprimer l'opération "${op.libelle}" d'un montant de ${Math.abs(op.montant)} DH ?`)) {
       
-      // 🟢 FIX HNA: Zedna ": any" bach TypeScript y-khellina n-zidou les IDs 3la khatrna
+      // 🔴 7iyedna propriete_id
       const payload: any = {
-        sp_identifier: this.proprieteId,
         se_identifier: this.exerciceSelectionne
       };
 
@@ -330,22 +301,7 @@ export class BudgetsOperations implements OnInit {
         payload.sdep_identifier = op.origin_id;
       }
 
-      // F L-MOUSTA9BAL: Appel API
-      /*
-      const requeteApi = op.type === 'Encaissement' 
-        ? this.budgetService.supprimerEncaissement(payload)
-        : this.budgetService.supprimerDepense(payload);
-
-      requeteApi.subscribe({
-        next: (res: any) => {
-          if (res.success) this.chargerDonnees(true);
-        },
-        error: (err: any) => alert("Erreur lors de la suppression.")
-      });
-      */
-
       console.log('🗑️ Simulation suppression:', payload);
-      // N-ms7ouha mn l-tableau temporairement bach t-bani lik l-animation f l-front
       this.operations = this.operations.filter(o => o.origin_id !== op.origin_id);
     }
   }

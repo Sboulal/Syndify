@@ -22,12 +22,7 @@
       </div>
     </div>
 
-    <div class="flex items-center gap-3 ml-auto">
-        <button (click)="isProfileDropdownOpen = !isProfileDropdownOpen" class="h-9 px-3 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center gap-2 transition-all border-0 cursor-pointer">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-            <svg class="w-3.5 h-3.5 opacity-60" [ngClass]="{'rotate-180': isProfileDropdownOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-        </button>
-    </div>
+   
   </app-page-header>
 
   <div class="flex-1 p-6 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -36,7 +31,7 @@
       
       <div>
         <div class="mb-4">
-          <h2 class="text-[18px] font-bold text-syndify-dark uppercase tracking-wide">Soldes des copropriétaires</h2>
+          <h2 class="text-[18px] font-bold text-syndify-dark tracking-wide">Soldes des copropriétaires</h2>
         </div>
         
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -51,7 +46,7 @@
             <tbody class="text-[13px] font-medium">
               <tr *ngIf="isLoading"><td colspan="3" class="py-10 text-center text-gray-400">Chargement...</td></tr>
               <tr *ngFor="let s of soldes" class="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                <td class="py-4 px-6 text-gray-500">{{ s.id }}</td>
+                <td class="py-4 px-6 text-gray-500 text-syndify-accent decoration-syndify-accent/30 underline-offset-2 hover:decoration-syndify-accent">{{ s.id }}</td>
                 <td class="py-4 px-6 text-syndify-dark font-bold">{{ s.nom }}</td>
                 <td class="py-4 px-6 text-right font-extrabold" [ngClass]="s.isNegatif ? 'text-red-500' : 'text-green-600'">
                   {{ s.solde }} <span class="text-[10px] opacity-60 ml-0.5">MAD</span>
@@ -67,7 +62,7 @@
       </div>
 
       <div>
-        <h2 class="text-[18px] font-bold text-syndify-dark mb-4 uppercase tracking-wide">Événements récents</h2>
+        <h2 class="text-[18px] font-bold text-syndify-dark mb-4  tracking-wide">Événements récents</h2>
         <div class="bg-white rounded-xl border border-gray-200 p-10 text-center flex flex-col items-center justify-center gap-3">
           <div class="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-300">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>

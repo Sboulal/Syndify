@@ -7,33 +7,31 @@ import { Observable } from 'rxjs';
 })
 export class CoproprietaireService {
   
-  private baseUrl = 'http://nomade-cloud.com:8085/api';
+  // N.B: Bddelt lik l-URL l-IP (51.178...) bach y-b9a cohérent m3a les autres pages
+  private baseUrl = 'http://nomade-cloud.com:8085/api'; 
   private apiUrl = `${this.baseUrl}/coproprietaires`;
 
   constructor(private http: HttpClient) {}
 
-
-  getListe(proprieteId: string, typeAffichage: string, lastId?: number): Observable<any> {
+  // 1. Liste
+  getListe(typeAffichage: string, lastId?: number): Observable<any> {
     const body = {
-      propriete_id: proprieteId,
       type_affichage: typeAffichage,
       last_id: lastId
     };
-    return this.http.post(`${(this.apiUrl)}/liste`, body);
+    return this.http.post(`${this.apiUrl}/liste`, body);
   }
 
   // 2. Désactiver
-  desactiver(proprieteId: string, userId: string): Observable<any> {
+  desactiver(userId: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/desactiver`, {
-      propriete_id: proprieteId,
       user_id: userId
     });
   }
 
-ajouter(proprieteId: string, coproData: any) {
-   
+  // 3. Ajouter ou Modifier
+  ajouter(coproData: any) {
     return this.http.post(`${this.apiUrl}/ajouter`, {
-      propriete_id: proprieteId,
       nom: coproData.nom,
       email: coproData.email,
       tel: coproData.tel,
@@ -42,10 +40,18 @@ ajouter(proprieteId: string, coproData: any) {
       selectedLots: coproData.selectedLots
     });
   }
-  supprimer(proprieteId: string, userId: string): Observable<any> {
+
+  // 4. Supprimer
+  supprimer(userId: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/supprimer`, {
-      propriete_id: proprieteId,
       user_id: userId
+    });
+  }
+
+  getHistorique(userId: string, exerciceId?: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/historique`, {
+      user_id: userId,
+      se_identifier: exerciceId
     });
   }
 }

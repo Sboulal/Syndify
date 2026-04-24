@@ -1,31 +1,38 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ExerciceService {
-  
-  private apiUrl = 'http://nomade-cloud.com:8085/api/exercices'; // T2kdi mnhoum
+  private http = inject(HttpClient);
+  private apiUrl = 'http://nomade-cloud.com:8085/api/exercices';
 
-  constructor(private http: HttpClient) {}
-
-  // 🟢 Koulchi wella POST w kaysift data f l-body (kima derti f l-lots)
-  
-  getListe(sp_identifier: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/liste`, { sp_identifier });
+  getListe() {
+    return this.http.post(`${this.apiUrl}/liste`, {});
   }
 
-  ajouter(data: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/ajouter`, data);
+  ajouter(data: any) {
+    // 🟢 Fix: Bach matchi d-data m3a l-Backend
+    const payload = {
+      ...data,
+      period: data.periode // Laravel kay-tsenna 'period'
+    };
+    return this.http.post(`${this.apiUrl}/ajouter`, payload);
   }
 
-  modifier(data: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/modifier`, data);
+  modifier(data: any) {
+    // 🟢 HNA FIN KINE L-MOUCHKIL: T2kdi blli 'se_identifier' kine w s7i7
+    const payload = {
+      ...data,
+      se_identifier: data.se_identifier, // Darouri kheddam f l-modifier
+      period: data.periode || data.period 
+    };
+    return this.http.post(`${this.apiUrl}/modifier`, payload);
   }
 
-  supprimer(sp_identifier: string, se_identifier: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/supprimer`, { sp_identifier, se_identifier });
+  supprimer(se_id: string) {
+    // 🟢 L-Backend dyalna daba m-m7tajch sp_identifier
+    return this.http.post(`${this.apiUrl}/supprimer`, { se_identifier: se_id });
   }
 }

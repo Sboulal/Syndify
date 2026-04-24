@@ -2,20 +2,21 @@
 
   <app-page-header 
     class="shrink-0 relative"
-    parentPath="Résidence les jardins" 
-    currentPath="Simuler un budget"
-    title="Simuler un budget"
-    [statsText]="''"
-    [statsSubText]="''">
+    [title]="residenceInfo.nom"
+    [description]="residenceInfo.adresse"
+    parentPath="Financement" 
+    currentPath="Simulation Budget"
+   >
     
-    <div class="absolute left-6 right-6 md:left-8 md:right-8 flex items-center gap-6 md:gap-12">
+    <div class="absolute right-6 md:right-8 top-1/2 -translate-y-1/2 flex items-center gap-6 md:gap-12 z-10">
       
       <div class="flex items-center gap-2">
         <span class="text-gray-400 text-[13.5px] font-medium whitespace-nowrap">Clé de répartition :</span>
-  <div class="relative flex items-center">
+        <div class="relative flex items-center">
           <select [(ngModel)]="cleSelectionnee" class="appearance-none bg-transparent text-white font-bold text-[13.5px] outline-none cursor-pointer pr-5 focus:ring-0 border-none p-0 m-0">
+            <option value="" disabled selected class="text-gray-500 bg-white">Sélectionnez une clé</option>
             <option *ngFor="let cle of listeCles" [value]="cle.id" class="text-syndify-dark bg-white">
-               {{ cle.nom }}
+               {{ cle.nom || cle.titre || cle.name || 'Clé N°' + cle.id }}
             </option>
           </select>
           <svg class="w-3.5 h-3.5 text-white absolute right-0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -46,7 +47,7 @@
 
   <div class="flex-1 p-6 md:p-8 flex flex-col gap-5 overflow-visible">
     
-    <div class="bg-white rounded-xl border border-gray-200 flex flex-col flex-1 overflow-hidden relative">
+    <div class="bg-white rounded-xl border border-gray-200 flex flex-col flex-1 overflow-hidden relative shadow-sm">
       
       <div class="flex gap-6 px-6 pt-4 border-b border-gray-100">
         <button (click)="setTab('coproprietaire')" 
@@ -57,7 +58,7 @@
         <button (click)="setTab('lot')" 
                 class="pb-3 text-[13px] font-bold transition-all bg-transparent border-0 cursor-pointer"
                 [ngClass]="activeTab === 'lot' ? 'text-syndify-dark border-b-[3px] border-syndify-dark' : 'text-gray-400 hover:text-gray-600 border-b-[3px] border-transparent'">
-          Par lot
+          Par bien
         </button>
       </div>
 
@@ -65,27 +66,36 @@
         <table class="w-full text-left border-collapse">
           <thead class="bg-gray-50/50 border-b border-gray-100">
             <tr>
-              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px]">
-                {{ activeTab === 'coproprietaire' ? 'Nom du copropriétaire' : 'Identifiant du lot' }}
+            <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[50%]">
+                {{ activeTab === 'coproprietaire' ? 'Nom du copropriétaire' : 'N° du bien' }}
               </th>
               <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px]">Budget</th>
               <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px]">Total</th>
             </tr>
           </thead>
-         <tbody class="text-[13px] text-gray-700 font-medium">
+          <tbody class="text-[13px] text-gray-700 font-medium">
             
             <tr *ngIf="isLoading">
               <td colspan="3" class="py-8 text-center text-gray-500">Chargement des données...</td>
             </tr>
 
-            <tr *ngFor="let item of resultatsSimulation" class="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
-              <td class="py-4 px-6">{{ activeTab === 'coproprietaire' ? item.nom : item.identifiant }}</td>
+         <tr *ngFor="let item of resultatsSimulation" class="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
+              <td class="py-4 px-6 font-semibold text-syndify-dark">
+                <ng-container *ngIf="activeTab === 'coproprietaire'">
+                  {{ item.nom }}
+                </ng-container>
+                <ng-container *ngIf="activeTab === 'lot'">
+                  <span>
+                    {{ item.identifiant }}
+                  </span>
+                </ng-container>
+              </td>
               <td class="py-4 px-6">{{ item.budget | number:'1.2-2' }} DH</td>
-              <td class="py-4 px-6 font-bold text-syndify-dark">{{ item.total | number:'1.2-2' }} DH</td>
+              <td class="py-4 px-6 font-extrabold text-syndify-dark">{{ item.total | number:'1.2-2' }} DH</td>
             </tr>
             
             <tr *ngIf="!isLoading && resultatsSimulation.length === 0">
-               <td colspan="3" class="py-8 text-center text-gray-400">Saisissez un montant et générez la simulation.</td>
+               <td colspan="3" class="py-12 text-center text-gray-400">Saisissez un montant et générez la simulation.</td>
             </tr>
 
           </tbody>

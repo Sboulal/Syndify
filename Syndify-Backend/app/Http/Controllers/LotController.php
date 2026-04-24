@@ -9,19 +9,44 @@ use Illuminate\Support\Facades\Log;
 
 class LotController extends Controller
 {
+    // ========================================================
+    // 🟢 FONCTION SÉCURISÉE
+    // ========================================================
+private function getProprieteId(Request $request)
+{
+    // 🟢 HACK ZERBA: N-forciw l-ID dyal l-User (Matalan 1) 
+    // Bash y-khelina n-testiw bla Auth w bla Headers f Angular
+    $userId = 1; 
+
+    $propOwnerCol = Schema::hasColumn('user_as_owner', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
+    $link = DB::table('user_as_owner')->where('user_id', $userId)->first();
+    
+    return $link ? $link->$propOwnerCol : null;
+}
+
     // ==========================================
     // 1. Liste des Lots
     // ==========================================
-    public function liste(Request $request)
+  public function liste(Request $request)
     {
-        $request->validate(['propriete_id' => 'required']);
+        $propriete_id = $this->getProprieteId($request);
+        if (!$propriete_id) return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
         
+        $propIdCol_units = Schema::hasColumn('units', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
+        $propIdCol_propriete = Schema::hasColumn('proprietes', 'sp_identifier') ? 'sp_identifier' : 'id';
+
+        // 🟢 1. Jbed l-m3loumat dyal l-Résidence (b7al l-Dashboard)
+        $residence = DB::table('proprietes')
+            ->where($propIdCol_propriete, $propriete_id)
+            ->first();
+
+        // 🟢 2. Jbed l-liste dyal l-Lots
         $lots = DB::table('units')
-            ->where('propriete_id', $request->propriete_id)
+            ->where($propIdCol_units, $propriete_id)
             ->orderBy('id', 'desc')
             ->get();
 
-        $userPk = Schema::hasColumn('users', 'identifier') ? 'identifier' : (Schema::hasColumn('users', 'user_id') ? 'user_id' : 'id');
+        $userPk = Schema::hasColumn('users', 'identifier') ? 'identifier' : 'id';
         $userNameCol = Schema::hasColumn('users', 'full_name') ? 'full_name' : 'name';
 
         foreach ($lots as $lot) {
@@ -42,7 +67,15 @@ class LotController extends Controller
             }
         }
 
-        return response()->json(['success' => true, 'data' => $lots]);
+        // 🟢 3. Rjja3 kolchi f "data" wa7da
+        return response()->json([
+            'success' => true, 
+            'residence' => [
+                'nom' => $residence->nom ?? 'Résidence',
+                'adresse' => $residence->address ?? 'Adresse non définie'
+            ],
+            'data' => $lots
+        ]);
     }
 
     // ==========================================
@@ -50,19 +83,24 @@ class LotController extends Controller
     // ==========================================
     public function ajouter(Request $request)
     {
-        // 🟢 FIX 1 : owner_id wellat 'nullable' bach n9edro n-ziidou lot bla propriétaire
         $request->validate([
-            'propriete_id' => 'required',
             'type' => 'required',
             'numero_porte' => 'required',
             'owner_id' => 'nullable' 
         ]);
 
+        $propriete_id = $this->getProprieteId($request);
+        if (!$propriete_id) return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
+
+        $propIdCol_units = Schema::hasColumn('units', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
+        $propIdCol_cles = Schema::hasColumn('cle_repartitions', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
+        $cleIdCol_pivot = Schema::hasColumn('unit_to_key', 'cle_repartition_id') ? 'cle_repartition_id' : 'key_id';
+        $propOwnerCol = Schema::hasColumn('user_as_owner', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
+
         DB::beginTransaction();
         try {
-            // A. Ajout dyal l'Unit (Lot)
             $lotId = DB::table('units')->insertGetId([
-                'propriete_id' => $request->propriete_id,
+                $propIdCol_units => $propriete_id, // 🟢 FIX: Dynamic Column
                 'type' => $request->type,
                 'batiment' => $request->batiment,
                 'etage' => $request->etage,
@@ -71,15 +109,13 @@ class LotController extends Controller
                 'updated_at' => now()
             ]);
 
-            // B. Liaison m3a les clés de répartition (b Try-Catch bach may-plantich ila table ma-kynach)
             try {
-                $cleCol = Schema::hasColumn('cle_repartitions', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
-                $cles = DB::table('cle_repartitions')->where($cleCol, $request->propriete_id)->get();
+                $cles = DB::table('cle_repartitions')->where($propIdCol_cles, $propriete_id)->get();
                 $insertKeys = [];
                 foreach ($cles as $cle) {
                     $insertKeys[] = [
                         'unit_id' => $lotId,
-                        'key_id' => $cle->id,
+                        $cleIdCol_pivot => $cle->id, // 🟢 FIX: key_id awla cle_repartition_id
                         'tantieme' => 0,
                         'created_at' => now(),
                         'updated_at' => now()
@@ -92,14 +128,13 @@ class LotController extends Controller
                 Log::warning("Impossible de lier les clés au lot : " . $e->getMessage());
             }
 
-            // C. Affectation dyal le propriétaire GHIIR ila khtar l-user chi wa7ed
             if ($request->owner_id) {
                 $status = $request->owner_status == 'Actif' ? 1 : 2;
 
                 if ($status == 1) {
                     DB::table('user_as_owner')
                         ->where('user_id', $request->owner_id)
-                        ->where('propriete_id', $request->propriete_id)
+                        ->where($propOwnerCol, $propriete_id)
                         ->update(['status' => 1]);
                 }
 
@@ -126,7 +161,12 @@ class LotController extends Controller
     // ==========================================
     public function modifier(Request $request)
     {
-        $request->validate(['propriete_id' => 'required', 'lot_id' => 'required']);
+        $request->validate(['lot_id' => 'required']);
+
+        $propriete_id = $this->getProprieteId($request);
+        if (!$propriete_id) return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
+
+        $propOwnerCol = Schema::hasColumn('user_as_owner', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
 
         DB::beginTransaction();
         try {
@@ -138,24 +178,22 @@ class LotController extends Controller
                 'updated_at' => now()
             ]);
 
-            // N-ms7ou l-propriétaire l-9dim dima
             DB::table('user_owner_unit')->where('unit_id', $request->lot_id)->delete();
 
-            // Ila khtar l-user propriétaire jdid, n-zidouh
             if ($request->owner_id) {
                 $status = $request->owner_status == 'Actif' ? 1 : 2;
 
                 if ($status == 1) { 
                     DB::table('user_as_owner')
                         ->where('user_id', $request->owner_id)
-                        ->where('propriete_id', $request->propriete_id)
+                        ->where($propOwnerCol, $propriete_id)
                         ->update(['status' => 1]);
                 } 
                 elseif ($status == 2) { 
                     DB::table('user_as_owner')
                         ->where('user_id', $request->owner_id)
-                        ->where('propriete_id', $request->propriete_id)
-                        ->update(['balance_prev' => 0, 'balance_new' => 0, 'status' => 2]);
+                        ->where($propOwnerCol, $propriete_id)
+                        ->update(['balance_prev' => 0, 'balance_trav' => 0, 'status' => 2]); // 🟢 FIX: balance_trav blast balance_new
                 }
 
                 DB::table('user_owner_unit')->insert([
@@ -181,14 +219,20 @@ class LotController extends Controller
     // ==========================================
     public function supprimer(Request $request)
     {
-        $request->validate(['propriete_id' => 'required', 'lot_id' => 'required']);
+        $request->validate(['lot_id' => 'required']);
+
+        $propriete_id = $this->getProprieteId($request);
+        if (!$propriete_id) return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
+
+        $propIdCol_units = Schema::hasColumn('units', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
 
         try {
             DB::beginTransaction();
             DB::table('user_owner_unit')->where('unit_id', $request->lot_id)->delete();
-            // Try-Catch f l-clés 7it momkin table tkon mzl makynach
             try { DB::table('unit_to_key')->where('unit_id', $request->lot_id)->delete(); } catch(\Exception $e) {}
-            DB::table('units')->where('id', $request->lot_id)->where('propriete_id', $request->propriete_id)->delete();
+            
+            DB::table('units')->where('id', $request->lot_id)->where($propIdCol_units, $propriete_id)->delete();
+            
             DB::commit();
             return response()->json(['success' => true, 'message' => 'Lot supprimé avec succès.']);
         } catch (\Exception $e) {

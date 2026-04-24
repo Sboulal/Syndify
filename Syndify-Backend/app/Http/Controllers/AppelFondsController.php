@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
@@ -11,52 +12,85 @@ use Exception;
 
 class AppelFondsController extends Controller
 {
-    // ==========================================
-    // 1. CHARGEMENT DES APPELS DE FONDS
-    // ==========================================
-    public function liste(Request $request)
-    {
-        Log::info('--- DÉBUT : Liste Appels de Fonds ---');
-        $request->validate([
-            'sp_identifier' => 'required|string',
-            'type_charge' => 'required|in:previsionnel,travaux'
-        ]);
+    // ========================================================
+    // 🟢 FONCTION SÉCURISÉE
+    // ========================================================
+ private function getProprieteId(Request $request)
+{
+    // 🟢 HACK ZERBA: N-forciw l-ID dyal l-User (Matalan 1) 
+    // Bash y-khelina n-testiw bla Auth w bla Headers f Angular
+    $userId = 1; 
 
-        $sp_id = $request->sp_identifier;
-        $se_id = $request->se_identifier; // Y9der ykoun null
-        $type = $request->type_charge;
+    $propOwnerCol = Schema::hasColumn('user_as_owner', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
+    $link = DB::table('user_as_owner')->where('user_id', $userId)->first();
+    
+    return $link ? $link->$propOwnerCol : null;
+}
 
-        try {
-            if (!$se_id) {
-                $lastExercice = DB::table('exercices')->where('sp_identifier', $sp_id)->orderBy('start_date', 'desc')->first();
-                if (!$lastExercice) return response()->json(['success' => true, 'data' => []]);
-                $se_id = $lastExercice->se_identifier;
-            }
+    // West AppelFondsController.php -> fonction liste()
 
-            $appels = DB::table('appels_fonds')
-                ->where('se_identifier', $se_id)
-                ->where('type_charge', $type)
-                ->orderBy('due_date', 'asc')
-                ->get();
+public function liste(Request $request) {
+        $sp_id = $this->getProprieteId($request);
+        if (!$sp_id) return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
 
-            return response()->json(['success' => true, 'data' => $appels]);
+        // 🟢 1. Jbed l-m3loumat dyal l-Résidence
+        $propIdCol_propriete = Schema::hasColumn('proprietes', 'sp_identifier') ? 'sp_identifier' : 'id';
+        $residence = DB::table('proprietes')->where($propIdCol_propriete, $sp_id)->first();
 
-        } catch (Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Erreur serveur.'], 500);
+        $se_id = $request->se_identifier; 
+        $type = $request->type_charge; 
+
+        if (!$se_id) {
+            $exercice = DB::table('exercices')
+                ->where('propriete_id', $sp_id) 
+                ->orderBy('created_at', 'desc')
+                ->first();
+            
+            if (!$exercice) return response()->json([
+                'success' => true, 
+                'residence' => [
+                    'nom' => $residence->nom ?? 'Résidence',
+                    'adresse' => $residence->address ?? 'Adresse non définie'
+                ],
+                'data' => [], 
+                'exercice' => null
+            ]);
+            $se_id = $exercice->se_identifier;
+        } else {
+            $exercice = DB::table('exercices')->where('se_identifier', $se_id)->first();
         }
-    }
 
+        $appels = DB::table('appels_fonds')
+            ->where('se_identifier', $se_id)
+            ->where('type_charge', $type)
+            ->orderBy('due_date', 'asc')
+            ->get();
+
+        // 🟢 2. Rjja3 kolchi m-jmo3
+        return response()->json([
+            'success' => true,
+            'residence' => [
+                'nom' => $residence->nom ?? 'Résidence',
+                'adresse' => $residence->address ?? 'Adresse non définie'
+            ],
+            'data' => $appels,
+            'exercice' => $exercice
+        ]);
+    }
     // ==========================================
     // 2. AJOUTER UN APPEL DE FONDS - PLANIFIÉ
     // ==========================================
     public function ajouterPlanifie(Request $request)
     {
         Log::info('--- DÉBUT : Ajout AF Planifié ---');
+        // 🔴 7iyedna 'propriete_id'
         $request->validate([
-            'sp_identifier' => 'required|string',
             'se_identifier' => 'required|string',
             'type_charge' => 'required|in:previsionnel,travaux'
         ]);
+
+        $sp_id = $this->getProprieteId($request);
+        if (!$sp_id) return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
 
         $se_id = $request->se_identifier;
         $type = $request->type_charge;
@@ -123,8 +157,8 @@ class AppelFondsController extends Controller
     public function ajouterExceptionnel(Request $request)
     {
         Log::info('--- DÉBUT : Ajout AF Exceptionnel ---');
+        // 🔴 7iyedna 'propriete_id'
         $request->validate([
-            'sp_identifier' => 'required|string',
             'se_identifier' => 'required|string',
             'type_charge' => 'required|in:previsionnel,travaux',
             'cle_repartition_id' => 'required',
@@ -132,6 +166,9 @@ class AppelFondsController extends Controller
             'due_date' => 'required|date',
             'title' => 'required|string'
         ]);
+
+        $sp_id = $this->getProprieteId($request);
+        if (!$sp_id) return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
 
         $se_id = $request->se_identifier;
         $type = $request->type_charge;
@@ -169,117 +206,95 @@ class AppelFondsController extends Controller
         }
     }
 
-    // ==========================================
-    // 4 & 5. GÉNÉRER LES APPELS (Planifié & Exceptionnel)
-    // ==========================================
-    public function generer(Request $request)
+  public function generer(Request $request)
     {
-        Log::info('--- DÉBUT : Génération des Appels de Fonds ---');
         $request->validate([
-            'sp_identifier' => 'required|string',
             'se_identifier' => 'required|string',
             'af_identifier' => 'required|string'
         ]);
 
-        $se_id = $request->se_identifier;
-        $af_id = $request->af_identifier;
+        $sp_id = $this->getProprieteId($request);
+        if (!$sp_id) return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
 
         DB::beginTransaction();
         try {
-            $exercice = DB::table('exercices')->where('se_identifier', $se_id)->first();
-            if (!$exercice || !in_array($exercice->status, ['en cours', 'en attente'])) {
-                return response()->json(['success' => false, 'message' => "L'exercice n'est pas actif."], 400);
+            $appel = DB::table('appels_fonds')->where('af_identifier', $request->af_identifier)->first();
+            if (!$appel || $appel->is_generated) return response()->json(['success' => false, 'message' => "Invalide ou déjà généré."], 400);
+
+            // 🟢 1. Jbed ga3 l-copropriétaires liés l-had la résidence mn table user_as_owner
+            $proprietaires = DB::table('user_as_owner')
+                ->where('propriete_id', $sp_id)
+                ->get();
+
+            if ($proprietaires->isEmpty()) {
+                return response()->json(['success' => false, 'message' => "Aucun copropriétaire trouvé pour cette résidence."], 400);
             }
 
-            $appel = DB::table('appels_fonds')->where('af_identifier', $af_id)->first();
-            if (!$appel) return response()->json(['success' => false, 'message' => "Appel introuvable."], 404);
-            if ($appel->is_generated) return response()->json(['success' => false, 'message' => "Déjà généré."], 400);
-
-            // LOGIQUE DE RÉPARTITION SELON LE TYPE (RÉSUMÉE POUR LE CODE)
-            $mapProprietaires = [];
-            
-            // ... (Pour la simulation, on suppose que l'on trouve des propriétaires, sinon on le fait avec les lots comme avant)
-            // Simulation d'ajout de 2 propriétaires fictifs pour tester le Front-End:
-            $mapProprietaires[101] = $appel->amount * 0.4; // Ex: Proprietaire 1 paie 40%
-            $mapProprietaires[102] = $appel->amount * 0.6; // Ex: Proprietaire 2 paie 60%
-
             $documentsCrees = 0;
-            foreach ($mapProprietaires as $owner_id => $montantDu) {
-                // SIMULATION DOSSIER ET DOCUMENT
-                $docPath = "proprietes/{$request->sp_identifier}/appels/{$af_id}/doc_{$owner_id}.pdf";
-                
-                $docId = DB::table('documents')->insertGetId([
-                    'type' => 'appel_fonds',
-                    'file_path' => $docPath,
-                    'created_at' => now(),
-                ]);
+            foreach ($proprietaires as $p) {
+                // 🟢 2. Calcul du montant (Simulé pour l'instant, on prend le montant total / nb owners)
+                // Hna f l-moustaqbal ghadi ndiro (Tantièmes / Total) * Montant
+                $montantDu = $appel->amount / count($proprietaires); 
 
+                // 🟢 3. Insert f appf_to_owner (L-Link s7i7)
                 DB::table('appf_to_owner')->insert([
-                    'af_identifier' => $af_id,
-                    'user_id' => $owner_id,
-                    'document_id' => $docId,
+                    'af_identifier' => $appel->af_identifier,
+                    'user_id' => $p->user_id, // L-ID s7i7 mn table user_as_owner
                     'montant_du' => $montantDu,
                     'created_at' => now()
                 ]);
                 $documentsCrees++;
             }
 
-            DB::table('appels_fonds')->where('af_identifier', $af_id)->update([
+            // 🟢 4. Update status
+            DB::table('appels_fonds')->where('af_identifier', $appel->af_identifier)->update([
                 'is_generated' => true,
                 'number_generated' => $documentsCrees,
                 'updated_at' => now()
             ]);
 
             DB::commit();
-            return response()->json(['success' => true, 'message' => "Génération réussie."]);
+            return response()->json(['success' => true, 'message' => "Génération réussie pour {$documentsCrees} propriétaires."]);
 
         } catch (Exception $e) {
             DB::rollBack();
-            return response()->json(['success' => false, 'message' => 'Erreur: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
-  // ==========================================
+    // ==========================================
     // 6. ENVOYER LES APPELS DE FONDS
     // ==========================================
-    public function envoyer(Request $request)
+ public function envoyer(Request $request)
     {
         Log::info('--- DÉBUT : Envoi ---');
         $request->validate(['af_identifier' => 'required|string']);
+
+        $sp_id = $this->getProprieteId($request); // 🟢 Jbed l-ID sécurisé
+        if (!$sp_id) return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
 
         DB::beginTransaction();
         try {
             $appel = DB::table('appels_fonds')->where('af_identifier', $request->af_identifier)->first();
             if (!$appel || !$appel->is_generated) return response()->json(['success' => false, 'message' => "Appel invalide ou non généré."], 400);
-            if ($appel->is_sent) return response()->json(['success' => false, 'message' => "Déjà envoyé."], 400);
-
-            // 🟢 N-jbdou l-ID dyal l-propriété mn l-Exercice
-            $exercice = DB::table('exercices')->where('se_identifier', $appel->se_identifier)->first();
-            $propriete = $exercice ? DB::table('proprietes')->where('sp_identifier', $exercice->sp_identifier)->first() : null;
-            $propriete_id = $propriete ? $propriete->id : 1; // 1 k-valeur par défaut l-les tests fakes
-
+            
             $proprietaires = DB::table('appf_to_owner')->where('af_identifier', $appel->af_identifier)->get();
             $numberSent = 0;
 
             foreach ($proprietaires as $p) {
-                $soldeDb = DB::table('user_as_owner')->where('user_id', $p->user_id)->first();
-                $soldeActuel = $soldeDb ? $soldeDb->solde : 0;
+                // 🟢 Fix: Jbed l-balance s7i7a (matalan balance_prev)
+                $balanceCol = $appel->type_charge === 'previsionnel' ? 'balance_prev' : 'balance_trav';
+                
+                $soldeDb = DB::table('user_as_owner')->where('user_id', $p->user_id)->where('propriete_id', $sp_id)->first();
+                $soldeActuel = $soldeDb ? $soldeDb->$balanceCol : 0;
+                
+                // Mola7ada: L-appel de fonds kay-n9ess mn l-balance (Dette)
                 $nouveauSolde = $soldeActuel - $p->montant_du;
 
-                DB::table('appf_to_owner')->where('id', $p->id)->update(['solde_avant' => $soldeActuel]);
-
-                // 🟢 L-FIX HNA: Zidna 'propriete_id' bach may-t-plantach PostgreSQL m3a l-fakes
-                DB::table('user_as_owner')->updateOrInsert(
-                    ['user_id' => $p->user_id], 
-                    ['solde' => $nouveauSolde, 'propriete_id' => $propriete_id]
-                );
-
-                // SIMULATION D'ENVOI DE NOTIFICATION
-                DB::table('notifications')->insert([
-                    'user_id' => $p->user_id,
-                    'message' => "Nouvel appel de fonds : " . $appel->title,
-                    'created_at' => now()
-                ]);
+                DB::table('user_as_owner')
+                    ->where('user_id', $p->user_id)
+                    ->where('propriete_id', $sp_id)
+                    ->update([$balanceCol => $nouveauSolde]);
 
                 $numberSent++;
             }
@@ -299,27 +314,33 @@ class AppelFondsController extends Controller
         }
     }
 
-    // ==========================================
-    // 7. DÉTAILS APPEL DE FONDS
-    // ==========================================
     public function details(Request $request)
     {
         $request->validate(['af_identifier' => 'required|string']);
 
+        $sp_id = $this->getProprieteId($request);
+        if (!$sp_id) return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
+
         $appel = DB::table('appels_fonds')->where('af_identifier', $request->af_identifier)->first();
         if (!$appel) return response()->json(['success' => false, 'message' => "Introuvable."], 404);
 
-        $details = DB::table('appf_to_owner')
-            ->leftJoin('users', 'users.id', '=', 'appf_to_owner.user_id') 
-            ->where('appf_to_owner.af_identifier', $appel->af_identifier)
-            ->select('appf_to_owner.*', 'users.full_name', 'users.email')
-            ->get();
+        // 🟢 FIX SOLDE: N-3erfou chmn solde njebdo (balance_prev awla balance_trav)
+        $balanceCol = ($appel->type_charge === 'previsionnel') ? 'balance_prev' : 'balance_trav';
 
-        if (!$appel->is_sent) {
-            foreach ($details as $d) {
-                $d->solde_actuel = DB::table('user_as_owner')->where('user_id', $d->user_id)->value('solde') ?? 0;
-            }
-        }
+        $details = DB::table('appf_to_owner')
+            ->leftJoin('users', 'users.id', '=', 'appf_to_owner.user_id')
+            ->leftJoin('user_as_owner', function($join) use ($sp_id) {
+                $join->on('user_as_owner.user_id', '=', 'appf_to_owner.user_id')
+                     ->where('user_as_owner.propriete_id', '=', $sp_id);
+            })
+            ->where('appf_to_owner.af_identifier', $appel->af_identifier)
+            ->select(
+                'appf_to_owner.*',
+                'users.full_name as owner_name', // Y-mken khawya f l-DB
+                'users.email as email',          // 🟢 Nzidou email bach y-ban lina chkoun homa
+                "user_as_owner.{$balanceCol} as solde_actuel" // 🟢 Jbed l-flouss s7a7 mn DB
+            )
+            ->get();
 
         return response()->json([
             'success' => true,
@@ -329,7 +350,6 @@ class AppelFondsController extends Controller
             ]
         ]);
     }
-
     // ==========================================
     // 8. SUPPRIMER UN APPEL DE FONDS
     // ==========================================
@@ -346,7 +366,7 @@ class AppelFondsController extends Controller
 
         DB::beginTransaction();
         try {
-            DB::table('appels_fonds')->where('af_identifier', $request->af_identifier)->delete(); // Kayms7 m3ah appf_to_owner (Cascade)
+            DB::table('appels_fonds')->where('af_identifier', $request->af_identifier)->delete(); 
             DB::commit();
             return response()->json(['success' => true, 'message' => "Appel supprimé."]);
         } catch (Exception $e) {

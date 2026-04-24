@@ -18,7 +18,7 @@ class Exercice extends Model
 
     protected $fillable = [
         'se_identifier',
-        'sp_identifier',
+        'propriete_id',
         'start_date',
         'end_date',
         'period',
@@ -30,7 +30,7 @@ class Exercice extends Model
     // L-Exercice تابع l-Propriété (Résidence)
     public function propriete()
     {
-        return $this->belongsTo(Copropriete::class, 'sp_identifier', 'id');
+        return $this->belongsTo(Copropriete::class, 'propriete_id', 'id');
     }
 
     // L-Exercice 3ndo Budget Prévisionnel wa7ed
