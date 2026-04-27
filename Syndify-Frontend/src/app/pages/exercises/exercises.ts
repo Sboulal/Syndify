@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router'; 
+import { ActivatedRoute, Router, RouterModule } from '@angular/router'; 
 import { PageHeader } from '../../components/page-header/page-header';
 import { FormsModule } from '@angular/forms';
 import { ExerciceService } from '../../services/exercice'; 
@@ -9,7 +9,7 @@ import { CleRepartitionService } from '../../services/cle-repartition';
 @Component({
   selector: 'app-exercises',
   standalone: true,
-  imports: [CommonModule, PageHeader, FormsModule],
+  imports: [CommonModule, PageHeader, FormsModule, RouterModule],
   templateUrl: './exercises.html',
 })
 export class Exercises implements OnInit {
@@ -292,8 +292,8 @@ cloturerExercice(ex: any) {
     console.log('🔐 [cloturerExercice] ID li l9ina:', idS7i7);
 
     if (idS7i7 && String(idS7i7).startsWith('EX-')) {
-       // 🟢 N-ssiftou l-User l-page dyal l-Clôture
-       this.router.navigate(['/exercices/cloture', idS7i7]);
+       // 🟢 FIX HNA: Mshina l-chemin s7i7 lli m-defini f app.routes.ts
+       this.router.navigate(['/clotures/details', idS7i7]);
     } else {
        this.showToast("Erreur: ID de l'exercice introuvable ou invalide.", 'error');
     }

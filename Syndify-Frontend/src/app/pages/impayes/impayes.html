@@ -1,0 +1,89 @@
+<div class="flex flex-col min-h-full font-['Poppins'] bg-syndify-bg overflow-x-hidden">
+
+  <app-page-header 
+    class="shrink-0"
+    parentPath="Ma copropriété" 
+    currentPath="Les impayés"
+    title="Gestion des impayés"
+    description="Suivez les soldes débiteurs et relancez les copropriétaires en retard de paiement.">
+  </app-page-header>
+
+  <div class="flex-1 p-6 md:p-8">
+    
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      
+      <div class="p-6 border-b border-gray-200 flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-50/50 gap-4">
+        <h2 class="text-[18px] font-bold text-syndify-dark tracking-wide">Liste des copropriétaires débiteurs</h2>
+        <div class="bg-red-50 text-red-600 px-5 py-2.5 rounded-lg border border-red-100 flex items-center gap-3 shadow-sm">
+            <span class="text-[12px] font-bold uppercase tracking-wider opacity-80">Total à recouvrer</span>
+            <span class="text-[18px] font-black">{{ totalImpayes | number:'1.2-2' }} <span class="text-[11px] ml-0.5">MAD</span></span>
+        </div>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead class="bg-white border-b border-gray-200">
+            <tr>
+              <th class="py-4 px-6 font-semibold text-gray-400 uppercase tracking-wider text-[11px]">Identifiant</th>
+              <th class="py-4 px-6 font-semibold text-gray-400 uppercase tracking-wider text-[11px]">Copropriétaire</th>
+              <th class="py-4 px-6 font-semibold text-gray-400 uppercase tracking-wider text-[11px]">Contact</th>
+              <th class="py-4 px-6 font-semibold text-gray-400 uppercase tracking-wider text-[11px] text-right">Montant Dû</th>
+              <th class="py-4 px-6 font-semibold text-gray-400 uppercase tracking-wider text-[11px] text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody class="text-[13px] font-medium">
+            
+            <tr *ngIf="isLoading">
+                <td colspan="5" class="py-12 text-center text-gray-400">
+                    <div class="flex flex-col items-center justify-center gap-3">
+                        <div class="w-6 h-6 border-2 border-syndify-accent border-t-transparent rounded-full animate-spin"></div>
+                        <span>Chargement des impayés...</span>
+                    </div>
+                </td>
+            </tr>
+            
+            <tr *ngIf="!isLoading && impayesList.length === 0">
+                <td colspan="5" class="py-16 text-center text-gray-500 font-medium text-[14px]">
+               
+                    Aucun impayé trouvé. Tous les copropriétaires sont à jour !
+                </td>
+            </tr>
+            
+            <tr *ngFor="let impaye of impayesList" class="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+              <td class="py-4 px-6 text-gray-500 font-bold">COP-{{ formatId(impaye.user_id) }}</td>
+              
+              <td class="py-4 px-6 text-syndify-dark font-bold text-[14px]">{{ impaye.full_name }}</td>
+              
+              <td class="py-4 px-6 text-gray-500 text-[12px]">
+                <div class="flex flex-col gap-0.5">
+                  <span *ngIf="impaye.tel" class="font-medium">{{ impaye.tel }}</span>
+                  <span *ngIf="impaye.email" class="opacity-70">{{ impaye.email }}</span>
+                  <span *ngIf="!impaye.tel && !impaye.email" class="opacity-50">Aucun contact</span>
+                </div>
+              </td>
+              
+              <td class="py-4 px-6 text-right font-black text-red-600 text-[15px]">
+                {{ impaye.total_du | number:'1.2-2' }} <span class="text-[10px] opacity-60 ml-0.5">MAD</span>
+              </td>
+              
+              <td class="py-4 px-6 text-center">
+                <button 
+                  (click)="relancer(impaye.su_identifier)" 
+                  [disabled]="isSending === impaye.su_identifier" 
+                  class="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-lg text-[12px] font-bold transition-all border border-red-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto min-w-[110px]">
+                  
+                  <svg *ngIf="isSending !== impaye.su_identifier" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                  <svg *ngIf="isSending === impaye.su_identifier" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                  
+                  {{ isSending === impaye.su_identifier ? 'Envoi...' : 'Relancer' }}
+                </button>
+              </td>
+            </tr>
+            
+          </tbody>
+        </table>
+      </div>
+      
+    </div>
+  </div>
+</div>

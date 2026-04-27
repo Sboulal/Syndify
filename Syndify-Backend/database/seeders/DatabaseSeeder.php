@@ -15,11 +15,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            SyndifyDemoSeeder::class, // 🟢 N-runniw ghir l-Base
+            // SyndifyDocumentSeeder::class, // 🔴 Hadi d-derna liha Commentaire
         ]);
     }
 }

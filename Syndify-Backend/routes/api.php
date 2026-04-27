@@ -11,6 +11,8 @@ use App\Http\Controllers\SimulationController;
 use App\Http\Controllers\AppelFondsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ClotureController;
+use App\Http\Controllers\ImpayeController;
+use App\Http\Controllers\DocumentController;
 
 // ==========================================
 // 🔓 ROUTES PUBLIQUES (Bla Token)
@@ -82,6 +84,17 @@ Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
     Route::post('/clotures/finaliser', [ClotureController::class, 'finaliser']);
 
     // --- Dashboard ---
-    Route::post('/dashboard/data', [DashboardController::class, 'getDashboardData']);   
+    Route::post('/dashboard/data', [DashboardController::class, 'getDashboardData']);  
+    Route::post('/impayes/liste', [ImpayeController::class, 'listeImpayes']);
+Route::post('/impayes/rappels', [ImpayeController::class, 'listeRappels']);
+Route::post('/impayes/envoyer-rappel', [ImpayeController::class, 'envoyerRappel']); 
+
+
+
+Route::post('/documents/principal', [DocumentController::class, 'chargerDossierPrincipal']);
+Route::post('/documents/sous-dossier', [DocumentController::class, 'accederSousDossier']);
+Route::post('/documents/telecharger', [DocumentController::class, 'telecharger']); // Ghadia traja3 Fichier/Zip
+Route::post('/documents/supprimer', [DocumentController::class, 'supprimer']);
+Route::post('/documents/rechercher', [DocumentController::class, 'rechercher']);
 
 

@@ -76,7 +76,7 @@
                 <div *ngIf="activeDropdown === ex.se_identifier" 
                      class="absolute right-6 mt-2 w-48 bg-white rounded-2xl border border-gray-100 py-2 z-[999] shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)] origin-top-right transition-all">
                   
-                  <button *ngIf="ex.status === 'en cours' || ex.status === 'A clore' || ex.status === 'en attente'" (click)="$event.stopPropagation(); cloturerExercice(ex)" class="w-full text-left px-4 py-2.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 hover:text-syndify-accent flex items-center gap-3 transition-colors cursor-pointer border-0 bg-transparent group">
+                 <button *ngIf="ex.status === 'en cours' || ex.status === 'A clore' || ex.status === 'en attente'" (click)="$event.stopPropagation(); cloturerExercice(ex)" class="w-full text-left px-4 py-2.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 hover:text-syndify-accent flex items-center gap-3 transition-colors cursor-pointer border-0 bg-transparent group">
                     <div class="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-all">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                     </div>
@@ -89,7 +89,6 @@
                     </div>
                     Voir la clôture
                   </button>
-
                   <div *ngIf="ex.status === 'en attente'" class="h-px bg-gray-50 my-1 mx-2"></div>
                   
                   <button *ngIf="ex.status === 'en attente'" (click)="$event.stopPropagation(); openEditModal(ex)" class="w-full text-left px-4 py-2.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 hover:text-syndify-accent flex items-center gap-3 transition-colors cursor-pointer border-0 bg-transparent group">

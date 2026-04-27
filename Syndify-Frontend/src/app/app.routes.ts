@@ -14,6 +14,8 @@ import { BudgetsOperations } from './pages/budgetsdepenses/budgetsdepenses';
 import { Appelsfonds } from './pages/appelsfonds/appelsfonds';
 import { AppelsFondsDetails } from './pages/appels-fonds-details/appels-fonds-details';
 import { Cloturedetails } from './pages/cloturedetails/cloturedetails';
+import { Impayes } from './pages/impayes/impayes';
+import { Documents } from './pages/documents/documents';
 
 export const routes: Routes = [
   // ==========================================
@@ -47,7 +49,12 @@ export const routes: Routes = [
       {path : 'appels-de-fonds', component: Appelsfonds},
       { path: 'financement/appels-fonds/details/:id', component: AppelsFondsDetails },
       { path: 'financement/appels-fonds/details/:id', component: Appelsfonds },
-      { path: 'exercices/cloture/:id', component: Cloturedetails },
+      { 
+    path: 'clotures/details/:id', 
+    component: Cloturedetails 
+},
+      {path : 'impayes', component: Impayes},
+      {path : 'documents', component: Documents }, // Lazy load pour la page Documents
       
       
       // { path: 'documents', component: DocumentsComponent },

@@ -41,15 +41,17 @@ export class Cloturedetails implements OnInit {
     private cdr: ChangeDetectorRef
   ) {}
 
-  ngOnInit() {
+ngOnInit() {
     this.route.paramMap.subscribe(params => {
       const id = params.get('id');
       if (id) {
         this.se_identifier = id;
-        console.log("🟢 ID Exercice récupéré mn l-URL:", this.se_identifier); // 🟢 CHECK F CONSOLE
-        
+        console.log("🟢 ID Exercice récupéré mn l-URL:", this.se_identifier);
         this.chargerCloture();
-   
+      } else {
+        // 🟢 FIX HNA: Ila l-ID ma-dazsh, n-rjj3ou l-User l-liste awtomatiki
+        console.error("❌ L-ID khawi f l-URL! Redirection vers la liste...");
+        this.router.navigate(['/clotures']); // Bddliha b l-Chemin dyal l-Liste dyalk
       }
     });
   }
@@ -66,20 +68,17 @@ export class Cloturedetails implements OnInit {
     });
   }
 
- chargerCloture() {
+chargerCloture() {
     this.isLoading = true;
     
-    // 🟢 Payload m3a headers l-id dyal l-user
     this.http.post(`${this.baseUrl}/clotures/charger`, { se_identifier: this.se_identifier }, { headers: this.getHeaders() }).subscribe({
       next: (res: any) => {
         if (res.success) {
           this.data = res.data;
           
-          // 🟢 FIX: Synchro l-Header m3a d-data dyal l-Backend
-          // Khass ykoun l-Backend dyal ClotureController@charger kay-rjja3 'residence'
+          // 🟢 FIX: 7iydna l-Commentaire hna!
           if (res.residence) {
-            // Ila konti saybti l-backend b7al les pages akhrin
-            // this.residenceInfo = res.residence; 
+             this.residenceInfo = res.residence; 
           }
 
           if (this.data.cloture_saved_data) {
@@ -134,19 +133,38 @@ export class Cloturedetails implements OnInit {
     }
 
     this.isSaving = true;
-    
-    // 🟢 Zedna { headers: this.getHeaders() }
-    this.http.post(`${this.baseUrl}/clotures/finaliser`, { se_identifier: this.se_identifier }, { headers: this.getHeaders() }).subscribe({
-      next: (res: any) => {
-        if (res.success) {
-          alert("Exercice clos avec succès ! Document généré.");
-          this.chargerCloture(); 
+
+    // 🟢 1. N-ssauvegardiw l-Khtiyarat (Brouillon) luwel awtomatiki
+    const payloadBrouillon = {
+      se_identifier: this.se_identifier,
+      ...this.formChoices
+    };
+
+    this.http.post(`${this.baseUrl}/clotures/enregistrer`, payloadBrouillon, { headers: this.getHeaders() }).subscribe({
+      next: (resBrouillon: any) => {
+        if (resBrouillon.success) {
+          
+          // 🟢 2. Mlli kay-douz l-Brouillon, 3ad n-3eytou l-Finaliser bash y-sayeb l-PDF
+          this.http.post(`${this.baseUrl}/clotures/finaliser`, { se_identifier: this.se_identifier }, { headers: this.getHeaders() }).subscribe({
+            next: (resFinal: any) => {
+              if (resFinal.success) {
+                alert("Exercice clos avec succès ! Document généré.");
+                this.chargerCloture(); 
+              }
+              this.isSaving = false;
+              this.cdr.detectChanges();
+            },
+            error: (errFinal) => {
+              alert("Erreur: " + (errFinal.error?.message || "Erreur lors de la finalisation."));
+              this.isSaving = false;
+              this.cdr.detectChanges();
+            }
+          });
+
         }
-        this.isSaving = false;
-        this.cdr.detectChanges();
       },
-      error: (err) => {
-        alert("Erreur: " + (err.error?.message || "Veuillez d'abord enregistrer le brouillon."));
+      error: (errBrouillon) => {
+        alert("Erreur: " + (errBrouillon.error?.message || "Impossible de sauvegarder les choix."));
         this.isSaving = false;
         this.cdr.detectChanges();
       }

@@ -233,8 +233,41 @@ chargerDonnees(reset: boolean = false) {
     });
   }
 
-  telechargerReleve() {
-    console.log('📥 Clic sur Télécharger le relevé');
+telechargerReleve() {
+    console.log('📥 Demande de téléchargement du relevé PDF en cours...');
+    
+    if (!this.exerciceSelectionne) {
+      alert("Veuillez sélectionner un exercice d'abord.");
+      return;
+    }
+
+    const payload = {
+      exercise: this.exerciceSelectionne,
+      type: this.activeTab
+    };
+
+    this.budgetService.telechargerReleve(payload).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Releve_${this.activeTab}_${this.exerciceSelectionne}.pdf`;
+        document.body.appendChild(a);
+        
+        a.click(); 
+        
+        // 🟢 FIX HNA: N-tsennaw 2 tawani 3ad n-ms7ou l-Blob mn l-mémoire
+        // Bash n-3tiw we9t l-Navigateur (Edge/Chrome) y-9ra l-PDF 3la khatrou
+        setTimeout(() => {
+            window.URL.revokeObjectURL(url);
+            a.remove();
+        }, 2000);
+      },
+      error: (err) => {
+        console.error("❌ Erreur lors du téléchargement", err);
+        alert("Une erreur est survenue lors du téléchargement du relevé.");
+      }
+    });
   }
 
   toggleMenu(operationActuelle: any) {

@@ -25,10 +25,10 @@ private function getProprieteId(Request $request)
     
     return $link ? $link->$propOwnerCol : null;
 }
-    // ==========================================
+ // ==========================================
     // 1. CHARGER LA LISTE DES EXERCICES
     // ==========================================
-public function liste(Request $request)
+    public function liste(Request $request)
     {
         $sp_id = $this->getProprieteId($request);
         if (!$sp_id) return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
@@ -37,10 +37,12 @@ public function liste(Request $request)
         $propIdCol_propriete = Schema::hasColumn('proprietes', 'sp_identifier') ? 'sp_identifier' : 'id';
         $residence = DB::table('proprietes')->where($propIdCol_propriete, $sp_id)->first();
 
-        // 2. Jbed les exercices
+        // 🟢 2. Jbed les exercices AVEC leur statut de clôture (kima matloub f l-Cahier des charges)
         $exercices = DB::table('exercices')
-            ->where('propriete_id', $sp_id) 
-            ->orderBy('start_date', 'desc')
+            ->leftJoin('clotures', 'exercices.se_identifier', '=', 'clotures.se_identifier')
+            ->where('exercices.propriete_id', $sp_id)
+            ->select('exercices.*', 'clotures.status as cloture_status') // 0: Brouillon, 1: Finalisé
+            ->orderBy('exercices.start_date', 'desc') // Du plus récent au plus ancien
             ->get();
 
         foreach ($exercices as $ex) {
@@ -176,12 +178,11 @@ public function ajouter(Request $request)
         }
     }
 
-    // ==========================================
+// ==========================================
     // 3. MODIFIER UN EXERCICE
     // ==========================================
     public function modifier(Request $request)
     {
-        // 🔴 7iydna propriete_id mn l-Validation
         $request->validate(['se_identifier' => 'required|string']);
 
         $sp_id = $this->getProprieteId($request);
@@ -212,21 +213,42 @@ public function ajouter(Request $request)
                 DB::table('bp_to_key')->where('scp_identifier', $cp->scp_identifier)->delete();
                 $bpLinks = [];
                 foreach ($request->list_cles_previsionnel as $cle) {
-                    $bpLinks[] = ['cle_id' => $cle['cle_id'], 'scp_identifier' => $cp->scp_identifier, 'budget' => $cle['montant'], 'depenses' => 0];
+                    // 🟢 FIX HNA: Rddinaha 'cle_repartition_id' blast 'cle_id'
+                    $bpLinks[] = [
+                        'cle_repartition_id' => $cle['cle_id'], 
+                        'scp_identifier' => $cp->scp_identifier, 
+                        'budget' => $cle['montant'], 
+                        'depenses' => 0
+                    ];
                 }
                 if(!empty($bpLinks)) DB::table('bp_to_key')->insert($bpLinks);
             }
 
-            // Update Travaux ... (Nfs l-logic dyal CT)
+            // Update Travaux
+            $ct = DB::table('charges_travaux')->where('se_identifier', $request->se_identifier)->first();
+            if($ct) {
+                DB::table('charges_travaux')->where('sct_identifier', $ct->sct_identifier)->update(['budget' => $request->budget_travaux_total]);
+                DB::table('bt_to_key')->where('sct_identifier', $ct->sct_identifier)->delete();
+                $btLinks = [];
+                foreach ($request->list_cles_travaux as $cle) {
+                    // 🟢 FIX HNA: Rddinaha 'cle_repartition_id' blast 'cle_id'
+                    $btLinks[] = [
+                        'cle_repartition_id' => $cle['cle_id'], 
+                        'sct_identifier' => $ct->sct_identifier, 
+                        'budget' => $cle['montant'], 
+                        'depenses' => 0
+                    ];
+                }
+                if(!empty($btLinks)) DB::table('bt_to_key')->insert($btLinks);
+            }
             
             DB::commit();
-            return response()->json(['success' => true, 'message' => 'Exercice mis à jour.']);
-        } catch (Exception $e) {
+            return response()->json(['success' => true, 'message' => 'Exercice mis à jour avec succès.']);
+        } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
-
     // ==========================================
     // 4. SUPPRIMER UN EXERCICE
     // ==========================================

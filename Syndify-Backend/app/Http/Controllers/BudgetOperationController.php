@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Exception;
 
 class BudgetOperationController extends Controller
@@ -247,5 +248,50 @@ private function getProprieteId(Request $request)
         $ex = DB::table('exercices')->where('se_identifier', $se_identifier)->first();
         if (!$ex) return "L'exercice '{$se_identifier}' est introuvable.";
         return true; 
+    }
+
+// ==========================================
+    // 6. TÉLÉCHARGER LE RELEVÉ (EN PDF)
+    // ==========================================
+    public function telechargerReleve(Request $request)
+    {
+        $sp_id = $this->getProprieteId($request);
+        if (!$sp_id) return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
+
+        $request->validate([
+            'exercise' => 'required|string',
+            'type' => 'required|in:previsionnel,travaux'
+        ]);
+
+        $se_id = $request->exercise;
+
+        // Njbdou Smiya d-Résidence
+        $propIdCol = Schema::hasColumn('proprietes', 'sp_identifier') ? 'sp_identifier' : 'id';
+        $residence = DB::table('proprietes')->where($propIdCol, $sp_id)->first();
+
+        // Njbdou les Encaissements (🟢 7iydna l-filtre li kan kay-khabbi d-data)
+        $encaissements = DB::table('encaissements')
+            ->where('se_identifier', $se_id)
+            ->select('date', 'title as libelle', 'amount as montant', DB::raw("'Encaissement' as type"))
+            ->get();
+
+        // Njbdou les Dépenses (🟢 7iydna l-filtre li kan kay-khabbi d-data)
+        $depenses = DB::table('depenses')
+            ->where('se_identifier', $se_id)
+            ->select('date', 'title as libelle', DB::raw("amount * -1 as montant"), DB::raw("'Dépense' as type"))
+            ->get();
+
+        // 🟢 FIX L-KBIR: Zedna ->values() bash l-PDF y-9der y-9ra l-liste mzyan
+        $operations = $encaissements->merge($depenses)->sortByDesc('date')->values();
+
+        // N-ssiftou d-Data l-Fichier Blade bash y-creye l-PDF
+        $pdf = Pdf::loadView('pdfs.releve', [
+            'operations' => $operations,
+            'type' => $request->type,
+            'exercice' => $se_id,
+            'residence' => $residence
+        ]);
+
+        return $pdf->download("Releve_{$request->type}_{$se_id}.pdf");
     }
 }

@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class ClotureController extends Controller
@@ -37,33 +39,35 @@ private function getProprieteId(Request $request)
         $propIdCol = Schema::hasColumn('exercices', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
 
         try {
-            // 1. Vérification de l'exercice
+            // 1. Jbed l-Résidence bash n-ssifetouha l-Header dyal Angular
+            $propIdCol_propriete = Schema::hasColumn('proprietes', 'sp_identifier') ? 'sp_identifier' : 'id';
+            $residence = DB::table('proprietes')->where($propIdCol_propriete, $sp_id)->first();
+
+            // 2. Vérification de l'exercice
             $exercice = DB::table('exercices')->where('se_identifier', $se_id)->where($propIdCol, $sp_id)->first();
             if (!$exercice) return response()->json(['success' => false, 'message' => 'Exercice introuvable.'], 404);
 
-            // Vérifier si la clôture existe déjà (Brouillon ou Finalisée)
-            $cloture = DB::table('clotures')->where('se_identifier', $se_id)->first();
-            $clotureStatus = $cloture ? $cloture->status : 0; // 0 = draft, 1 = finalisé
+            // 🟢 FIX HNA: 7iydna l-IF lli kan kay-bloci l-page !
+            $cloture = DB::table('clotures')->where('se_identifier', $request->se_identifier)->first();
+            $clotureStatus = $cloture ? $cloture->status : 0; 
 
-            // 2. Chargement des Budgets Planifiés
+            // 3. Chargement des Budgets Planifiés
             $cp = DB::table('charges_previsionnelles')->where('se_identifier', $se_id)->first();
             $ct = DB::table('charges_travaux')->where('se_identifier', $se_id)->first();
 
-            // Calcul Prévisionnel
             $prev_budget = $cp ? $cp->budget : 0;
             $prev_encaissement = $cp ? $cp->total_encaissements : 0;
             $prev_depense = $cp ? $cp->total_depenses : 0;
             $prev_reste = max(0, $prev_encaissement - $prev_depense);
             $prev_du = max(0, $prev_budget - $prev_encaissement);
 
-            // Calcul Travaux
             $trav_budget = $ct ? $ct->budget : 0;
             $trav_encaissement = $ct ? $ct->total_encaissements : 0;
             $trav_depense = $ct ? $ct->total_depenses : 0;
             $trav_reste = max(0, $trav_encaissement - $trav_depense);
             $trav_du = max(0, $trav_budget - $trav_encaissement);
 
-            // 3. Chargement par Clé de répartition
+            // 4. Chargement par Clé de répartition
             $cles_prev = [];
             if ($cp) {
                 $cles_prev = DB::table('bp_to_key')
@@ -73,7 +77,7 @@ private function getProprieteId(Request $request)
                     ->get();
             }
 
-            // 4. Exceptionnels
+            // 5. Exceptionnels
             $appels_exceptionnels_prev = DB::table('appels_fonds')
                 ->where('se_identifier', $se_id)->where('type_charge', 'previsionnel')->where('sub_type', 'exceptionnel')->get();
             
@@ -81,7 +85,7 @@ private function getProprieteId(Request $request)
             $exceptionnel_prev_enc = DB::table('encaissements')->where('se_identifier', $se_id)->where('sub_type_charges', 'exceptionnel')->where('type_charges', 'previsionnel')->sum('amount');
             $exceptionnel_prev_dep = DB::table('depenses')->where('se_identifier', $se_id)->where('sub_type_charges', 'exceptionnel')->where('type_charges', 'previsionnel')->sum('amount');
 
-            // 5. Grand Total
+            // 6. Grand Total
             $grand_budget = $prev_budget + $trav_budget + $exceptionnel_prev_budget;
             $grand_encaissement = $prev_encaissement + $trav_encaissement + $exceptionnel_prev_enc;
             $grand_depense = $prev_depense + $trav_depense + $exceptionnel_prev_dep;
@@ -90,6 +94,10 @@ private function getProprieteId(Request $request)
 
             return response()->json([
                 'success' => true,
+                'residence' => [
+                    'nom' => $residence->nom ?? 'Résidence',
+                    'adresse' => $residence->address ?? 'Adresse non définie'
+                ],
                 'data' => [
                     'exercice_status' => $exercice->status,
                     'cloture_status' => $clotureStatus,
@@ -116,7 +124,7 @@ private function getProprieteId(Request $request)
                         'budget' => $grand_budget, 'encaissements' => $grand_encaissement, 
                         'depenses' => $grand_depense, 'reste' => $grand_reste, 'du' => $grand_du
                     ],
-                    'cloture_saved_data' => $cloture // Récupérer les choix précédents s'il y a un brouillon
+                    'cloture_saved_data' => $cloture 
                 ]
             ]);
 
@@ -124,7 +132,6 @@ private function getProprieteId(Request $request)
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
-
     // ==========================================
     // 2. ENREGISTRER LA CLÔTURE (Brouillon)
     // ==========================================
@@ -184,7 +191,7 @@ private function getProprieteId(Request $request)
         }
     }
 
-    // ==========================================
+// ==========================================
     // 3. FINALISER LA CLÔTURE (Clôture Définitive)
     // ==========================================
     public function finaliser(Request $request)
@@ -200,19 +207,37 @@ private function getProprieteId(Request $request)
             if (!$cloture) return response()->json(['success' => false, 'message' => 'Veuillez enregistrer la clôture avant de finaliser.'], 400);
             if ($cloture->status == 1) return response()->json(['success' => false, 'message' => 'Cette clôture est déjà finalisée.'], 400);
 
-            // Génération de Document (Simulation URL pour le moment)
-            $documentUrl = "documents/clotures/{$request->se_identifier}_report.pdf";
+            // 🟢 1. GÉNÉRATION DU VRAI PDF DE CLÔTURE
+            $html = "
+                <div style='font-family: Arial, sans-serif; text-align: center; padding: 40px;'>
+                    <h1 style='color: #1E3A34;'>Rapport de Clôture d'Exercice</h1>
+                    <h2 style='color: #444;'>Exercice : {$request->se_identifier}</h2>
+                    <p style='margin-top: 30px; font-size: 14px;'>Ce document représente le rapport officiel et final de la clôture des comptes.</p>
+                    <hr style='margin-top: 50px; border: 0; border-top: 1px solid #ddd;'>
+                    <p style='color: #888; font-size: 11px;'>Généré le : " . date('d/m/Y H:i') . "</p>
+                </div>
+            ";
 
-            // 1. Mettre à jour la clôture
+            $pdf = Pdf::loadHTML($html);
+            
+            // 🟢 2. SAUVEGARDE DANS LE DOSSIER DE LA RÉSIDENCE
+            $pdfPath = "proprietes/{$sp_id}/clotures/{$request->se_identifier}_rapport_cloture.pdf";
+            Storage::disk('public')->put($pdfPath, $pdf->output());
+
+            // 🟢 3. L-LIEN S-S7I7 LLI GHAY-9RAH ANGULAR
+            // "storage/" bash l-navigateur y-9der y-wsel l-dossier public dyal Laravel
+            $documentUrl = "storage/" . $pdfPath;
+
+            // 4. Mettre à jour la clôture
             DB::table('clotures')->where('se_identifier', $request->se_identifier)->update([
                 'status' => 1, // Finalisé
                 'report_link' => $documentUrl,
                 'updated_at' => now()
             ]);
 
-            // 2. Mettre à jour l'exercice
+            // 5. Mettre à jour l'exercice
             DB::table('exercices')->where('se_identifier', $request->se_identifier)->update([
-                'status' => 'Clos', // 🟢 Passage à l'état Clos
+                'status' => 'Clos',
                 'updated_at' => now()
             ]);
 

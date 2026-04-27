@@ -70,11 +70,11 @@ export class MainLayout implements OnInit {
       this.activeItem = 'dashboard';
       this.openMenus = {}; 
     } 
-    else if (currentUrl.includes('/gestion-lots') || currentUrl.includes('/liste-coproprietes') || currentUrl.includes('/cles-de-repartition') || currentUrl.includes('/les-impayes')) {
+    else if (currentUrl.includes('/gestion-lots') || currentUrl.includes('/liste-coproprietes') || currentUrl.includes('/cles-de-repartition') || currentUrl.includes('/impayes')) {
       if (currentUrl.includes('/gestion-lots')) this.activeItem = 'gestion-lots';
       if (currentUrl.includes('/liste-coproprietes')) this.activeItem = 'liste-copros';
       if (currentUrl.includes('/cles-de-repartition')) this.activeItem = 'cles';
-      if (currentUrl.includes('/les-impayes')) this.activeItem = 'impayes';
+      if (currentUrl.includes('/impayes')) this.activeItem = 'impayes';
       this.openMenus['copropriete'] = true; 
     }
     else if (currentUrl.includes('/budgets-depenses') || currentUrl.includes('/appels-de-fonds') || currentUrl.includes('/simulation-budget')) {
@@ -83,18 +83,28 @@ export class MainLayout implements OnInit {
       if (currentUrl.includes('/simulation-budget')) this.activeItem = 'simulation-budget';
       this.openMenus['financement'] = true; 
     }
-    else if (currentUrl.includes('/exercice')  || currentUrl.includes('exercices/cloture')) {
+    else if (currentUrl.includes('/exercice')  || currentUrl.includes('clotures')) {
       if (currentUrl.includes('/exercice')) this.activeItem = 'exercice';
       if (currentUrl.includes('exercices/cloture')) this.activeItem = 'cloture';
       this.openMenus['Exercice & clôtures'] = true; 
     }
+     else if (currentUrl.includes('/documents')) {
+    this.activeItem = 'documents';
+    this.openMenus['documents'] = true;
   }
+  }
+ 
 
   toggleSidebar() {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
   }
 
-  toggleMenu(menu: string) {
+// 🟢 FIX: Zedna 'event' bash n-7bssou l-redirection
+  toggleMenu(menu: string, event?: Event) {
+    if (event) {
+      event.preventDefault(); // 🛑 Kat-mne3 l-navigateur y-ddik l-chi blassa khra (b7al Dashboard)
+    }
+    
     const etaitOuvert = this.openMenus[menu];
     this.openMenus = {}; 
     if (!etaitOuvert) {
