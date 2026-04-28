@@ -16,7 +16,8 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            SyndifyDemoSeeder::class, // 🟢 N-runniw ghir l-Base
+            // SyndifyDemoSeeder::class, // 🟢 N-runniw ghir l-Base
+           SyndifyTestDataSeeder::class,
             // SyndifyDocumentSeeder::class, // 🔴 Hadi d-derna liha Commentaire
         ]);
     }

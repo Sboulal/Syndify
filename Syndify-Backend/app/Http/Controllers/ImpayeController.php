@@ -12,24 +12,16 @@ use Exception;
 
 class ImpayeController extends Controller
 {
-    // ========================================================
+// ========================================================
     // 🟢 FONCTION SÉCURISÉE POUR L'ID DE LA PROPRIÉTÉ
     // ========================================================
     private function getProprieteId(Request $request)
     {
-        // 🟢 N-forciw l-ID dyal l-User (Matalan 1) pour les tests
-        if ($request->has('propriete_id') && !empty($request->propriete_id)) {
-            return $request->propriete_id;
-        }
-
-        $userId = 1; 
-        $propOwnerCol = Schema::hasColumn('user_as_owner', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
-        $link = DB::table('user_as_owner')->where('user_id', $userId)->first();
-        
-        return $link ? $link->$propOwnerCol : null;
+        // 🟢 FIX RADICAL: N-forciw l-ID dyal l-Résidence d-Demo nichan
+        return 'SP-87248712';
     }
 
-// ==========================================
+    // ==========================================
     // 1. LES IMPAYÉS (Liste des soldes négatifs)
     // ==========================================
     public function listeImpayes(Request $request)
@@ -38,6 +30,10 @@ class ImpayeController extends Controller
         if (!$sp_id) return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
 
         try {
+            // 🟢 1. N-jbdou l-m3loumat dyal l-Résidence bach nsiftoha l-Angular Header
+            $propIdCol_propriete = Schema::hasColumn('proprietes', 'sp_identifier') ? 'sp_identifier' : 'id';
+            $residence = DB::table('proprietes')->where($propIdCol_propriete, $sp_id)->first();
+
             // 🟢 N-shoufou wach les colonnes kaynin aslan f PostgreSQL
             $hasTrav = Schema::hasColumn('user_as_owner', 'balance_trav');
             $hasSolde = Schema::hasColumn('user_as_owner', 'solde');
@@ -86,8 +82,13 @@ class ImpayeController extends Controller
                 ];
             });
 
+            // 🟢 2. N-siftou l-residence f l-JSON response
             return response()->json([
                 'success' => true,
+                'residence' => [
+                    'nom' => $residence->nom ?? 'Résidence',
+                    'adresse' => $residence->address ?? 'Adresse non définie'
+                ],
                 'data' => $resultats,
                 'total_impayes' => $resultats->sum('total_du')
             ]);

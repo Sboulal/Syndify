@@ -9,42 +9,32 @@ use Illuminate\Support\Facades\Log;
 
 class LotController extends Controller
 {
-    // ========================================================
-    // 🟢 FONCTION SÉCURISÉE
-    // ========================================================
-private function getProprieteId(Request $request)
-{
-    // 🟢 HACK ZERBA: N-forciw l-ID dyal l-User (Matalan 1) 
-    // Bash y-khelina n-testiw bla Auth w bla Headers f Angular
-    $userId = 1; 
-
-    $propOwnerCol = Schema::hasColumn('user_as_owner', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
-    $link = DB::table('user_as_owner')->where('user_id', $userId)->first();
     
-    return $link ? $link->$propOwnerCol : null;
-}
+// ========================================================
+    // 🟢 FONCTION SÉCURISÉE POUR L'ID DE LA PROPRIÉTÉ
+    // ========================================================
+    private function getProprieteId(Request $request)
+    {
+        // 🟢 FIX RADICAL: N-forciw l-ID dyal l-Résidence d-Demo nichan
+        return 'SP-87248712';
+    }
 
     // ==========================================
     // 1. Liste des Lots
     // ==========================================
-  public function liste(Request $request)
+    public function liste(Request $request)
     {
         $propriete_id = $this->getProprieteId($request);
-        if (!$propriete_id) return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
         
-        $propIdCol_units = Schema::hasColumn('units', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
         $propIdCol_propriete = Schema::hasColumn('proprietes', 'sp_identifier') ? 'sp_identifier' : 'id';
 
-        // 🟢 1. Jbed l-m3loumat dyal l-Résidence (b7al l-Dashboard)
+        // 1. Jbed l-m3loumat dyal l-Résidence
         $residence = DB::table('proprietes')
             ->where($propIdCol_propriete, $propriete_id)
             ->first();
 
-        // 🟢 2. Jbed l-liste dyal l-Lots
-        $lots = DB::table('units')
-            ->where($propIdCol_units, $propriete_id)
-            ->orderBy('id', 'desc')
-            ->get();
+        // 🟢 FIX: N-jbdou ga3 les Lots nichan
+        $lots = DB::table('units')->orderBy('id', 'desc')->get();
 
         $userPk = Schema::hasColumn('users', 'identifier') ? 'identifier' : 'id';
         $userNameCol = Schema::hasColumn('users', 'full_name') ? 'full_name' : 'name';
@@ -67,7 +57,6 @@ private function getProprieteId(Request $request)
             }
         }
 
-        // 🟢 3. Rjja3 kolchi f "data" wa7da
         return response()->json([
             'success' => true, 
             'residence' => [

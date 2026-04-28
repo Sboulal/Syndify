@@ -59,14 +59,13 @@ chargerListeAppels() {
     this.http.post(apiUrl, payload).subscribe({
       next: (res: any) => {
         if (res.success) {
-          // 🟢 FIX: Synchro s-smiya mn l-Backend
           if (res.residence) {
             this.residenceInfo = res.residence;
           }
 
           this.appelsDeFonds = res.data;
-          this.appelsPlanifies = this.appelsDeFonds.filter(a => a.sub_type === 'planifie');
-          this.appelsExceptionnels = this.appelsDeFonds.filter(a => a.sub_type === 'exceptionnel');
+          this.appelsPlanifies = this.appelsDeFonds.filter((a: any) => a.sub_type === 'planifie');
+          this.appelsExceptionnels = this.appelsDeFonds.filter((a: any) => a.sub_type === 'exceptionnel');
 
           if (res.exercice) {
             this.exerciceInfos = {
@@ -82,6 +81,7 @@ chargerListeAppels() {
         this.cdr.detectChanges();
       },
       error: (err) => {
+        console.error("❌ Erreur chargement appels fonds:", err); // 🟢 FIX HNA
         this.isLoading = false;
         this.cdr.detectChanges();
       }

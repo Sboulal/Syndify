@@ -4,35 +4,40 @@
     class="shrink-0"
     parentPath="Ma copropriété" 
     currentPath="Documents"
-    title="Documents archivés"
-    description="Consultez et gérez tous les documents archivés de la copropriété.">
+    [title]="residenceInfo.nom"
+    [description]="residenceInfo.adresse">
   </app-page-header>
 
-  <div class="flex-1 p-6 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+  <div class="flex-1 p-6 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start overflow-visible">
     
     <div class="lg:col-span-2 space-y-8">
       
       <div>
-        <h2 class="text-[16px] font-bold text-syndify-dark tracking-wide mb-1">Ajoutés récemment</h2>
-        <p class="text-[13px] text-gray-400 mb-4">Un accès rapide aux fichiers ajoutés récemment</p>
+        <h2 class="text-[18px] font-bold text-syndify-dark tracking-wide mb-1">Ajoutés récemment</h2>
+        <p class="text-[13px] text-gray-500 mb-4 font-medium">Un accès rapide aux fichiers ajoutés récemment</p>
         
-        <div *ngIf="isLoading" class="text-center py-6 text-gray-400">Chargement...</div>
+        <div *ngIf="isLoading" class="text-center py-6 text-syndify-accent">
+          <div class="flex flex-col items-center justify-center gap-3">
+              <div class="w-6 h-6 border-2 border-syndify-accent border-t-transparent rounded-full animate-spin"></div>
+              <span>Chargement des documents...</span>
+          </div>
+        </div>
         
-        <div *ngIf="!isLoading && recentFiles.length === 0" class="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400 text-[13px]">
+        <div *ngIf="!isLoading && recentFiles.length === 0" class="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400 text-[13px] italic shadow-none">
             Aucun fichier récent trouvé.
         </div>
 
         <div *ngIf="!isLoading && recentFiles.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div *ngFor="let file of recentFiles" class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col group hover:shadow-md transition-shadow">
-            <div class="h-24 bg-gray-50 flex items-center justify-center border-b border-gray-100 group-hover:bg-gray-100 transition-colors">
+          <div *ngFor="let file of recentFiles" class="bg-white rounded-xl border border-gray-200 shadow-none overflow-hidden flex flex-col group hover:shadow-sm transition-all cursor-pointer" (click)="telecharger(file.path, 'file')">
+            <div class="h-24 bg-gray-50/50 flex items-center justify-center border-b border-gray-100 group-hover:bg-gray-100 transition-colors">
                 <svg class="w-10 h-10 text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
             </div>
             <div class="p-3 flex items-center justify-between">
                 <div class="truncate max-w-[80%]">
-                    <p class="text-[12px] font-bold text-syndify-dark truncate" [title]="file.name">{{ file.name }}</p>
-                    <p class="text-[10px] text-gray-400">{{ file.size_formatted }} • {{ file.date_formatted }}</p>
+                    <p class="text-[13px] font-bold text-syndify-dark truncate" [title]="file.name">{{ file.name }}</p>
+                    <p class="text-[11px] text-gray-400 font-medium">{{ file.size_formatted }} • {{ file.date_formatted }}</p>
                 </div>
-                <button (click)="telecharger(file.path, 'file')" class="text-gray-400 hover:text-syndify-accent">
+                <button (click)="$event.stopPropagation(); telecharger(file.path, 'file')" class="text-gray-400 hover:text-syndify-accent bg-transparent border-0 cursor-pointer">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m0 0l-4-4m4 4l4-4"></path></svg>
                 </button>
             </div>
@@ -43,50 +48,52 @@
     <div>
         <div class="flex items-start sm:items-center justify-between mb-4 flex-col sm:flex-row gap-3">
           <div>
-            <h2 class="text-[16px] font-bold text-syndify-dark tracking-wide mb-1">Liste du contenu</h2>
-            <p class="text-[13px] text-gray-400">
+            <h2 class="text-[18px] font-bold text-syndify-dark tracking-wide mb-1">Liste du contenu</h2>
+            <p class="text-[13px] text-gray-500 font-medium">
               <span *ngIf="currentPath === ''">Parcourez et gérez tous vos fichiers et dossiers</span>
-              <span *ngIf="currentPath !== ''" class="text-syndify-accent font-medium uppercase tracking-wider text-[11px]">{{ currentPath.split('proprietes/')[1] || currentPath }}</span>
+              <span *ngIf="currentPath !== ''" class="text-syndify-accent font-bold uppercase tracking-wider text-[11px]">{{ currentPath.split('proprietes/')[1] || currentPath }}</span>
             </p>
           </div>
           
-          <button *ngIf="currentPath !== ''" (click)="retour()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-[12px] font-bold text-gray-600 hover:bg-gray-50 flex items-center gap-2 cursor-pointer shadow-sm transition-all border-0">
+          <button *ngIf="currentPath !== ''" (click)="retour()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-[13px] font-bold text-slate-700 hover:bg-gray-50 flex items-center gap-2 cursor-pointer shadow-none transition-all">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Dossier Parent
           </button>
         </div>
         
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <table class="w-full text-left">
-            <thead class="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th class="py-3 px-6 font-semibold text-syndify-dark text-[12px]">Nom du fichier</th>
-                <th class="py-3 px-6 font-semibold text-syndify-dark text-[12px]">Date d'ajout</th>
-                <th class="py-3 px-6 font-semibold text-syndify-dark text-[12px]">Taille</th>
-                <th class="py-3 px-6 font-semibold text-syndify-dark text-[12px] text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="text-[13px] font-medium">
-              <tr *ngIf="isLoading"><td colspan="4" class="py-10 text-center text-gray-400">Chargement...</td></tr>
-              <tr *ngIf="!isLoading && folderContent.length === 0"><td colspan="4" class="py-10 text-center text-gray-400">Le dossier est vide.</td></tr>
-              
-              <tr *ngFor="let item of folderContent" (click)="ouvrirDossier(item)" class="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors group" [ngClass]="{'cursor-pointer': item.type === 'folder'}">
-                <td class="py-3.5 px-6 flex items-center gap-3">
-                  <svg *ngIf="item.type === 'folder'" class="w-5 h-5 text-[#887fd3]" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>
-                  <svg *ngIf="item.type === 'file'" class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                  
-                  <span class="text-syndify-dark font-semibold group-hover:text-syndify-accent transition-colors">{{ item.name }}</span>
-                </td>
-                <td class="py-3.5 px-6 text-gray-500 text-[12px]">{{ item.date_formatted }}</td>
-                <td class="py-3.5 px-6 text-gray-500 text-[12px]">{{ item.size_formatted }}</td>
-                <td class="py-3.5 px-6 text-right">
-                  <button (click)="$event.stopPropagation(); telecharger(item.path, item.type)" class="p-1.5 text-gray-400 hover:text-syndify-accent hover:bg-gray-100 rounded-lg transition-colors cursor-pointer border-0 bg-transparent">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="bg-white rounded-xl border border-gray-200 shadow-none overflow-hidden relative">
+          <div class="w-full overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[45%]">Nom du fichier</th>
+                  <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[20%]">Date d'ajout</th>
+                  <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[20%]">Taille</th>
+                  <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] text-right w-[15%]">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="text-[13px] font-medium text-gray-700">
+                <tr *ngIf="isLoading"><td colspan="4" class="py-12 text-center text-gray-400 italic">Chargement du dossier...</td></tr>
+                <tr *ngIf="!isLoading && folderContent.length === 0"><td colspan="4" class="py-12 text-center text-gray-400 italic">Le dossier est vide.</td></tr>
+                
+                <tr *ngFor="let item of folderContent" (click)="ouvrirDossier(item)" class="border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors group" [ngClass]="{'cursor-pointer': item.type === 'folder'}">
+                  <td class="py-4 px-6 flex items-center gap-3">
+                    <svg *ngIf="item.type === 'folder'" class="w-5 h-5 text-syndify-accent" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>
+                    <svg *ngIf="item.type === 'file'" class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    
+                    <span class="text-slate-700 font-semibold group-hover:text-syndify-accent transition-colors truncate">{{ item.name }}</span>
+                  </td>
+                  <td class="py-4 px-6 text-gray-500">{{ item.date_formatted }}</td>
+                  <td class="py-4 px-6 text-gray-500">{{ item.size_formatted }}</td>
+                  <td class="py-4 px-6 text-right">
+                    <button (click)="$event.stopPropagation(); telecharger(item.path, item.type)" class="p-2 text-gray-400 hover:text-syndify-accent hover:bg-gray-100 rounded-lg transition-colors cursor-pointer border-0 bg-transparent flex items-center justify-center ml-auto">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -94,43 +101,43 @@
     <div class="space-y-6">
       
       <div>
-        <h2 class="text-[16px] font-bold text-syndify-dark tracking-wide mb-1">Analyse du stockage</h2>
-        <p class="text-[13px] text-gray-400 mb-4">Suivez votre utilisation de stockage</p>
+        <h2 class="text-[18px] font-bold text-syndify-dark tracking-wide mb-1">Analyse du stockage</h2>
+        <p class="text-[13px] text-gray-500 font-medium mb-4">Suivez votre utilisation de stockage</p>
       </div>
 
-      <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div class="bg-white rounded-xl border border-gray-200 shadow-none overflow-hidden">
         
-        <div class="p-8 border-b border-gray-100 flex flex-col items-center justify-center relative">
+        <div class="p-8 border-b border-gray-100 flex flex-col items-center justify-center relative bg-gray-50/50">
           <svg viewBox="0 0 100 100" class="w-48 h-48 transform -rotate-90">
-            <circle cx="50" cy="50" r="40" fill="transparent" stroke="#f3f4f6" stroke-width="8"></circle>
-            <circle cx="50" cy="50" r="40" fill="transparent" stroke="#251b5c" stroke-width="8" stroke-linecap="round" [attr.stroke-dasharray]="(storagePercentage * 251.2 / 100) + ' 251.2'"></circle>
+            <circle cx="50" cy="50" r="40" fill="transparent" stroke="#e5e7eb" stroke-width="8"></circle>
+            <circle cx="50" cy="50" r="40" fill="transparent" stroke="#161d36" stroke-width="8" stroke-linecap="round" [attr.stroke-dasharray]="(storagePercentage * 251.2 / 100) + ' 251.2'"></circle>
           </svg>
           <div class="absolute flex flex-col items-center mt-2">
-            <svg class="w-6 h-6 text-[#887fd3] mb-1" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>
-            <span class="text-[11px] text-gray-400 font-bold uppercase tracking-wide">Espace utilisé</span>
+            <svg class="w-6 h-6 text-syndify-accent mb-1" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>
+            <span class="text-[11px] text-gray-500 font-bold uppercase tracking-wide">Espace utilisé</span>
             <span class="text-[20px] font-black text-syndify-dark">{{ totalSize }}</span>
           </div>
         </div>
 
-        <div class="p-6 bg-gray-50/30">
-          <h3 class="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-5">Stockage par type de documents</h3>
+        <div class="p-6 bg-white">
+          <h3 class="text-[12px] font-bold text-gray-400 uppercase tracking-wider mb-5">Stockage par type de documents</h3>
           
           <div class="space-y-5">
             <div *ngFor="let stat of statistics" class="flex items-center gap-4">
-              <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+              <div class="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
               </div>
               
               <div class="flex-1">
-                <div class="flex justify-between items-center mb-1">
+                <div class="flex justify-between items-center mb-1.5">
                   <div>
                     <p class="text-[13px] font-bold text-syndify-dark">{{ stat.name }}</p>
-                    <p class="text-[10px] text-gray-400 font-medium">{{ stat.count }} fichiers</p>
+                    <p class="text-[11px] text-gray-500 font-medium">{{ stat.count }} fichiers</p>
                   </div>
                   <span class="text-[12px] font-black text-syndify-dark">{{ stat.size_formatted }}</span>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-1.5">
-                  <div class="bg-[#251b5c] h-1.5 rounded-full" [style.width.%]="stat.width || 0"></div>
+                <div class="w-full bg-gray-100 rounded-full h-1.5">
+                  <div class="bg-syndify-dark h-1.5 rounded-full" [style.width.%]="stat.width || 0"></div>
                 </div>
               </div>
             </div>

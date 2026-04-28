@@ -3,6 +3,7 @@ services:
   syndify_db:
     image: postgres:15
     container_name: syndify_db
+    restart: unless-stopped
     environment:
       POSTGRES_DB: syndify_db
       POSTGRES_USER: syndify_admin
@@ -13,6 +14,12 @@ services:
       - "5435:5432" # 👈 Port jdid 5435
     networks:
       - syndify_network
+    # 🟢 FIX HNA: Healthcheck bash y-tsenna l-Base de données t-sh3el
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U syndify_admin -d syndify_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   # 2. Backend Laravel
   syndify_backend:
@@ -20,11 +27,12 @@ services:
       context: ./Syndify-Backend 
       dockerfile: Dockerfile
     container_name: syndify_backend
+    restart: unless-stopped
     volumes:
       - ./Syndify-Backend:/var/www/html
     environment:
       APP_ENV: local
-      APP_DEBUG: true
+      APP_DEBUG: "true"
       DB_CONNECTION: pgsql
       DB_HOST: syndify_db
       DB_PORT: 5432
@@ -32,7 +40,8 @@ services:
       DB_USERNAME: syndify_admin
       DB_PASSWORD: SyndifySecretPassword123
     depends_on:
-      - syndify_db
+      syndify_db:
+        condition: service_healthy # 🟢 FIX HNA: Laravel ghadi y-tsenna 7ta t-wjed l-DB
     networks:
       - syndify_network
 
@@ -42,6 +51,7 @@ services:
       context: ./Syndify-Frontend
       dockerfile: Dockerfile
     container_name: syndify_frontend
+    restart: unless-stopped
     volumes:
       - ./Syndify-Frontend:/app
       - /app/node_modules
@@ -51,6 +61,7 @@ services:
   syndify_proxy:
     image: nginx:alpine
     container_name: syndify_proxy
+    restart: unless-stopped
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
     ports:

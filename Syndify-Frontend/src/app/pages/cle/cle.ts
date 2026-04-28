@@ -87,24 +87,29 @@ export class Cle implements OnInit {
     });
   }
 
-  formaterTableau() {
+formaterTableau() {
     const lotsMap = new Map();
 
+    // 1. N-7ettou ga3 l-lots lli 3ndna f l-Map bash y-banou kamlin
+    this.tousLesLots.forEach(lot => {
+      const proprio = lot.owners && lot.owners.length > 0 ? lot.owners[0].nom : '-- Non affecté --';
+      lotsMap.set(lot.id, {
+        id: lot.id,
+        numero_porte: lot.numero_porte,
+        details: `${lot.type} ${lot.numero_porte} / Bat: ${lot.batiment || '-'} / Etg: ${lot.etage || '-'}`,
+        coproprietaire: proprio,
+        tantiemes: {} 
+      });
+    });
+
+    // 2. N-3emmrou l-Tantièmes mn l-Cles lli jaw mn l-Backend
     this.clesList.forEach(cle => {
       if (cle.lots && Array.isArray(cle.lots)) {
         cle.lots.forEach((lot: any) => {
-          if (!lotsMap.has(lot.id)) {
-            const proprio = lot.owners && lot.owners.length > 0 ? lot.owners[0].full_name : '-- Non affecté --';
-            
-            lotsMap.set(lot.id, {
-              id: lot.id,
-              numero_porte: lot.numero_porte,
-              details: `${lot.type} ${lot.numero_porte} / ${lot.batiment || ''} / ${lot.etage || ''}`,
-              coproprietaire: proprio,
-              tantiemes: {} 
-            });
+          if (lotsMap.has(lot.id)) {
+            // N-7ettou l-Tantième (0 ila ma-fiha walo)
+            lotsMap.get(lot.id).tantiemes[cle.id] = lot.tantieme_applied || 0;
           }
-          lotsMap.get(lot.id).tantiemes[cle.id] = lot.tantieme_applied;
         });
       }
     });

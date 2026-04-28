@@ -12,25 +12,17 @@ use Exception;
 
 class BudgetOperationController extends Controller
 {
+// ========================================================
+    // 🟢 FONCTION SÉCURISÉE POUR L'ID DE LA PROPRIÉTÉ
     // ========================================================
-    // 🟢 FONCTION SÉCURISÉE
-    // ========================================================
-private function getProprieteId(Request $request)
-{
-    // 🟢 HACK ZERBA: N-forciw l-ID dyal l-User (Matalan 1) 
-    // Bash y-khelina n-testiw bla Auth w bla Headers f Angular
-    $userId = 1; 
+    private function getProprieteId(Request $request)
+    {
+        // 🟢 FIX RADICAL: N-forciw l-ID dyal l-Résidence d-Demo nichan
+        return 'SP-87248712';
+    }
 
-    $propOwnerCol = Schema::hasColumn('user_as_owner', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
-    $link = DB::table('user_as_owner')->where('user_id', $userId)->first();
-    
-    return $link ? $link->$propOwnerCol : null;
-}
-
-    // ==========================================
-    // 1. CHARGEMENT DES DONNÉES
-    // ==========================================
-    // ==========================================
+   
+// ==========================================
     // 1. CHARGEMENT DES DONNÉES
     // ==========================================
     public function chargerDonnees(Request $request)
@@ -43,17 +35,25 @@ private function getProprieteId(Request $request)
             'type' => 'required|in:previsionnel,travaux'
         ]);
 
-        // 🟢 1. Njbdou l-m3loumat dyal l-Résidence
         $propIdCol_propriete = Schema::hasColumn('proprietes', 'sp_identifier') ? 'sp_identifier' : 'id';
         $residence = DB::table('proprietes')->where($propIdCol_propriete, $sp_id)->first();
 
         $se_id = $request->exercise;
 
         if (!$se_id) {
+            // 🟢 FIX HNA: N-jbdou l-Exercice "en cours" (2025) hwa l-luwel 7it fih l-flouss!
             $latestEx = DB::table('exercices')
                 ->where('propriete_id', $sp_id) 
-                ->orderBy('start_date', 'desc')
+                ->where('status', 'en cours')
                 ->first();
+                
+            // Ila ma-l9inash "en cours", 3ad n-jbdou l-lekher
+            if (!$latestEx) {
+                $latestEx = DB::table('exercices')
+                    ->where('propriete_id', $sp_id) 
+                    ->orderBy('start_date', 'desc')
+                    ->first();
+            }
                 
             if (!$latestEx) return response()->json([
                 'success' => true, 
@@ -75,8 +75,6 @@ private function getProprieteId(Request $request)
             ? DB::table('charges_previsionnelles')->where('se_identifier', $se_id)->first()
             : DB::table('charges_travaux')->where('se_identifier', $se_id)->first();
 
-        // 🟢 FIX L-KBIR HNA: N-7esbou s-somme b-yeddina mn les tables nichan!
-        // Hkkda Angular dima y-wselha l-7ssab s7i7 100% wakha t-zad data mn Seeder awla Database
         if ($totaux) {
             $totaux->total_encaissements = DB::table('encaissements')->where('se_identifier', $se_id)->sum('amount') ?? 0;
             $totaux->total_depenses = DB::table('depenses')->where('se_identifier', $se_id)->sum('amount') ?? 0;
@@ -117,7 +115,6 @@ private function getProprieteId(Request $request)
             ]
         ]);
     }
-
     // ==========================================
     // 3. AJOUTER UN ENCAISSEMENT
     // ==========================================

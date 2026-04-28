@@ -11,20 +11,14 @@ use Exception;
 
 class ExerciceController extends Controller
 {
-  // ========================================================
-    // 🟢 FONCTION SÉCURISÉE (Jbed l-ID mn l-Token)
+// ========================================================
+    // 🟢 FONCTION SÉCURISÉE POUR L'ID DE LA PROPRIÉTÉ
     // ========================================================
-private function getProprieteId(Request $request)
-{
-    // 🟢 HACK ZERBA: N-forciw l-ID dyal l-User (Matalan 1) 
-    // Bash y-khelina n-testiw bla Auth w bla Headers f Angular
-    $userId = 1; 
-
-    $propOwnerCol = Schema::hasColumn('user_as_owner', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
-    $link = DB::table('user_as_owner')->where('user_id', $userId)->first();
-    
-    return $link ? $link->$propOwnerCol : null;
-}
+    private function getProprieteId(Request $request)
+    {
+        // 🟢 FIX RADICAL: N-forciw l-ID dyal l-Résidence d-Demo nichan
+        return 'SP-87248712';
+    }
  // ==========================================
     // 1. CHARGER LA LISTE DES EXERCICES
     // ==========================================

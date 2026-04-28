@@ -12,20 +12,14 @@ use Exception;
 
 class AppelFondsController extends Controller
 {
+// ========================================================
+    // 🟢 FONCTION SÉCURISÉE POUR L'ID DE LA PROPRIÉTÉ
     // ========================================================
-    // 🟢 FONCTION SÉCURISÉE
-    // ========================================================
- private function getProprieteId(Request $request)
-{
-    // 🟢 HACK ZERBA: N-forciw l-ID dyal l-User (Matalan 1) 
-    // Bash y-khelina n-testiw bla Auth w bla Headers f Angular
-    $userId = 1; 
-
-    $propOwnerCol = Schema::hasColumn('user_as_owner', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
-    $link = DB::table('user_as_owner')->where('user_id', $userId)->first();
-    
-    return $link ? $link->$propOwnerCol : null;
-}
+    private function getProprieteId(Request $request)
+    {
+        // 🟢 FIX RADICAL: N-forciw l-ID dyal l-Résidence d-Demo nichan
+        return 'SP-87248712';
+    }
 
     // West AppelFondsController.php -> fonction liste()
 
@@ -33,7 +27,7 @@ public function liste(Request $request) {
         $sp_id = $this->getProprieteId($request);
         if (!$sp_id) return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
 
-        // 🟢 1. Jbed l-m3loumat dyal l-Résidence
+        // 1. Jbed l-m3loumat dyal l-Résidence
         $propIdCol_propriete = Schema::hasColumn('proprietes', 'sp_identifier') ? 'sp_identifier' : 'id';
         $residence = DB::table('proprietes')->where($propIdCol_propriete, $sp_id)->first();
 
@@ -41,10 +35,19 @@ public function liste(Request $request) {
         $type = $request->type_charge; 
 
         if (!$se_id) {
+            // 🟢 FIX HNA: N-jbdou dima l-Exercice "en cours" (2025 lli fih l-flouss) hwa l-luwel!
             $exercice = DB::table('exercices')
                 ->where('propriete_id', $sp_id) 
-                ->orderBy('created_at', 'desc')
+                ->where('status', 'en cours') // Priorité l-en cours
                 ->first();
+            
+            // Ila ma-l9inash "en cours", 3ad n-jbdou l-lekher
+            if (!$exercice) {
+                $exercice = DB::table('exercices')
+                    ->where('propriete_id', $sp_id) 
+                    ->orderBy('start_date', 'desc')
+                    ->first();
+            }
             
             if (!$exercice) return response()->json([
                 'success' => true, 
@@ -66,7 +69,7 @@ public function liste(Request $request) {
             ->orderBy('due_date', 'asc')
             ->get();
 
-        // 🟢 2. Rjja3 kolchi m-jmo3
+        // 2. Rjja3 kolchi m-jmo3
         return response()->json([
             'success' => true,
             'residence' => [

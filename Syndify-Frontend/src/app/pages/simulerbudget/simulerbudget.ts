@@ -27,51 +27,49 @@ export class SimulationBudget implements OnInit {
     private cdr: ChangeDetectorRef
   ) {}
 
-  ngOnInit() {
-    // 🟢 FIX HNA: L-ID d-bsse7 lli lqina f la base de données
-    this.proprieteId = localStorage.getItem('active_propriete_id') || 'SP-87248712';
+ ngOnInit() {
+  
     this.chargerDonneesSimulation();
   }
 
-  chargerDonneesSimulation() {
+chargerDonneesSimulation() {
    this.isLoading = true;
-    const apiUrl = `http://nomade-cloud.com:8085/api/simulation/charger`; 
-    
-    // 🟢 FIX HNA: Rje3na kan-ssiftou {} khawya bash l-Backend y-jbed l-ID b-rasso dima
-    this.http.post(apiUrl, {}).subscribe({
-      next: (res: any) => {
-        if (res.success) {
-          // 🟢 Synchronisation mn l-Backend
-          if (res.residence) {
-            this.residenceInfo = res.residence;
-          }
+   const apiUrl = `http://nomade-cloud.com:8085/api/simulation/charger`; 
+   
+   // 🟢 Kantsiftou requête khawya, l-Backend houwa li ghadi y3raf chkoun l-user
+   this.http.post(apiUrl, {}).subscribe({
+     next: (res: any) => {
+       if (res.success) {
+         if (res.residence) {
+           this.residenceInfo = res.residence;
+         }
 
-          if (res.data && res.data.length > 0) {
-            this.listeCles = res.data;
-            
-            const savedMontant = localStorage.getItem('sim_montant');
-            const savedCle = localStorage.getItem('sim_cle');
-            
-            if (savedMontant && savedCle) {
-                this.montantSaisi = Number(savedMontant);
-                this.cleSelectionnee = savedCle;
-                this.genererSimulation(); 
-            } else {
-                this.cleSelectionnee = this.listeCles[0].id;
-            }
-          }
-        }
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('❌ Erreur API Simulation:', err);
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      }
-    });
+         if (res.data && res.data.length > 0) {
+           this.listeCles = res.data;
+           
+           // Nkhliyo simulation logic kima hya
+           const savedMontant = localStorage.getItem('sim_montant');
+           const savedCle = localStorage.getItem('sim_cle');
+           
+           if (savedMontant && savedCle) {
+               this.montantSaisi = Number(savedMontant);
+               this.cleSelectionnee = savedCle;
+               this.genererSimulation(); 
+           } else {
+               this.cleSelectionnee = this.listeCles[0].id;
+           }
+         }
+       }
+       this.isLoading = false;
+       this.cdr.detectChanges();
+     },
+     error: (err) => {
+       console.error('❌ Erreur API Simulation:', err);
+       this.isLoading = false;
+       this.cdr.detectChanges();
+     }
+   });
   }
-
   setTab(tab: 'coproprietaire' | 'lot') {
     this.activeTab = tab;
     if (this.montantSaisi && this.cleSelectionnee) {

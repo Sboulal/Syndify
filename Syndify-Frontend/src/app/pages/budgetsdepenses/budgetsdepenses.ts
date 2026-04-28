@@ -70,15 +70,26 @@ export class BudgetsOperations implements OnInit {
     this.chargerExercices();
   }
 
-  chargerExercices() {
-    // 🔴 7iyedna proprieteId mn hna
+chargerExercices() {
     this.exerciceService.getListe().subscribe({
       next: (res: any) => {
         if (res.success && res.data.length > 0) {
           this.exercices = res.data;
-          this.exerciceSelectionne = this.exercices[0].se_identifier; 
+          
+          // 🟢 FIX HNA: N-goulou l-Angular y-9elleb 3la l-Exercice "en cours"
+          const exEnCours = this.exercices.find(ex => ex.status === 'en cours');
+          
+          if (exEnCours) {
+            this.exerciceSelectionne = exEnCours.se_identifier; // Y-3zel 2025
+          } else {
+            this.exerciceSelectionne = this.exercices[0].se_identifier; // Sinon y-3zel l-luwel
+          }
+          
           this.chargerDonnees(true); 
         }
+      },
+      error: (err) => {
+        console.error("❌ Erreur chargement Exercices:", err);
       }
     });
   }

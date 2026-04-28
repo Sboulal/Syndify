@@ -12,23 +12,14 @@ use Exception;
 
 class DocumentController extends Controller
 {
-    // ========================================================
+// ========================================================
     // 🟢 FONCTION SÉCURISÉE POUR L'ID DE LA PROPRIÉTÉ
     // ========================================================
     private function getProprieteId(Request $request)
     {
-        if ($request->has('propriete_id') && !empty($request->propriete_id)) {
-            return $request->propriete_id;
-        }
-        $userId = 1; 
-        $propOwnerCol = Schema::hasColumn('user_as_owner', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
-        $link = DB::table('user_as_owner')->where('user_id', $userId)->first();
-        return $link ? $link->$propOwnerCol : null;
+        // 🟢 FIX RADICAL: N-forciw l-ID dyal l-Résidence d-Demo nichan
+        return 'SP-87248712';
     }
-
-    // ==========================================
-    // 1. PAGE PRINCIPALE (Statistiques & Dossier racine)
-    // ==========================================
     public function chargerDossierPrincipal(Request $request)
     {
         $sp_id = $this->getProprieteId($request);
@@ -36,15 +27,17 @@ class DocumentController extends Controller
 
         $basePath = "proprietes/{$sp_id}";
         
-        // Creyi l-dossier ila ma-kanch
         if (!Storage::disk('public')->exists($basePath)) {
             Storage::disk('public')->makeDirectory($basePath);
         }
 
         try {
+            // 🟢 FIX: Jbdena l-infos dyal l-residence bach nsiftohom l-header
+            $propIdCol_propriete = Schema::hasColumn('proprietes', 'sp_identifier') ? 'sp_identifier' : 'id';
+            $residence = DB::table('proprietes')->where($propIdCol_propriete, $sp_id)->first();
+
             $allFiles = Storage::disk('public')->allFiles($basePath);
             
-            // 🟢 1. Taille totale
             $totalSizeBytes = 0;
             $filesData = [];
 
@@ -61,7 +54,6 @@ class DocumentController extends Controller
                 ];
             }
 
-            // 🟢 2. Les 3 fichiers les plus récents
             $recentFiles = collect($filesData)
                 ->sortByDesc('last_modified')
                 ->take(3)
@@ -71,7 +63,6 @@ class DocumentController extends Controller
                     return $f;
                 })->values();
 
-            // 🟢 3. Calcul par catégorie (Statistiques)
             $stats = [
                 'Appels de fonds' => ['size' => 0, 'count' => 0, 'folder' => 'appels_fonds'],
                 'Rappels' => ['size' => 0, 'count' => 0, 'folder' => 'reminders'],
@@ -97,16 +88,19 @@ class DocumentController extends Controller
                 }
             }
 
-            // Formater l-tailles dyal les stats
             foreach ($stats as $cat => $data) {
                 $stats[$cat]['size_formatted'] = $this->formatBytes($data['size']);
             }
 
-            // 🟢 4. Contenu du dossier racine
             $rootContent = $this->getFolderContent($basePath);
 
+            // 🟢 FIX: Siftna l-residence m3a l-JSON
             return response()->json([
                 'success' => true,
+                'residence' => [
+                    'nom' => $residence->nom ?? 'Résidence',
+                    'adresse' => $residence->address ?? 'Adresse non définie'
+                ],
                 'data' => [
                     'total_size' => $this->formatBytes($totalSizeBytes),
                     'total_size_bytes' => $totalSizeBytes,
@@ -121,9 +115,6 @@ class DocumentController extends Controller
         }
     }
 
-    // ==========================================
-    // 2. ACCÈS À UN SOUS-DOSSIER
-    // ==========================================
     public function accederSousDossier(Request $request)
     {
         $sp_id = $this->getProprieteId($request);
@@ -143,9 +134,6 @@ class DocumentController extends Controller
         }
     }
 
-    // ==========================================
-    // 3. TÉLÉCHARGER (Fichier ou Dossier en Zip)
-    // ==========================================
     public function telecharger(Request $request)
     {
         $sp_id = $this->getProprieteId($request);
@@ -153,7 +141,6 @@ class DocumentController extends Controller
 
         $targetPath = trim($request->path, '/');
 
-        // Sécurité: T2kked blli khddam ghir f l-propriété dyalo
         if (!Str::startsWith($targetPath, "proprietes/{$sp_id}")) {
             return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
         }
@@ -164,7 +151,6 @@ class DocumentController extends Controller
 
         $fullPath = Storage::disk('public')->path($targetPath);
 
-        // Si c'est un dossier -> ZIP
         if (is_dir($fullPath)) {
             $zipFileName = basename($targetPath) . '_' . time() . '.zip';
             $zipFilePath = storage_path("app/public/temp/{$zipFileName}");
@@ -186,13 +172,9 @@ class DocumentController extends Controller
             return response()->download($zipFilePath)->deleteFileAfterSend(true);
         }
 
-        // Si c'est un fichier direct
         return response()->download($fullPath);
     }
 
-    // ==========================================
-    // 4. SUPPRIMER (Fichier ou Dossier)
-    // ==========================================
     public function supprimer(Request $request)
     {
         $sp_id = $this->getProprieteId($request);
@@ -222,9 +204,6 @@ class DocumentController extends Controller
         }
     }
 
-    // ==========================================
-    // 5. RECHERCHER UN FICHIER
-    // ==========================================
     public function rechercher(Request $request)
     {
         $sp_id = $this->getProprieteId($request);
@@ -256,9 +235,6 @@ class DocumentController extends Controller
         ]);
     }
 
-    // ==========================================
-    // FONCTIONS D'AIDE (Helpers)
-    // ==========================================
     private function getFolderContent($folderPath)
     {
         $directories = Storage::disk('public')->directories($folderPath);
@@ -266,9 +242,7 @@ class DocumentController extends Controller
 
         $content = [];
 
-        // Traiter les dossiers
         foreach ($directories as $dir) {
-            // N7esbou taille dyal dossier kamel
             $dirFiles = Storage::disk('public')->allFiles($dir);
             $dirSize = 0;
             foreach ($dirFiles as $f) {
@@ -286,7 +260,6 @@ class DocumentController extends Controller
             ];
         }
 
-        // Traiter les fichiers
         foreach ($files as $file) {
             $size = Storage::disk('public')->size($file);
             $content[] = [

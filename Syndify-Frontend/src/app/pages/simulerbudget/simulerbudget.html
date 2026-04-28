@@ -1,4 +1,4 @@
-<div class="flex flex-col min-h-full font-['Poppins'] bg-syndify-bg">
+<div class="flex flex-col min-h-full font-['Poppins'] bg-syndify-bg overflow-x-hidden">
 
   <app-page-header 
     class="shrink-0 relative"
@@ -47,55 +47,70 @@
 
   <div class="flex-1 p-6 md:p-8 flex flex-col gap-5 overflow-visible">
     
-    <div class="bg-white rounded-xl border border-gray-200 flex flex-col flex-1 overflow-hidden relative shadow-sm">
+    <div class="bg-white rounded-xl border border-gray-200 flex flex-col flex-1 overflow-hidden relative shadow-none">
       
-      <div class="flex gap-6 px-6 pt-4 border-b border-gray-100">
+      <div class="flex gap-6 px-6 pt-4 border-b border-gray-200 bg-gray-50/50">
         <button (click)="setTab('coproprietaire')" 
-                class="pb-3 text-[13px] font-bold transition-all bg-transparent border-0 cursor-pointer"
+                class="pb-3 text-[14px] font-bold transition-all bg-transparent border-0 cursor-pointer"
                 [ngClass]="activeTab === 'coproprietaire' ? 'text-syndify-dark border-b-[3px] border-syndify-dark' : 'text-gray-400 hover:text-gray-600 border-b-[3px] border-transparent'">
           Par copropriétaire
         </button>
         <button (click)="setTab('lot')" 
-                class="pb-3 text-[13px] font-bold transition-all bg-transparent border-0 cursor-pointer"
+                class="pb-3 text-[14px] font-bold transition-all bg-transparent border-0 cursor-pointer"
                 [ngClass]="activeTab === 'lot' ? 'text-syndify-dark border-b-[3px] border-syndify-dark' : 'text-gray-400 hover:text-gray-600 border-b-[3px] border-transparent'">
           Par bien
         </button>
       </div>
 
-      <div class="flex-1 overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead class="bg-gray-50/50 border-b border-gray-100">
+      <div class="flex-1 w-full overflow-visible">
+        <table class="w-full text-left border-collapse table-fixed">
+          
+          <thead class="bg-gray-50 border-b border-gray-200">
             <tr>
-            <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[50%]">
+              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[50%]">
                 {{ activeTab === 'coproprietaire' ? 'Nom du copropriétaire' : 'N° du bien' }}
               </th>
-              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px]">Budget</th>
-              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px]">Total</th>
+              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[25%]">Budget</th>
+              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[25%]">Total</th>
             </tr>
           </thead>
+          
           <tbody class="text-[13px] text-gray-700 font-medium">
             
             <tr *ngIf="isLoading">
-              <td colspan="3" class="py-8 text-center text-gray-500">Chargement des données...</td>
+                <td colspan="3" class="py-12 text-center text-syndify-accent">
+                    <div class="flex flex-col items-center justify-center gap-3">
+                        <div class="w-6 h-6 border-2 border-syndify-accent border-t-transparent rounded-full animate-spin"></div>
+                        <span>Chargement des données...</span>
+                    </div>
+                </td>
             </tr>
 
-         <tr *ngFor="let item of resultatsSimulation" class="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
-              <td class="py-4 px-6 font-semibold text-syndify-dark">
+            <tr *ngFor="let item of resultatsSimulation" class="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
+              
+              <td class="py-4 px-6 text-slate-700 font-semibold truncate">
                 <ng-container *ngIf="activeTab === 'coproprietaire'">
                   {{ item.nom }}
                 </ng-container>
+                
                 <ng-container *ngIf="activeTab === 'lot'">
-                  <span>
+                   <div class="flex items-center text-syndify-accent decoration-syndify-accent/30 underline-offset-2">
                     {{ item.identifiant }}
-                  </span>
+                   </div>
                 </ng-container>
               </td>
-              <td class="py-4 px-6">{{ item.budget | number:'1.2-2' }} DH</td>
-              <td class="py-4 px-6 font-extrabold text-syndify-dark">{{ item.total | number:'1.2-2' }} DH</td>
+              
+              <td class="py-4 px-6 text-slate-700 truncate font-semibold">
+                {{ item.budget | number:'1.2-2' }} <span class="text-[10px] opacity-60 ml-0.5">MAD</span>
+              </td>
+              
+              <td class="py-4 px-6 font-black text-syndify-dark text-[15px] truncate">
+                {{ item.total | number:'1.2-2' }} <span class="text-[10px] opacity-60 ml-0.5">MAD</span>
+              </td>
             </tr>
             
             <tr *ngIf="!isLoading && resultatsSimulation.length === 0">
-               <td colspan="3" class="py-12 text-center text-gray-400">Saisissez un montant et générez la simulation.</td>
+               <td colspan="3" class="py-12 text-center text-gray-400 italic">Saisissez un montant et générez la simulation.</td>
             </tr>
 
           </tbody>

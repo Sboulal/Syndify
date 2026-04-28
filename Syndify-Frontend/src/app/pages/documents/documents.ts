@@ -12,6 +12,9 @@ import { PageHeader } from '../../components/page-header/page-header';
 export class Documents implements OnInit {
   isLoading = false;
   
+  // 🟢 FIX: Zidna residenceInfo l-Header
+  residenceInfo = { nom: 'Résidence', adresse: 'Chargement...' };
+
   // Data variables
   totalSize: string = '0 B';
   totalSizeBytes: number = 0;
@@ -23,9 +26,8 @@ export class Documents implements OnInit {
   folderContent: any[] = [];
   statistics: any[] = [];
 
-  // 🟢 VARIABLES DYAL NAVIGATION
   currentPath: string = ''; 
-  pathHistory: string[] = []; // Bash n-3e9lou 3la l-historique dyal rjou3
+  pathHistory: string[] = []; 
 
   constructor(
     private http: HttpClient,
@@ -44,6 +46,12 @@ export class Documents implements OnInit {
       .subscribe({
         next: (res: any) => {
           if (res.success) {
+            
+            // 🟢 FIX: N-qraw residenceInfo mn l-Backend
+            if (res.residence) {
+               this.residenceInfo = res.residence;
+            }
+
             this.totalSize = res.data.total_size;
             this.totalSizeBytes = res.data.total_size_bytes;
             this.maxStorageBytes = res.data.max_storage_bytes || this.maxStorageBytes;
@@ -52,7 +60,6 @@ export class Documents implements OnInit {
             this.recentFiles = res.data.recent_files;
             this.folderContent = res.data.content;
             
-            // 🟢 N-rjj3ou l-racine
             this.currentPath = ''; 
             this.pathHistory = [];
             
@@ -77,9 +84,8 @@ export class Documents implements OnInit {
       });
   }
 
-  // 🟢 FONCTION JDIDA BASH N-DKHLOU L-DOSSIER
   ouvrirDossier(item: any) {
-    if (item.type !== 'folder') return; // Ila kan fichier, ma-ndirou walo
+    if (item.type !== 'folder') return; 
 
     this.isLoading = true;
     const proprieteId = localStorage.getItem('active_propriete_id') || 'SP-87248712';
@@ -90,9 +96,9 @@ export class Documents implements OnInit {
     }).subscribe({
       next: (res: any) => {
         if (res.success) {
-          this.pathHistory.push(this.currentPath); // N-khbbiw l-dossier l-9dim
-          this.currentPath = item.path; // N-sejjlou l-jdid
-          this.folderContent = res.data; // N-beddlou l-liste
+          this.pathHistory.push(this.currentPath); 
+          this.currentPath = item.path; 
+          this.folderContent = res.data; 
         }
         this.isLoading = false;
         this.cdr.detectChanges();
@@ -105,13 +111,12 @@ export class Documents implements OnInit {
     });
   }
 
-  // 🟢 FONCTION JDIDA BASH N-RJJ3OU L-LOUR
   retour() {
     if (this.pathHistory.length === 0) return;
     
     const previousPath = this.pathHistory.pop();
     if (!previousPath || previousPath === '') {
-      this.chargerDocuments(); // Rje3na l-racine kamla
+      this.chargerDocuments(); 
       return;
     }
 
@@ -137,11 +142,10 @@ export class Documents implements OnInit {
     });
   }
 
-telecharger(path: string, type: string) {
+  telecharger(path: string, type: string) {
     console.log(`📥 Téléchargement de: ${path}`);
     const proprieteId = localStorage.getItem('active_propriete_id') || 'SP-87248712';
     
-    // 🟢 N-biyynou l-Loading bash l-User y-tsenna
     this.isLoading = true; 
     this.cdr.detectChanges();
 
@@ -150,8 +154,6 @@ telecharger(path: string, type: string) {
       path: path 
     }, { responseType: 'blob' }).subscribe({
       next: (res: Blob) => {
-        
-        // 🟢 FIX 1: N-3tiw l-MimeType s7i7 bash l-Navigateur ma-y-t-blokash
         const mimeType = type === 'folder' ? 'application/zip' : (res.type || 'application/pdf');
         const blob = new Blob([res], { type: mimeType });
         
@@ -160,9 +162,8 @@ telecharger(path: string, type: string) {
         
         a.style.display = 'none';
         a.href = url;
-        a.target = '_blank'; // 🟢 FIX 2: Kat-3awen f l-Bypass dyal l-HTTPS warning
+        a.target = '_blank'; 
         
-        // N-9addou s-smiya dyal l-Fichier
         let fileName = path.split('/').pop() || 'document';
         if (type === 'folder') {
             fileName += '.zip';
@@ -171,13 +172,12 @@ telecharger(path: string, type: string) {
         a.download = fileName;
         document.body.appendChild(a);
         
-        a.click(); // N-wrekou 3lih awtomatiki
+        a.click(); 
         
-        // 🟢 FIX 3: N-tsennaw 3 tawani (3000 ms) 3ad n-ms7ou l-lien mn l-mémoire
         setTimeout(() => {
             window.URL.revokeObjectURL(url);
             a.remove();
-            this.isLoading = false; // N-7iydou l-Loading
+            this.isLoading = false; 
             this.cdr.detectChanges();
         }, 3000);
 
@@ -185,7 +185,6 @@ telecharger(path: string, type: string) {
       error: (err) => {
         console.error("❌ Erreur téléchargement:", err);
         
-        // 🟢 N-9raw l-Erreur lli mkhbbya f l-Blob
         if (err.error instanceof Blob) {
           const reader = new FileReader();
           reader.onload = (e: any) => {

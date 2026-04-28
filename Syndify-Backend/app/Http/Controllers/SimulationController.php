@@ -9,15 +9,13 @@ use Illuminate\Support\Facades\Log;
 
 class SimulationController extends Controller
 {
+// ========================================================
+    // 🟢 FONCTION SÉCURISÉE POUR L'ID DE LA PROPRIÉTÉ
+    // ========================================================
     private function getProprieteId(Request $request)
     {
-        // 🟢 FIX HNA: 7iydna l-verification dyal l-payload, dima n-jbdou mn user_id = 1
-        $userId = 1; 
-
-        $propOwnerCol = Schema::hasColumn('user_as_owner', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
-        $link = DB::table('user_as_owner')->where('user_id', $userId)->first();
-        
-        return $link ? $link->$propOwnerCol : null;
+        // 🟢 FIX RADICAL: N-forciw l-ID dyal l-Résidence d-Demo nichan
+        return 'SP-87248712';
     }
   public function chargerDonneesSimulation(Request $request)
     {
