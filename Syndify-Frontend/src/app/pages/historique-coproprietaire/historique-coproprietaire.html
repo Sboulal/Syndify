@@ -10,16 +10,43 @@
     
     <div class="absolute left-6 md:left-8 flex items-center gap-6 md:gap-12">
       
-      <div class="flex items-center gap-2">
-        <span class="text-gray-400 text-[13.5px] font-medium">Exercice :</span>
-        <div class="relative flex items-center">
-          <select [(ngModel)]="exerciceSelectionne" (change)="chargerHistorique()" class="appearance-none bg-transparent text-white font-bold text-[13.5px] outline-none cursor-pointer pr-5 focus:ring-0 border-none p-0 m-0">
-            <option *ngFor="let ex of exercicesPasses" [value]="ex.id" class="text-syndify-dark bg-white">{{ ex.annee }}</option>
-          </select>
-          <svg class="w-3.5 h-3.5 text-white absolute right-0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
-        </div>
+  <div class="flex items-center gap-2.5">
+  <!-- Label -->
+  <span class="text-white/70 text-[13px] font-medium tracking-wide">Exercice :</span>
+
+  <!-- Wrapper dyal Select (Custom Dropdown) -->
+<div class="relative flex items-center bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 hover:bg-white/20 transition-all cursor-pointer min-w-[90px]" (click)="isExerciceMenuOpen = !isExerciceMenuOpen">
+
+    <!-- L-3am lli m3zoul w S-sehm -->
+    <div class="flex items-center justify-between w-full gap-2">
+      <span class="text-white font-bold text-[13px]">
+        {{ getAnneeSelectionnee() }}
+      </span>
+      <svg class="w-4 h-4 text-white opacity-80 transition-transform duration-200"
+           [ngClass]="{'rotate-180': isExerciceMenuOpen}"
+           fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+      </svg>
+    </div>
+
+    <!-- L-Menu lli kay-t7el (Design Nady w M-finy) -->
+    <div *ngIf="isExerciceMenuOpen"
+         class="absolute top-[calc(100%+8px)] left-0 w-full min-w-[120px] bg-white rounded-xl border border-gray-100 py-1.5 z-[999] shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)]">
+
+      <div *ngFor="let ex of exercicesPasses"
+           (click)="changerExercice(ex.id); $event.stopPropagation()"
+           class="px-3 py-2.5 text-[13px] font-bold transition-colors cursor-pointer flex items-center justify-between group"
+           [ngClass]="exerciceSelectionne === ex.id ? 'bg-syndify-accent/10 text-syndify-accent' : 'text-gray-700 hover:bg-gray-50 hover:text-syndify-dark'">
+        
+        {{ ex.annee }}
+        
+        <!-- Iconat (Check) kat-ban ghir 7da l-3am lli m3zoul -->
+        <svg *ngIf="exerciceSelectionne === ex.id" class="w-3.5 h-3.5 text-syndify-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
       </div>
 
+    </div>
+</div>
+</div>
       <div class="flex items-center gap-2">
         <span class="text-gray-400 text-[13.5px] font-medium">Total Encaissements :</span>
         <span class="text-white font-bold text-[13.5px] tracking-wide">{{ totalEncaissements | number:'1.2-2' }} MAD</span>
@@ -39,7 +66,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
       
       <div class="flex items-center gap-3">
-        <div class="w-11 h-11 rounded-full bg-syndify-accent/10 border border-syndify-accent/20 flex items-center justify-center text-syndify-accent font-bold text-[16px] shadow-sm">
+        <div class="w-11 h-11 rounded-full bg-syndify-accent/10 border border-syndify-accent/20 flex items-center justify-center text-syndify-accent font-bold text-[16px] shadow-none">
           {{ coproprietaire?.nom ? coproprietaire.nom.charAt(0).toUpperCase() : '?' }}
         </div>
         
@@ -55,13 +82,13 @@
         </div>
       </div>
 
-      <button (click)="retour()" class="px-4 py-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 text-gray-700 text-[13px] font-semibold transition-all cursor-pointer flex items-center gap-2 shadow-sm">
+      <button (click)="retour()" class="px-4 py-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 text-gray-700 text-[13px] font-semibold transition-all cursor-pointer flex items-center gap-2 shadow-none">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
         Retour à la liste
       </button>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col flex-1 overflow-hidden relative mt-1">
+    <div class="bg-white rounded-xl shadow-none border border-gray-200 flex flex-col flex-1 overflow-hidden relative mt-1">
       <div class="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
         <h4 class="text-[15px] font-bold text-syndify-dark">Détails des opérations</h4>
       </div>

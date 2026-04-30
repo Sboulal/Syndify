@@ -29,7 +29,7 @@ export const routes: Routes = [
   {
     path: '', 
     component: MainLayout, 
-    // canActivate: [authGuard],
+    canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }, // إيلا دخل غير لـ '/' غيمشي لـ dashboard
       
@@ -64,5 +64,5 @@ export const routes: Routes = [
   // ==========================================
   // Erreur 404 (Route non trouvée)
   // ==========================================
-  { path: '**', redirectTo: 'login' } // من الأحسن إيلا تلف يرجع لـ login باش يـ checki واش مكونيكطي
+  { path: '**', redirectTo: 'login' }
 ];

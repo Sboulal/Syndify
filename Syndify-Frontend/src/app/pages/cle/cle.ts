@@ -90,25 +90,30 @@ export class Cle implements OnInit {
 formaterTableau() {
     const lotsMap = new Map();
 
-    // 1. N-7ettou ga3 l-lots lli 3ndna f l-Map bash y-banou kamlin
+    // 1. N-7ettou l-lots kamlin f l-Map
     this.tousLesLots.forEach(lot => {
-      const proprio = lot.owners && lot.owners.length > 0 ? lot.owners[0].nom : '-- Non affecté --';
       lotsMap.set(lot.id, {
         id: lot.id,
         numero_porte: lot.numero_porte,
         details: `${lot.type} ${lot.numero_porte} / Bat: ${lot.batiment || '-'} / Etg: ${lot.etage || '-'}`,
-        coproprietaire: proprio,
+        coproprietaire: '-- Non affecté --', // N-khelliwha par défaut khawya
         tantiemes: {} 
       });
     });
 
-    // 2. N-3emmrou l-Tantièmes mn l-Cles lli jaw mn l-Backend
+    // 2. N-3emmrou l-Tantièmes w n-jbdou l-Mlak (Owners) mn l-Cles (li fiha data s7i7a)
     this.clesList.forEach(cle => {
       if (cle.lots && Array.isArray(cle.lots)) {
         cle.lots.forEach((lot: any) => {
           if (lotsMap.has(lot.id)) {
-            // N-7ettou l-Tantième (0 ila ma-fiha walo)
-            lotsMap.get(lot.id).tantiemes[cle.id] = lot.tantieme_applied || 0;
+            const lotData = lotsMap.get(lot.id);
+            // N-7etto Tantième
+            lotData.tantiemes[cle.id] = lot.tantieme_applied || 0;
+
+            // 🟢 FIX L-KBIR HNA: N-jbdou s-smiya dyal Copropriétaire!
+            if (lot.owners && lot.owners.length > 0) {
+              lotData.coproprietaire = lot.owners[0].full_name; // Smiya as-slia li kayna f DB
+            }
           }
         });
       }
@@ -116,7 +121,6 @@ formaterTableau() {
 
     this.lignesTableau = Array.from(lotsMap.values());
   }
-
   openAddModal(cleAModifier: any = null) {
     this.closeDropdown();
 

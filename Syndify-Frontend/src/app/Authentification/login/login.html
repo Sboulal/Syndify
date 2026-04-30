@@ -28,7 +28,7 @@
 
                 <form class="space-y-6">
                     <div class="group">
-                        <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 group-focus-within:border-syndify-dark/20 group-focus-within:bg-white transition-all shadow-sm">
+                        <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 group-focus-within:border-syndify-dark/20 group-focus-within:bg-white transition-all shadow-none">
                             <label class="block text-[10px] font-black text-syndify-dark/40 mb-1 uppercase tracking-[0.2em]">Email ou Téléphone</label>
                             <input type="text" [(ngModel)]="identifier" name="identifier" placeholder="syndic@exemple.ma" 
                                    class="w-full bg-transparent text-syndify-text font-bold text-base outline-none placeholder-gray-300"
@@ -53,19 +53,19 @@
                 <form class="space-y-8">
                     <div class="flex justify-between gap-2 md:gap-3">
                         <input #otp1 type="text" maxlength="1" [(ngModel)]="otp[0]" name="otp0" (keyup)="moveFocus($event, null, otp1, otp2)"
-                               class="w-12 h-14 md:w-14 md:h-16 text-center text-2xl font-black bg-gray-50 border-2 border-gray-200 focus:border-syndify-dark focus:bg-white rounded-2xl outline-none transition-all duration-300 text-syndify-text shadow-sm" [disabled]="isLoading">
+                               class="w-12 h-14 md:w-14 md:h-16 text-center text-2xl font-black bg-gray-50 border-2 border-gray-200 focus:border-syndify-dark focus:bg-white rounded-2xl outline-none transition-all duration-300 text-syndify-text shadow-none" [disabled]="isLoading">
                         
                         <input #otp2 type="text" maxlength="1" [(ngModel)]="otp[1]" name="otp1" (keyup)="moveFocus($event, otp1, otp2, otp3)"
-                               class="w-12 h-14 md:w-14 md:h-16 text-center text-2xl font-black bg-gray-50 border-2 border-gray-200 focus:border-syndify-dark focus:bg-white rounded-2xl outline-none transition-all duration-300 text-syndify-text shadow-sm" [disabled]="isLoading">
+                               class="w-12 h-14 md:w-14 md:h-16 text-center text-2xl font-black bg-gray-50 border-2 border-gray-200 focus:border-syndify-dark focus:bg-white rounded-2xl outline-none transition-all duration-300 text-syndify-text shadow-none" [disabled]="isLoading">
                         
                         <input #otp3 type="text" maxlength="1" [(ngModel)]="otp[2]" name="otp2" (keyup)="moveFocus($event, otp2, otp3, otp4)"
-                               class="w-12 h-14 md:w-14 md:h-16 text-center text-2xl font-black bg-gray-50 border-2 border-gray-200 focus:border-syndify-dark focus:bg-white rounded-2xl outline-none transition-all duration-300 text-syndify-text shadow-sm" [disabled]="isLoading">
+                               class="w-12 h-14 md:w-14 md:h-16 text-center text-2xl font-black bg-gray-50 border-2 border-gray-200 focus:border-syndify-dark focus:bg-white rounded-2xl outline-none transition-all duration-300 text-syndify-text shadow-none" [disabled]="isLoading">
                         
                         <input #otp4 type="text" maxlength="1" [(ngModel)]="otp[3]" name="otp3" (keyup)="moveFocus($event, otp3, otp4, otp5)"
-                               class="w-12 h-14 md:w-14 md:h-16 text-center text-2xl font-black bg-gray-50 border-2 border-gray-200 focus:border-syndify-dark focus:bg-white rounded-2xl outline-none transition-all duration-300 text-syndify-text shadow-sm" [disabled]="isLoading">
+                               class="w-12 h-14 md:w-14 md:h-16 text-center text-2xl font-black bg-gray-50 border-2 border-gray-200 focus:border-syndify-dark focus:bg-white rounded-2xl outline-none transition-all duration-300 text-syndify-text shadow-none" [disabled]="isLoading">
                                
                         <input #otp5 type="text" maxlength="1" [(ngModel)]="otp[4]" name="otp4" (keyup)="moveFocus($event, otp4, otp5, null)"
-                               class="w-12 h-14 md:w-14 md:h-16 text-center text-2xl font-black bg-gray-50 border-2 border-gray-200 focus:border-syndify-dark focus:bg-white rounded-2xl outline-none transition-all duration-300 text-syndify-text shadow-sm" [disabled]="isLoading">
+                               class="w-12 h-14 md:w-14 md:h-16 text-center text-2xl font-black bg-gray-50 border-2 border-gray-200 focus:border-syndify-dark focus:bg-white rounded-2xl outline-none transition-all duration-300 text-syndify-text shadow-none" [disabled]="isLoading">
                     </div>
 
                     <button type="button" (click)="verifyCode()" [disabled]="isLoading" 

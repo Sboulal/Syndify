@@ -5,6 +5,8 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Faker\Factory as Faker;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -15,19 +17,27 @@ class SyndifyTestDataSeeder extends Seeder
     {
         $faker = Faker::create('fr_MA');
 
-        // ✅ Vider les tables
+        // ==========================================
+        // 0. VIDER LES TABLES ET DOSSIERS
+        // ==========================================
         DB::statement('SET session_replication_role = replica;');
         DB::statement('TRUNCATE TABLE proprietes, users, user_as_owner, units, user_owner_unit, unit_to_key, exercices, cle_repartitions, encaissements, depenses, depense_for_owner, appels_fonds, appf_to_owner CASCADE;');
         DB::statement('SET session_replication_role = origin;');
 
+        $sp_id = 'SP-87248712';
+        $basePath = "proprietes/{$sp_id}";
+
+        if (Storage::disk('public')->exists($basePath)) {
+            Storage::disk('public')->deleteDirectory($basePath);
+        }
+
         // ==========================================
         // 1. CRÉER UNE PROPRIÉTÉ
         // ==========================================
-        $sp_id = 'SP-87248712'; 
-        
         $propData = [
             'nom' => 'Résidence Les Jardins de l\'Océan',
-            'address' => $faker->address,
+            'city' => 'Casablanca',
+            'address' => 'Angle Boulevard Ghandi et Route de la Corniche',
             'created_at' => now(), 'updated_at' => now(),
         ];
 
@@ -39,7 +49,7 @@ class SyndifyTestDataSeeder extends Seeder
         $proprieteId = DB::table('proprietes')->insertGetId($propData);
 
         // ==========================================
-        // 2. CRÉER LES CLÉS DE RÉPARTITION 
+        // 2. CRÉER LA CLÉ DE RÉPARTITION 
         // ==========================================
         $cleId = DB::table('cle_repartitions')->insertGetId([
             'propriete_id' => $sp_id, 'nom' => 'Charges Communes Générales',
@@ -68,7 +78,7 @@ class SyndifyTestDataSeeder extends Seeder
 
             DB::table('user_as_owner')->insert([
                 'user_id' => $userId, 'propriete_id' => $sp_id, 'status' => 1,
-                'balance_prev' => 0, // 🟢 L-Balance ghat-t7seb b-l-mantiq mn b3d!
+                'balance_prev' => 0, 
                 'created_at' => now(), 'updated_at' => now(),
             ]);
         }
@@ -80,20 +90,18 @@ class SyndifyTestDataSeeder extends Seeder
         $unitToKeyData = [];
         $totalTantiemesRepartis = 0;
         
-        // 🟢 N-khzno l-Tantièmes dyal kol wa7ed bash n-7esbou bihom l-Appels de Fonds
         $userTantiemes = []; 
         foreach ($usersIds as $uid) { $userTantiemes[$uid] = 0; }
 
-        for ($i = 1; $i <= 120; $i++) {
+        for ($i = 0; $i < 120; $i++) {
             $type = $faker->randomElement($typesBiens);
             $unitId = DB::table('units')->insertGetId([
                 'propriete_id' => $proprieteId, 'type' => $type,
-                'numero_porte' => ($type === 'Appartement' ? 'A' : ($type === 'Garage' ? 'G' : 'M')) . str_pad($i, 3, '0', STR_PAD_LEFT),
+                'numero_porte' => ($type === 'Appartement' ? 'A' : ($type === 'Garage' ? 'G' : 'M')) . str_pad($i + 1, 3, '0', STR_PAD_LEFT),
                 'etage' => $type === 'Appartement' ? $faker->numberBetween(1, 10) : 0,
                 'created_at' => now(), 'updated_at' => now(),
             ]);
 
-            // 🟢 L-Mantiq: Kol Copropriétaire y-akhoud 2 awla 3 dyal l-Lots b-t-tartib
             $ownerId = $usersIds[$i % 50];
 
             DB::table('user_owner_unit')->insert([
@@ -101,10 +109,9 @@ class SyndifyTestDataSeeder extends Seeder
                 'created_at' => now(), 'updated_at' => now(),
             ]);
 
-            $tantiemeLot = ($i === 120) ? (10000 - $totalTantiemesRepartis) : round(10000 / 120, 4); 
+            $tantiemeLot = ($i === 119) ? (10000 - $totalTantiemesRepartis) : round(10000 / 120, 4); 
             $totalTantiemesRepartis += $tantiemeLot;
             
-            // 🟢 N-zidou l-Tantième f l-Rassid dyal l-Copropriétaire
             $userTantiemes[$ownerId] += $tantiemeLot; 
 
             $unitToKeyData[] = [
@@ -117,45 +124,57 @@ class SyndifyTestDataSeeder extends Seeder
         }
 
         // ==========================================
-        // 5. CRÉER L'EXERCICE COMPTABLE (2025)
+        // 5. CRÉER L'EXERCICE COMPTABLE (🟢 2026 POUR LE DASHBOARD)
         // ==========================================
-        $se_id = 'EX-2025-' . Str::random(5);
+        $se_id = 'EX-2026-' . Str::random(5);
         DB::table('exercices')->insert([
-            'se_identifier' => $se_id, 'propriete_id' => $sp_id, 'start_date' => '2025-01-01', 'end_date' => '2025-12-31',
+            'se_identifier' => $se_id, 'propriete_id' => $sp_id, 
+            'start_date' => '2026-01-01', 'end_date' => '2026-12-31',
             'status' => 'en cours', 'period' => 'trimestre', 'created_at' => now(), 'updated_at' => now(),
         ]);
         
         DB::table('charges_previsionnelles')->insert([
-            'scp_identifier' => 'SCP-2025-'.Str::random(3), 'se_identifier' => $se_id, 'budget' => 200000,
+            'scp_identifier' => 'SCP-2026-'.Str::random(3), 'se_identifier' => $se_id, 'budget' => 200000,
             'total_encaissements' => 0, 'total_depenses' => 0
         ]);
 
         // ==========================================
-        // 6. APPELS DE FONDS (Calculés selon les Tantièmes exacts !)
+        // 6. APPELS DE FONDS DÉTAILLÉS (4 Trimestres - 2026)
         // ==========================================
         $appfToOwner = [];
+        $budgetAnnuel = 200000;
+        $montantTrimestre = $budgetAnnuel / 4; // 50,000 DH
 
-        for ($trimestre = 1; $trimestre <= 3; $trimestre++) {
-            $af_id = 'AF-T' . $trimestre . '-' . Str::random(4);
-            $montantAppel = 40000; // 40,000 DH l-koll trimestre
+        $trimestres = [
+            ['num' => 1, 'date' => '2026-01-01', 'titre' => 'Appel de fonds Trimestre 1 - 2026'],
+            ['num' => 2, 'date' => '2026-04-01', 'titre' => 'Appel de fonds Trimestre 2 - 2026'],
+            ['num' => 3, 'date' => '2026-07-01', 'titre' => 'Appel de fonds Trimestre 3 - 2026'],
+            ['num' => 4, 'date' => '2026-10-01', 'titre' => 'Appel de fonds Trimestre 4 - 2026'],
+        ];
+
+        foreach ($trimestres as $trim) {
+            $af_id = 'AF-T' . $trim['num'] . '-' . Str::random(4);
 
             DB::table('appels_fonds')->insert([
-                'af_identifier' => $af_id, 'se_identifier' => $se_id, 'type_charge' => 'previsionnel', 'sub_type' => 'planifie',
-                'title' => "Appel de fonds Trimestre $trimestre - 2025", 'amount' => $montantAppel,
-                'due_date' => Carbon::createFromDate(2025, ($trimestre - 1) * 3 + 1, 1)->format('Y-m-d'),
-                'is_generated' => true, 'is_sent' => true, 'number_generated' => count($usersIds), 'number_sent' => count($usersIds),
+                'af_identifier' => $af_id, 
+                'se_identifier' => $se_id, 
+                'type_charge' => 'previsionnel', 
+                'sub_type' => 'planifie',
+                'title' => $trim['titre'], 
+                'amount' => $montantTrimestre,
+                'due_date' => $trim['date'],
+                'is_generated' => true, 
+                'is_sent' => true, 
+                'number_generated' => count($usersIds), 
+                'number_sent' => count($usersIds),
                 'created_at' => now(), 'updated_at' => now()
             ]);
 
-            // 🟢 L-Mantiq: L-khalass m-bni 3la Tantièmes (Mashi m9ssoum 3la 50)
             foreach ($usersIds as $uid) {
-                $montantDu = $montantAppel * ($userTantiemes[$uid] / 10000); // 7ssab s7i7!
-                
+                $montantDu = $montantTrimestre * ($userTantiemes[$uid] / 10000); 
                 $appfToOwner[] = [
                     'af_identifier' => $af_id, 'user_id' => $uid, 'montant_du' => $montantDu, 'created_at' => now()
                 ];
-                
-                // N-n9ssou l-Montant mn l-Balance (Dette)
                 DB::table('user_as_owner')->where('user_id', $uid)->decrement('balance_prev', $montantDu);
             }
         }
@@ -163,37 +182,35 @@ class SyndifyTestDataSeeder extends Seeder
             DB::table('appf_to_owner')->insert($chunk);
         }
 
-   // ==========================================
-        // 7. ENCAISSEMENTS (Paiements logiques)
+        // ==========================================
+        // 7. ENCAISSEMENTS (Paiements 2026)
         // ==========================================
         $encaissements = [];
-        $indexEnc = 1; // 🟢 Index bash n-dmanou l-unicité
+        $indexEnc = 1; 
         foreach (array_slice($usersIds, 0, 20) as $uid) {
             $montantPaye = 5000; 
             $encaissements[] = [
-                // 🟢 Zdna $indexEnc bash l-ID ykoune unique 100%
                 'sen_identifier' => 'ENC-' . time() . '-' . ($indexEnc++) . '-' . rand(1000, 9999), 
                 'se_identifier' => $se_id,
                 'owner_id' => $uid, 
                 'title' => 'Paiement Cotisation', 
                 'amount' => $montantPaye,
-                'date' => $faker->dateTimeBetween('2025-01-01', 'now')->format('Y-m-d'),
+                'date' => $faker->dateTimeBetween('2026-01-01', '2026-04-30')->format('Y-m-d'),
                 'type_charges' => 'previsionnel', 
                 'sub_type_charges' => 'planifié',
                 'created_at' => now(), 
                 'updated_at' => now()
             ];
-            // N-zidou l-Khlass f l-Balance
             DB::table('user_as_owner')->where('user_id', $uid)->increment('balance_prev', $montantPaye);
         }
         DB::table('encaissements')->insert($encaissements);
 
         // ==========================================
-        // 8. DÉPENSES
+        // 8. DÉPENSES (2026)
         // ==========================================
         $depenseId = DB::table('depenses')->insertGetId([
             'sdep_identifier' => 'DEP-' . time() . '-1', 'se_identifier' => $se_id, 'cle_repartition_id' => $cleId,
-            'title' => 'Facture Lydec + Nettoyage', 'amount' => 12500, 'date' => '2025-02-15',
+            'title' => 'Facture Lydec + Nettoyage', 'amount' => 12500, 'date' => '2026-02-15',
             'type_charges' => 'previsionnel', 'sub_type_charges' => 'Courante',
             'created_at' => now(), 'updated_at' => now()
         ]);
@@ -207,6 +224,38 @@ class SyndifyTestDataSeeder extends Seeder
         }
         DB::table('depense_for_owner')->insert($depenseForOwnerData);
 
-        $this->command->info('🚀 BOOM! Données 100% liées et logiques!');
+        // ==========================================
+        // 9. 🟢 GÉNÉRATION DES DOCUMENTS (PDF)
+        // ==========================================
+        $this->command->info('⏳ Création des Documents PDF en cours...');
+
+        Storage::disk('public')->makeDirectory("{$basePath}/appels_fonds");
+        Storage::disk('public')->makeDirectory("{$basePath}/reminders");
+        Storage::disk('public')->makeDirectory("{$basePath}/encaissements");
+        Storage::disk('public')->makeDirectory("{$basePath}/assemblees");
+        Storage::disk('public')->makeDirectory("{$basePath}/contrats");
+
+        $createRealPdf = function($path, $title) {
+            $html = "
+                <div style='font-family: Arial, sans-serif; text-align: center; padding: 40px;'>
+                    <h1 style='color: #251b5c;'>Syndify Document</h1>
+                    <h2 style='color: #444;'>{$title}</h2>
+                    <p style='margin-top: 30px; font-size: 14px;'>Document généré automatiquement par le Seeder pour l'exercice 2026.</p>
+                    <hr style='margin-top: 50px; border: 0; border-top: 1px solid #ddd;'>
+                    <p style='color: #888; font-size: 11px;'>Date de génération : " . date('d/m/Y H:i') . "</p>
+                </div>
+            ";
+            $pdf = Pdf::loadHTML($html);
+            Storage::disk('public')->put($path, $pdf->output());
+        };
+
+        $createRealPdf("{$basePath}/appels_fonds/Appel_Fonds_T1_2026.pdf", "Appel de Fonds T1 - 2026"); 
+        $createRealPdf("{$basePath}/appels_fonds/Appel_Fonds_T2_2026.pdf", "Appel de Fonds T2 - 2026"); 
+        $createRealPdf("{$basePath}/reminders/Rappel_Impaye.pdf", "Rappel Impayé - Relance 1"); 
+        $createRealPdf("{$basePath}/encaissements/Recu_Paiement_T1_2026.pdf", "Reçu de Paiement - Cotisation T1 2026"); 
+        $createRealPdf("{$basePath}/assemblees/PV_Assemblee_Generale_2025.pdf", "PV de l'Assemblée Générale 2025"); 
+        $createRealPdf("{$basePath}/contrats/Contrat_Syndic_2026.pdf", "Contrat de Syndic (Exercice 2026)"); 
+
+        $this->command->info('🚀 BOOM! Seeder Complet 2026 exécuté avec succès!');
     }
 }

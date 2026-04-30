@@ -13,14 +13,28 @@ use Exception;
 class BudgetOperationController extends Controller
 {
 // ========================================================
-    // 🟢 FONCTION SÉCURISÉE POUR L'ID DE LA PROPRIÉTÉ
+    // 🟢 FONCTION SÉCURISÉE AVEC AUTHENTIFICATION RÉELLE
     // ========================================================
     private function getProprieteId(Request $request)
     {
-        // 🟢 FIX RADICAL: N-forciw l-ID dyal l-Résidence d-Demo nichan
-        return 'SP-87248712';
-    }
+        // 1. Priorité l-ID li mssift mn l-Frontend (Angular Payload)
+        if ($request->has('propriete_id') && !empty($request->propriete_id)) {
+            return $request->propriete_id;
+        }
 
+        // 2. Ila Angular masift walo, njbdouh mn l-User li m-connecté (Auth)
+        $userId = auth()->id(); 
+        
+        // Ila makanch m-connecté aslan, maymknch y-accéder
+        if (!$userId) {
+            return null; 
+        }
+
+        $propOwnerCol = \Illuminate\Support\Facades\Schema::hasColumn('user_as_owner', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
+        $link = \Illuminate\Support\Facades\DB::table('user_as_owner')->where('user_id', $userId)->first();
+        
+        return $link ? $link->$propOwnerCol : null;
+    }
    
 // ==========================================
     // 1. CHARGEMENT DES DONNÉES

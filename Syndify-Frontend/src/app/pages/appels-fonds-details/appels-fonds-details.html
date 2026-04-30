@@ -1,80 +1,108 @@
-<div class="flex flex-col min-h-full font-['Poppins'] bg-syndify-bg">
+<div class="flex flex-col min-h-full font-['Poppins'] bg-syndify-bg overflow-x-hidden">
 
+  <!-- 🟢 HEADER L-KHDER (L-CEINTURE) -->
   <app-page-header 
     class="shrink-0 relative"
-    parentPath="Appels de fonds" 
-    currentPath="Détails"
-    title="Détails de l'appel de fonds"
-    [statsText]="''"
-    [statsSubText]="''">
+    [title]="residenceInfo.nom"
+    [description]="residenceInfo.adresse"
+    parentPath="Financement" 
+    currentPath="Appels de fonds detail">
     
-    <div class="absolute right-6 md:right-8 top-1/2 -translate-y-1/2 flex items-center gap-3 z-10">
+    <!-- 🚀 ACTIONS (GÉNÉRER / ENVOYER) LASS9IN F LISSAR 100% -->
+    <div class="absolute left-6 md:left-8 top-1/2 -translate-y-1/2 flex items-center gap-4 z-10">
       
-      <button (click)="retourListe()" class="px-4 py-2 bg-transparent text-white rounded-lg text-[13px] font-bold cursor-pointer border border-white/20 hover:bg-white/10 transition-all shadow-sm flex items-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-        Retour
+      <!-- Bouton Générer -->
+      <button *ngIf="appelPrincipal && !appelPrincipal.is_generated" (click)="genererAppel()" class="flex items-center gap-1.5 text-[12.5px] font-bold text-white hover:text-gray-200 transition-colors bg-transparent border-0 cursor-pointer p-0 shadow-none outline-none">
+        <svg class="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        Générer
       </button>
+      
+      <!-- Text Généré -->
+      <div *ngIf="appelPrincipal && appelPrincipal.is_generated" class="flex items-center gap-1.5 text-[12px] font-bold text-white">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+        Généré ({{ appelPrincipal.number_generated }})
+      </div>
 
-      <button *ngIf="appelPrincipal && !appelPrincipal.is_generated" (click)="genererAppel()" class="px-4 py-2 bg-white text-syndify-primary rounded-lg text-[13px] font-bold cursor-pointer border-0 hover:bg-gray-100 transition-all shadow-sm flex items-center gap-2">
-        Générer l'appel
-      </button>
-
-      <button *ngIf="appelPrincipal && appelPrincipal.is_generated && !appelPrincipal.is_sent" (click)="envoyerAppel()" class="px-4 py-2 bg-[#D39955] text-white rounded-lg text-[13px] font-bold cursor-pointer border-0 hover:brightness-110 transition-all shadow-sm flex items-center gap-2">
+      <!-- Bouton Envoyer -->
+      <button *ngIf="appelPrincipal && appelPrincipal.is_generated && !appelPrincipal.is_sent" (click)="envoyerAppel()" class="flex items-center gap-1.5 text-[12.5px] font-bold text-[#D39955] hover:text-[#e4a861] transition-colors bg-transparent border-0 cursor-pointer p-0 shadow-none outline-none">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
         Envoyer
+      </button>
+      
+      <!-- Text Envoyé -->
+      <div *ngIf="appelPrincipal && appelPrincipal.is_sent" class="flex items-center gap-1.5 text-[12px] font-bold font-black text-white">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+        Envoyé ({{ appelPrincipal.number_sent }})
+      </div>
+
+    </div>
+
+    <!-- 🚀 TRIMESTRE, MONTANT ET RETOUR À DROITE -->
+    <div class="absolute right-6 md:right-8 top-1/2 -translate-y-1/2 flex items-center gap-4 z-10">
+      
+      <!-- Trimestre + Date + Montant -->
+      <div *ngIf="appelPrincipal" class="hidden xl:flex items-center gap-4 pr-4">
+        
+        <!-- Trimestre & Date -->
+        <div class="flex flex-col items-end">
+          <h2 class="text-[13.5px] font-bold text-white tracking-wide">
+            {{ appelPrincipal.title.replace('Appel de fonds ', '') }}
+          </h2>
+        
+        </div>
+        <div class="flex flex-col items-end">
+          
+          <h2 class="text-[13.5px] font-bold text-white tracking-wide">
+            {{ appelPrincipal.due_date | date:'dd MMMM yyyy':'':'fr' }}
+          </h2>
+        </div>
+
+        <!-- Montant -->
+        <div class="flex gap-1  px-3 py-1.5 rounded-lg">
+          <span class="text-[18px] font-black text-white leading-none">{{ appelPrincipal.amount | number:'1.0-0' }}</span>
+          <span class="text-[10px] font-bold text-white/70">MAD</span>
+        </div>
+
+      </div>
+
+      <!-- BOUTON RETOUR -->
+      <button (click)="retourListe()" class="px-4 py-2 bg-transparent text-white rounded-lg text-[13px] font-bold cursor-pointer border border-white/20 hover:bg-white/10 transition-all shadow-none flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        Retour
       </button>
 
     </div>
   </app-page-header>
 
-  <div class="flex-1 p-6 md:p-8 flex flex-col gap-6 overflow-visible">
-    
-    <div *ngIf="appelPrincipal" class="flex items-start justify-between mt-2">
-      <div>
-        <h2 class="text-[18px] font-bold text-syndify-dark mb-1">
-          {{ appelPrincipal.title }}
-        </h2>
-        <p class="text-[13px] text-gray-500 font-medium mb-3">
-          Date d'exigibilité: <span class="font-bold text-syndify-dark">{{ appelPrincipal.due_date | date:'dd MMMM yyyy' }}</span>
-        </p>
-        
-        <div class="flex items-center gap-3">
-            <span *ngIf="appelPrincipal.is_generated" class="px-3 py-1 bg-green-100 text-green-700 text-[11px] font-bold rounded-md flex items-center gap-1.5">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
-                Généré ({{ appelPrincipal.number_generated }})
-            </span>
-            <span *ngIf="appelPrincipal.is_sent" class="px-3 py-1 bg-blue-100 text-blue-700 text-[11px] font-bold rounded-md flex items-center gap-1.5">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
-                Envoyé ({{ appelPrincipal.number_sent }})
-            </span>
-        </div>
-      </div>
+  <!-- 🟢 CONTENU PRINCIPAL (Tableau uniquement) -->
+  <div class="flex-1 p-6 md:p-8 flex flex-col overflow-visible pt-6">
 
-      <div class="text-[24px] font-extrabold text-syndify-dark text-right">
-        {{ appelPrincipal.amount | number:'1.0-0' }} <span class="text-[12px] font-bold ml-1 text-gray-500">MAD</span>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-[4px] border border-gray-200 mt-2 overflow-hidden shadow-sm">
+    <!-- 🟢 TABLEAU DES COPROPRIÉTAIRES -->
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-none">
       <div class="overflow-x-auto w-full">
         <table class="w-full text-left border-collapse">
           
-          <thead class="bg-[#EBEBEB] border-b border-gray-300">
+          <thead class="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th class="py-3.5 px-6 font-semibold text-syndify-dark text-[13px] w-[30%]">Copropriétaire</th>
-              <th class="py-3.5 px-6 font-semibold text-syndify-dark text-[13px] w-[20%] text-right">Solde avant</th>
-              <th class="py-3.5 px-6 font-semibold text-syndify-dark text-[13px] w-[20%] text-right">Provision</th>
-              <th class="py-3.5 px-6 font-semibold text-syndify-dark text-[13px] w-[30%] text-right">Solde après</th>
+              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[30%]">Copropriétaire</th>
+              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[20%] text-right">Solde avant</th>
+              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[20%] text-right">Provision</th>
+              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[30%] text-right">Solde après</th>
             </tr>
           </thead>
           
           <tbody class="text-[13px] text-gray-700 font-medium bg-white">
             
             <tr *ngIf="isLoading">
-              <td colspan="4" class="py-8 text-center text-gray-500">Chargement des données...</td>
+              <td colspan="4" class="py-12 text-center text-syndify-accent">
+                <div class="flex flex-col items-center justify-center gap-3">
+                  <div class="w-6 h-6 border-2 border-syndify-accent border-t-transparent rounded-full animate-spin"></div>
+                  <span>Chargement des données...</span>
+                </div>
+              </td>
             </tr>
             <tr *ngIf="!isLoading && lignesProprietaires.length === 0">
-              <td colspan="4" class="py-8 text-center text-gray-400">Aucun détail trouvé.</td>
+              <td colspan="4" class="py-10 text-center text-gray-400">Aucun détail trouvé.</td>
             </tr>
 
             <tr *ngFor="let item of lignesProprietaires" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
@@ -87,11 +115,11 @@
                 {{ item.soldeAvant | number:'1.2-2' }} MAD
               </td>
               
-              <td class="py-4 px-6 text-right font-medium text-syndify-dark">
+              <td class="py-4 px-6 text-right font-bold text-syndify-dark">
                 {{ item.provision | number:'1.2-2' }} MAD
               </td>
               
-              <td class="py-4 px-6 text-right font-extrabold" [ngClass]="item.soldeApres < 0 ? 'text-red-500' : 'text-green-600'">
+              <td class="py-4 px-6 text-right font-extrabold" [ngClass]="item.soldeApres < 0 ? 'text-red-500' : 'text-emerald-600'">
                 {{ item.soldeApres | number:'1.2-2' }} MAD
               </td>
 

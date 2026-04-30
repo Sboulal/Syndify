@@ -18,6 +18,7 @@ export class AppelsFondsDetails implements OnInit {
   appelPrincipal: any = null;
   lignesProprietaires: any[] = [];
   isLoading: boolean = false;
+  residenceInfo = { nom: '...', adresse: '...' };
 
   // 🟢 IP Unifiée
   private baseUrl = 'http://nomade-cloud.com:8085/api';
@@ -54,6 +55,13 @@ export class AppelsFondsDetails implements OnInit {
     this.http.post(`${this.baseUrl}/appels-fonds/details`, payload).subscribe({
       next: (res: any) => {
         if(res.success) {
+         if(res.data && res.data.residence) {
+   this.residenceInfo = res.data.residence;
+} else if(res.residence) {
+   this.residenceInfo = res.residence;
+} else if(res.data && res.data.propriete) {
+   this.residenceInfo = res.data.propriete; 
+}
           this.appelPrincipal = res.data.appel;
           
           this.lignesProprietaires = res.data.lignes.map((ligne: any) => {

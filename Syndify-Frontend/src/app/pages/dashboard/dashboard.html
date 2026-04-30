@@ -34,7 +34,7 @@
           <h2 class="text-[18px] font-bold text-syndify-dark tracking-wide">Soldes des copropriétaires</h2>
         </div>
         
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="bg-white rounded-xl border border-gray-200 shadow-none overflow-hidden">
           <table class="w-full text-left">
             <thead class="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -46,7 +46,7 @@
             <tbody class="text-[13px] font-medium">
               <tr *ngIf="isLoading"><td colspan="3" class="py-10 text-center text-gray-400">Chargement...</td></tr>
               <tr *ngFor="let s of soldes" class="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                <td class="py-4 px-6 text-gray-500 text-syndify-accent decoration-syndify-accent/30 underline-offset-2 hover:decoration-syndify-accent">{{ s.id }}</td>
+                <td class="py-4 px-6 text-gray-500 decoration-syndify-accent/30 underline-offset-2 hover:decoration-syndify-accent">{{ s.id }}</td>
                 <td class="py-4 px-6 text-syndify-dark font-bold">{{ s.nom }}</td>
                 <td class="py-4 px-6 text-right font-extrabold" [ngClass]="s.isNegatif ? 'text-red-500' : 'text-green-600'">
                   {{ s.solde }} <span class="text-[10px] opacity-60 ml-0.5">MAD</span>
@@ -74,7 +74,7 @@
 
     <div class="space-y-8">
       
-      <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+      <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-none">
         <h3 class="text-[15px] font-bold text-syndify-dark mb-6">Consommation du budget</h3>
         
         <div class="relative flex items-center justify-center mb-6">
@@ -100,7 +100,7 @@
         </div>
       </div>
 
-      <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+      <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-none">
         <h3 class="text-[15px] font-bold text-syndify-dark mb-6 tracking-wide">Détails par trimestre</h3>
         <div class="space-y-5">
             <div *ngFor="let trim of trimestres" class="flex flex-col gap-2">

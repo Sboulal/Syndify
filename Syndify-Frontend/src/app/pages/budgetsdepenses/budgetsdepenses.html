@@ -1,4 +1,4 @@
-<div class="flex flex-col min-h-full font-['Poppins'] bg-syndify-bg">
+<div class="flex flex-col min-h-full font-['Poppins'] bg-syndify-bg overflow-x-hidden">
 
   <app-page-header
     class="shrink-0 relative"
@@ -25,15 +25,13 @@
       </div>
 
       <div class="flex items-center gap-5">
-        <button (click)="nouveauMouvement()" class="flex items-center gap-1.5 text-[13.5px] font-semibold text-white hover:text-gray-200 transition-all bg-transparent border-none outline-none cursor-pointer">
+        <button (click)="nouveauMouvement()" class="btn-primary text-[13px] font-semibold !bg-syndify-accent !text-white border-0 flex items-center gap-2 cursor-pointer shadow-md">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
           Nouveau mouvement
-          <svg class="w-3.5 h-3.5 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+         
         </button>
         
-        <div class="hidden sm:block w-px h-4 bg-white/30"></div>
-
-        <button (click)="telechargerReleve()" class="flex items-center gap-1.5 text-[13.5px] font-semibold text-white hover:text-gray-200 transition-all bg-transparent border-none outline-none cursor-pointer">
+        <button (click)="telechargerReleve()" class="btn-primary text-[13px] font-semibold !bg-syndify-accent !text-white border-0 flex items-center gap-2 cursor-pointer shadow-md">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
           Télécharger le relevé
         </button>
@@ -46,19 +44,18 @@
     
     <div class="flex gap-8 border-b border-gray-200 -mt-2 mb-6">
       <button (click)="setTab('previsionnel')"
-              class="pb-3 text-[14px] font-bold transition-all bg-transparent border-0 cursor-pointer"
+              class="pb-3 text-[14px] font-bold transition-all bg-transparent border-0 cursor-pointer outline-none"
               [ngClass]="activeTab === 'previsionnel' ? 'text-syndify-dark border-b-[3px] border-syndify-dark' : 'text-gray-400 hover:text-gray-600 border-b-[3px] border-transparent'">
         Budget prévisionnel
       </button>
       <button (click)="setTab('travaux')"
-              class="pb-3 text-[14px] font-bold transition-all bg-transparent border-0 cursor-pointer"
+              class="pb-3 text-[14px] font-bold transition-all bg-transparent border-0 cursor-pointer outline-none"
               [ngClass]="activeTab === 'travaux' ? 'text-syndify-dark border-b-[3px] border-syndify-dark' : 'text-gray-400 hover:text-gray-600 border-b-[3px] border-transparent'">
         Budget travaux
       </button>
     </div>
 
     <div class="bg-white rounded-xl shadow-none border border-gray-200 relative flex flex-col overflow-visible mb-6">
-      
       <div class="p-6 border-b border-gray-200 flex items-center bg-gray-50/50">
         <h2 class="text-[18px] font-bold text-syndify-dark tracking-wide">Montants totaux des opérations</h2>
       </div>
@@ -88,7 +85,6 @@
     </div>
 
     <div class="bg-white rounded-xl shadow-none border border-gray-200 relative flex flex-col flex-1 overflow-visible">
-      
       <div class="p-6 border-b border-gray-200 flex items-center bg-gray-50/50">
         <h2 class="text-[18px] font-bold text-syndify-dark tracking-wide">Liste des opérations de l'exercice</h2>
       </div>
@@ -129,7 +125,7 @@
                 </button>
 
                 <div *ngIf="op.showMenu" 
-                     class="absolute right-8 top-12 w-48 bg-white border border-gray-100 rounded-2xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] z-[999] py-2 flex flex-col font-normal">
+                     class="absolute right-8 top-12 w-48 bg-white border border-gray-100 rounded-2xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] z-[999] py-2 flex flex-col font-normal text-left">
                   
                   <button (click)="modifierOperation(op)" class="w-full text-left px-4 py-2.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 hover:text-syndify-accent flex items-center gap-3 transition-colors cursor-pointer border-0 bg-transparent group">
                     <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-syndify-accent group-hover:bg-syndify-accent group-hover:text-white transition-all">
@@ -154,7 +150,6 @@
                     </div>
                     Supprimer
                   </button>
-                  
                 </div>
               </td>
             </tr>
@@ -169,12 +164,173 @@
 
       </div>
     </div>
-
   </div>
 
-  <div *ngIf="isAddModalOpen" class="...">
+
+<div *ngIf="isAddModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-[#0B0F24]/60 backdrop-blur-sm p-4">
+    
+    <div class="bg-white w-full max-w-lg rounded-[16px] shadow-xl overflow-hidden flex flex-col transform transition-all animate-in zoom-in-95 duration-200">
+      
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+        <h3 class="text-[16px] font-bold text-syndify-dark">Nouveau mouvement</h3>
+        <button (click)="closeAddModal()" class="text-gray-400 hover:text-red-500 transition-colors bg-transparent border-none cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
       </div>
-  <div *ngIf="isEditModalOpen" class="...">
+
+      <div class="p-6 flex flex-col gap-5">
+        
+        <div class="flex p-1 bg-gray-100 rounded-lg">
+          <button (click)="newMouvement.type_mouvement = 'encaissement'" 
+                  class="flex-1 py-2 text-[13px] font-bold rounded-md transition-all border-none cursor-pointer"
+                  [ngClass]="newMouvement.type_mouvement === 'encaissement' ? 'bg-white text-[#10B981] shadow-none' : 'bg-transparent text-gray-500 hover:text-gray-700'">
+            + Encaissement
+          </button>
+          <button (click)="newMouvement.type_mouvement = 'depense'" 
+                  class="flex-1 py-2 text-[13px] font-bold rounded-md transition-all border-none cursor-pointer"
+                  [ngClass]="newMouvement.type_mouvement === 'depense' ? 'bg-white text-red-500 shadow-none' : 'bg-transparent text-gray-500 hover:text-gray-700'">
+            - Dépense
+          </button>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-4">
+          <div class="flex-1">
+            <label class="block text-[12px] font-semibold text-gray-600 mb-1.5">Libellé de l'opération <span class="text-red-500">*</span></label>
+            <input type="text" [(ngModel)]="newMouvement.title" placeholder="Ex: Paiement cotisation" class="w-full text-[13px] font-medium border border-gray-200 rounded-lg px-3 py-2.5 outline-none focus:border-syndify-dark focus:ring-1 focus:ring-syndify-dark transition-all">
+          </div>
+          <div class="sm:w-1/3 w-full">
+            <label class="block text-[12px] font-semibold text-gray-600 mb-1.5">Montant <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <input type="number" [(ngModel)]="newMouvement.amount" placeholder="0.00" class="w-full text-[13px] font-bold border border-gray-200 rounded-lg pl-3 pr-8 py-2.5 outline-none focus:border-syndify-dark focus:ring-1 focus:ring-syndify-dark transition-all">
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-bold text-gray-400">DH</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-4">
+          <div class="flex-1">
+            <label class="block text-[12px] font-semibold text-gray-600 mb-1.5">Date <span class="text-red-500">*</span></label>
+            <input type="date" [(ngModel)]="newMouvement.date" class="w-full text-[13px] font-medium border border-gray-200 rounded-lg px-3 py-2.5 outline-none focus:border-syndify-dark transition-all">
+          </div>
+          <div class="flex-1">
+            <label class="block text-[12px] font-semibold text-gray-600 mb-1.5">Type de charge <span class="text-red-500">*</span></label>
+            <select [(ngModel)]="newMouvement.type_charges" class="w-full text-[13px] font-medium border border-gray-200 rounded-lg px-3 py-2.5 outline-none focus:border-syndify-dark transition-all bg-white cursor-pointer">
+              <option value="previsionnel">Prévisionnel</option>
+              <option value="travaux">Travaux</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[12px] font-semibold text-gray-600 mb-1.5">Sous-type <span class="text-red-500">*</span></label>
+          <select [(ngModel)]="newMouvement.sub_type_charges" class="w-full text-[13px] font-medium border border-gray-200 rounded-lg px-3 py-2.5 outline-none focus:border-syndify-dark transition-all bg-white cursor-pointer">
+            <option value="planifié">Planifié</option>
+            <option value="exceptionnel">Exceptionnel</option>
+          </select>
+        </div>
+
+        <div *ngIf="newMouvement.type_mouvement === 'encaissement'" class="transition-all duration-300">
+          <label class="block text-[12px] font-semibold text-[#10B981] mb-1.5">Propriétaire concerné <span class="text-red-500">*</span></label>
+          <select [(ngModel)]="newMouvement.owner_id" class="w-full text-[13px] font-bold text-gray-700 border border-emerald-200 bg-emerald-50 rounded-lg px-3 py-2.5 outline-none focus:border-emerald-500 transition-all cursor-pointer">
+            <option value="" disabled selected>Sélectionnez un propriétaire...</option>
+            <option *ngFor="let p of proprietairesActifs" [value]="p.user_id">{{ p.nom || p.full_name }}</option>
+          </select>
+        </div>
+
+        <div *ngIf="newMouvement.type_mouvement === 'depense'" class="transition-all duration-300">
+          <label class="block text-[12px] font-semibold text-red-600 mb-1.5">Clé de répartition <span class="text-red-500">*</span></label>
+          <select [(ngModel)]="newMouvement.cle_repartition_id" class="w-full text-[13px] font-bold text-gray-700 border border-red-200 bg-red-50 rounded-lg px-3 py-2.5 outline-none focus:border-red-500 transition-all cursor-pointer">
+            <option value="" disabled selected>Sélectionnez une clé...</option>
+            <option *ngFor="let c of clesRepartition" [value]="c.id">{{ c.nom }}</option>
+          </select>
+        </div>
+
       </div>
+
+      <div class="px-6 py-4 bg-gray-50 flex items-center justify-end gap-3 border-t border-gray-100">
+        <button (click)="closeAddModal()" [disabled]="isSubmitting" class="px-5 py-2.5 rounded-lg text-[13px] font-bold text-gray-600 hover:bg-gray-200 transition-colors bg-transparent border-none cursor-pointer">
+          Annuler
+        </button>
+        <button (click)="soumettreMouvement()" [disabled]="isSubmitting" class="px-6 py-2.5 rounded-lg text-[13px] font-bold text-white transition-colors border-none cursor-pointer flex items-center gap-2 shadow-none"
+                [ngClass]="newMouvement.type_mouvement === 'encaissement' ? 'bg-[#10B981] hover:bg-[#059669]' : 'bg-[#EF4444] hover:bg-[#DC2626]'">
+          <span *ngIf="!isSubmitting">Enregistrer l'opération</span>
+          <span *ngIf="isSubmitting">Traitement... ⏳</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <div *ngIf="isEditModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-[#0B0F24]/60 backdrop-blur-sm p-4">
+    
+    <div class="bg-white w-full max-w-lg rounded-[16px] shadow-xl overflow-hidden flex flex-col transform transition-all animate-in zoom-in-95 duration-200">
+      
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center justify-center w-8 h-8 bg-[#F0F5FA] rounded-lg">
+            <svg class="w-4 h-4 text-[#F5A623]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+          </div>
+          <h3 class="text-[16px] font-bold text-syndify-dark">Modifier l'opération</h3>
+        </div>
+        <button (click)="closeEditModal()" class="text-gray-400 hover:text-red-500 transition-colors bg-transparent border-none cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <div class="p-6 flex flex-col gap-5">
+        
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-[12px] font-semibold text-gray-500">Type d'opération:</span>
+          <span class="px-3 py-1 text-[12px] font-bold rounded-md"
+                [ngClass]="editMouvement.type === 'Encaissement' ? 'bg-emerald-50 text-[#10B981]' : 'bg-red-50 text-red-500'">
+            {{ editMouvement.type }}
+          </span>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-4">
+          <div class="flex-1">
+            <label class="block text-[12px] font-semibold text-gray-600 mb-1.5">Libellé de l'opération <span class="text-red-500">*</span></label>
+            <input type="text" [(ngModel)]="editMouvement.libelle" class="w-full text-[13px] font-medium border border-gray-200 rounded-lg px-3 py-2.5 outline-none focus:border-syndify-dark focus:ring-1 focus:ring-syndify-dark transition-all">
+          </div>
+          <div class="sm:w-1/3 w-full">
+            <label class="block text-[12px] font-semibold text-gray-600 mb-1.5">Montant <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <input type="number" [(ngModel)]="editMouvement.montant_absolu" class="w-full text-[13px] font-bold border border-gray-200 rounded-lg pl-3 pr-8 py-2.5 outline-none focus:border-syndify-dark focus:ring-1 focus:ring-syndify-dark transition-all">
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-bold text-gray-400">DH</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-4">
+          <div class="flex-1">
+            <label class="block text-[12px] font-semibold text-gray-600 mb-1.5">Date <span class="text-red-500">*</span></label>
+            <input type="date" [(ngModel)]="editMouvement.date" class="w-full text-[13px] font-medium border border-gray-200 rounded-lg px-3 py-2.5 outline-none focus:border-syndify-dark transition-all">
+          </div>
+          <div class="flex-1">
+            <label class="block text-[12px] font-semibold text-gray-600 mb-1.5">Sous-type <span class="text-red-500">*</span></label>
+            <select [(ngModel)]="editMouvement.sub_type_charges" class="w-full text-[13px] font-medium border border-gray-200 rounded-lg px-3 py-2.5 outline-none focus:border-syndify-dark transition-all bg-white cursor-pointer">
+              <option value="planifié">Planifié</option>
+              <option value="exceptionnel">Exceptionnel</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="px-6 py-4 bg-gray-50 flex items-center justify-end gap-3 border-t border-gray-100">
+        <button (click)="closeEditModal()" [disabled]="isSubmitting" class="px-5 py-2.5 rounded-lg text-[13px] font-bold text-gray-600 hover:bg-gray-200 transition-colors bg-transparent border-none cursor-pointer">
+          Annuler
+        </button>
+        <button (click)="soumettreModification()" [disabled]="isSubmitting" class="px-6 py-2.5 rounded-lg text-[13px] font-bold text-white bg-syndify-dark hover:bg-[#202938] transition-colors border-none cursor-pointer flex items-center gap-2 shadow-none">
+          <span *ngIf="!isSubmitting">Enregistrer les modifications</span>
+          <span *ngIf="isSubmitting">Traitement... ⏳</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
 
 </div>

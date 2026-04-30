@@ -24,7 +24,7 @@ Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 // ==========================================
 // 🔐 ROUTES SÉCURISÉES (Khasshom Token Sanctum)
 // ==========================================
-// Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:sanctum')->group(function () {
 
     // --- Lots ---
     Route::post('/lots/liste', [LotController::class, 'liste']);
@@ -98,3 +98,7 @@ Route::post('/documents/supprimer', [DocumentController::class, 'supprimer']);
 Route::post('/documents/rechercher', [DocumentController::class, 'rechercher']);
 
 
+
+    // --- Déconnexion ---
+    Route::post('/logout', [AuthController::class, 'logout']);
+});

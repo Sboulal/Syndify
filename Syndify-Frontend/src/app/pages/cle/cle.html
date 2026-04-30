@@ -36,7 +36,7 @@
   </div>
 
   <div class="flex-1 p-6 md:p-8 flex flex-col overflow-visible">
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 relative flex flex-col flex-1 overflow-visible">
+    <div class="bg-white rounded-xl shadow-none border border-gray-200 relative flex flex-col flex-1 overflow-visible">
       
       <div *ngIf="activeDropdown" (click)="closeDropdown()" class="fixed inset-0 z-30 cursor-default"></div>
 
@@ -54,45 +54,50 @@
 
               <ng-container *ngIf="currentTab === 'coproprietaires'">
                 <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[25%]">Copropriétaire</th>
-                <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[15%]">N° du bien</th>
+                
                 <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[20%]">Bien</th>
               </ng-container>
               
-              <th *ngFor="let cle of clesList; let last = last" 
-                  class="py-4 px-6 font-semibold text-syndify-dark text-[13px] relative"
-                  [ngClass]="{'z-50': activeDropdown === 'cle_' + cle.id}">
-                <div class="flex items-center justify-between gap-2 group">
-                  <span class="truncate">{{ cle.nom }}</span>
+        <th *ngFor="let cle of clesList; let last = last" 
+                  class="py-4 px-6 font-semibold text-syndify-dark text-[13px]"
+                  [ngClass]="{'z-[60]': activeDropdown === 'cle_' + cle.id}">
+                <div class="flex items-center justify-start gap-1.5 group">
+                  <span class="truncate max-w-[80%]">{{ cle.nom }}</span>
                   
-                  <button (click)="toggleDropdown('cle_' + cle.id, $event)"
-                          [ngClass]="{'bg-syndify-accent/10 text-syndify-accent': activeDropdown === 'cle_' + cle.id}"
-                          class="flex items-center justify-center w-7 h-7 rounded-lg text-gray-400 hover:text-syndify-dark hover:bg-gray-100 transition-all cursor-pointer shrink-0 relative z-[50] border-0 bg-transparent">
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14a2 2 0 100-4 2 2 0 000 4zm-7 0a2 2 0 100-4 2 2 0 000 4zm14 0a2 2 0 100-4 2 2 0 000 4z"></path></svg>
-                  </button>
+                  <!-- 🟢 HNA JAM3NA L-BOUTON W L-MENU F DIV RELATIVE BASH Y-LSSQOU -->
+                  <div class="relative">
+                    
+                    <button (click)="toggleDropdown('cle_' + cle.id, $event)"
+                            [ngClass]="{'bg-syndify-accent/10 text-syndify-accent': activeDropdown === 'cle_' + cle.id}"
+                            class="flex items-center justify-center w-6 h-6 rounded-md text-gray-400 hover:text-syndify-dark hover:bg-gray-100 transition-all cursor-pointer shrink-0 border-0 bg-transparent">
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14a2 2 0 100-4 2 2 0 000 4zm-7 0a2 2 0 100-4 2 2 0 000 4zm14 0a2 2 0 100-4 2 2 0 000 4z"></path></svg>
+                    </button>
 
-                  <div *ngIf="activeDropdown === 'cle_' + cle.id" 
-                       class="absolute top-12 w-48 bg-white rounded-2xl border border-gray-100 py-2 z-[999] shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)] transition-all font-normal"
-                       [ngClass]="last ? 'right-4 origin-top-right' : 'left-4 origin-top-left'">
-                    
-                    <button (click)="$event.stopPropagation(); openAddModal(cle)" class="w-full text-left px-4 py-2.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 hover:text-syndify-accent flex items-center gap-3 transition-colors cursor-pointer border-0 bg-transparent group">
-                      <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-syndify-accent group-hover:bg-syndify-accent group-hover:text-white transition-all">
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                      </div>
-                      Modifier
-                    </button>
-                    
-                    <div class="h-px bg-gray-50 my-1 mx-2"></div>
-                    
-                    <button (click)="$event.stopPropagation(); supprimerCle(cle.id)" class="w-full text-left px-4 py-2.5 text-[13px] font-bold text-red-500 hover:bg-red-50 flex items-center gap-3 transition-colors cursor-pointer group border-0 bg-transparent">
-                      <div class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-500 group-hover:bg-red-500 group-hover:text-white transition-all">
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                      </div>
-                      Supprimer
-                    </button>
+                    <!-- 🟢 L-MENU DABA KAY-BDE MN L-BOUTON NICHAN -->
+                    <div *ngIf="activeDropdown === 'cle_' + cle.id" 
+                         class="absolute top-full mt-2 w-48 bg-white rounded-2xl border border-gray-100 py-2 z-[999] shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)] transition-all font-normal"
+                         [ngClass]="last ? 'right-0 origin-top-right' : 'left-0 origin-top-left'">
+                      
+                      <button (click)="$event.stopPropagation(); openAddModal(cle)" class="w-full text-left px-4 py-2.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 hover:text-syndify-accent flex items-center gap-3 transition-colors cursor-pointer border-0 bg-transparent group">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-syndify-accent group-hover:bg-syndify-accent group-hover:text-white transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </div>
+                        Modifier
+                      </button>
+                      
+                      <div class="h-px bg-gray-50 my-1 mx-2"></div>
+                      
+                      <button (click)="$event.stopPropagation(); supprimerCle(cle.id)" class="w-full text-left px-4 py-2.5 text-[13px] font-bold text-red-500 hover:bg-red-50 flex items-center gap-3 transition-colors cursor-pointer group border-0 bg-transparent">
+                        <div class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-500 group-hover:bg-red-500 group-hover:text-white transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </div>
+                        Supprimer
+                      </button>
+                    </div>
                   </div>
+                  
                 </div>
               </th>
-
               <th *ngIf="clesList.length === 0" class="py-4 px-6 font-semibold text-gray-400 text-[13px] text-center">
                 Aucune clé
               </th>
@@ -112,7 +117,7 @@
               
               <ng-container *ngIf="currentTab === 'lots'">
                 <td class="py-4 px-6 font-semibold text-syndify-dark truncate">
-                  <div class="flex items-center text-syndify-accent decoration-syndify-accent/30 underline-offset-2">
+                  <div class="flex items-center decoration-syndify-accent/30 underline-offset-2">
                       {{ formatLotId(row.id) }} 
                   </div>
                 </td>
@@ -122,11 +127,7 @@
 
               <ng-container *ngIf="currentTab === 'coproprietaires'">
                 <td class="py-4 px-6 text-slate-700 font-semibold truncate">{{ row.coproprietaire }}</td>
-                <td class="py-4 px-6 font-semibold text-syndify-dark truncate">
-                  <div class="flex items-center text-syndify-accent e decoration-syndify-accent/30 underline-offset-2">
-                      {{ formatLotId(row.id) }} 
-                  </div>
-                </td>
+               
                 <td class="py-4 px-6 text-slate-700 truncate">{{ row.details }}</td>
               </ng-container>
               
@@ -189,7 +190,7 @@
             </span>
           </div>
           
-          <div class="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
+          <div class="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-none">
              <table class="w-full text-left">
                 <thead class="bg-gray-50 border-b border-gray-200">
                    <tr>

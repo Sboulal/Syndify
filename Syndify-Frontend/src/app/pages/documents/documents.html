@@ -28,7 +28,7 @@
         </div>
 
         <div *ngIf="!isLoading && recentFiles.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div *ngFor="let file of recentFiles" class="bg-white rounded-xl border border-gray-200 shadow-none overflow-hidden flex flex-col group hover:shadow-sm transition-all cursor-pointer" (click)="telecharger(file.path, 'file')">
+          <div *ngFor="let file of recentFiles" class="bg-white rounded-xl border border-gray-200 shadow-none overflow-hidden flex flex-col group hover:shadow-none transition-all cursor-pointer" (click)="telecharger(file.path, 'file')">
             <div class="h-24 bg-gray-50/50 flex items-center justify-center border-b border-gray-100 group-hover:bg-gray-100 transition-colors">
                 <svg class="w-10 h-10 text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
             </div>
