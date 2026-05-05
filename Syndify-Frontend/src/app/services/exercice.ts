@@ -6,7 +6,7 @@ import { HttpClient } from '@angular/common/http';
 })
 export class ExerciceService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://nomade-cloud.com:8085/api/exercices';
+  private apiUrl = 'http://51.178.87.234:8085/api/exercices';
 
   getListe() {
     return this.http.post(`${this.apiUrl}/liste`, {});

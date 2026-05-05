@@ -24,7 +24,7 @@ return [
         'https://nomade-cloud.com',
         'http://localhost:4200', // Bach t-khedmi f pc dyalek
         'http://51.178.87.234',
-        'http://nomade-cloud.com:8085',
+        'http://51.178.87.234:8085',
     ],
 
     'allowed_origins_patterns' => [],

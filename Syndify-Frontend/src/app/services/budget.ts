@@ -6,7 +6,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 })
 export class BudgetService {
   // 🟢 URL dyal l-API
-  private apiUrl = 'http://nomade-cloud.com:8085/api';
+  private apiUrl = 'http://51.178.87.234:8085/api';
 
   constructor(private http: HttpClient) {}
 

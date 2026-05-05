@@ -239,7 +239,7 @@ formatLotId(id: any): string {
     // Bash ila kan l-ID f MySQL hwa 32, ghadi y-wlli 845784 f l-Affichage
     const visualId = Number(id) + 845752; 
     
-    return 'LOT-' + visualId.toString().padStart(8, '0');
+    return 'BN-' + visualId.toString().padStart(8, '0');
   }
 
   supprimerLot(lot: any) {

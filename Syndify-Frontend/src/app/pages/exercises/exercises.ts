@@ -285,15 +285,15 @@ export class Exercises implements OnInit {
 cloturerExercice(ex: any) {
     this.closeDropdown();
     
-    // 🟢 N-9ellbou 3la l-ID s-s7i7 kifma bgha y-koun smit'ou f l-API
+    // Kan-jbdou l-ID dyal l-exercice
     const idS7i7 = ex.se_identifier || ex.id || ex.identifier;
     
     console.log('🔐 [cloturerExercice] Exercice kamel:', ex);
     console.log('🔐 [cloturerExercice] ID li l9ina:', idS7i7);
 
-    if (idS7i7 && String(idS7i7).startsWith('EX-')) {
-       // 🟢 FIX HNA: Mshina l-chemin s7i7 lli m-defini f app.routes.ts
-       this.router.navigate(['/clotures/details', idS7i7]);
+    if (idS7i7) {
+       // 🟢 Bdellna l-lien hna! Kay-ddi nishan l-Cloture
+       this.router.navigate(['/cloture', idS7i7]); 
     } else {
        this.showToast("Erreur: ID de l'exercice introuvable ou invalide.", 'error');
     }

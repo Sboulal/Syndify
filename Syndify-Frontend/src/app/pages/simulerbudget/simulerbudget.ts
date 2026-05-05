@@ -34,7 +34,7 @@ export class SimulationBudget implements OnInit {
 
 chargerDonneesSimulation() {
    this.isLoading = true;
-   const apiUrl = `http://nomade-cloud.com:8085/api/simulation/charger`; 
+   const apiUrl = `http://51.178.87.234:8085/api/simulation/charger`; 
    
    // 🟢 Kantsiftou requête khawya, l-Backend houwa li ghadi y3raf chkoun l-user
    this.http.post(apiUrl, {}).subscribe({

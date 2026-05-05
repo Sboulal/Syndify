@@ -2,9 +2,9 @@
 
   <app-page-header
     class="shrink-0 relative"
-   [title]="residenceInfo.nom"
-    [description]="residenceInfo.adresse"
-    parentPath="Financement" 
+   title = "Budgets & dépenses"
+    description = "Gérez l'ensemble de vos biens en toute simplicité."
+    [parentPath]="residenceInfo.nom"
     currentPath="Budgets & dépenses"
   >
     
@@ -28,7 +28,6 @@
         <button (click)="nouveauMouvement()" class="btn-primary text-[13px] font-semibold !bg-syndify-accent !text-white border-0 flex items-center gap-2 cursor-pointer shadow-md">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
           Nouveau mouvement
-         
         </button>
         
         <button (click)="telechargerReleve()" class="btn-primary text-[13px] font-semibold !bg-syndify-accent !text-white border-0 flex items-center gap-2 cursor-pointer shadow-md">
@@ -55,68 +54,72 @@
       </button>
     </div>
 
-    <div class="bg-white rounded-xl shadow-none border border-gray-200 relative flex flex-col overflow-visible mb-6">
-      <div class="p-6 border-b border-gray-200 flex items-center bg-gray-50/50">
-        <h2 class="text-[18px] font-bold text-syndify-dark tracking-wide">Montants totaux des opérations</h2>
-      </div>
-      
-      <div class="w-full overflow-visible">
-        <table class="w-full text-left border-collapse table-fixed">
-          <thead class="bg-gray-50 border-b border-gray-200">
+    <!-- 🟢 Titre Flottant 1 -->
+    <div class="flex items-center gap-2 mb-4 px-2 mt-2">
+      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+      <h2 class="text-[17px] font-bold text-gray-600">Montants totaux des opérations</h2>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-none border border-gray-200 relative flex flex-col overflow-visible mb-8">
+      <div class="syndify-table-container">
+        <table class="syndify-table">
+          <thead class="syndify-table-thead">
             <tr>
-              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[20%]">Budget total</th>
-              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[20%]">Total des encaissements</th>
-              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[20%]">Total des dépenses</th>
-              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[20%]">Le reste</th>
-              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[20%] text-right">Total Dû</th>
+              <th class="syndify-table-th">Budget total</th>
+              <th class="syndify-table-th">Total des encaissements</th>
+              <th class="syndify-table-th">Total des dépenses</th>
+              <th class="syndify-table-th">Le reste</th>
+              <th class="syndify-table-th">Total Dû</th>
             </tr>
           </thead>
-          <tbody class="text-[13px] text-gray-700 font-medium">
-            <tr class="hover:bg-gray-50/50 transition-colors">
-              <td class="py-4 px-6 text-slate-700 font-semibold truncate">{{ stats.budgetTotal | number:'1.2-2' }} <span class="text-[10px] opacity-60 ml-0.5">MAD</span></td>
-              <td class="py-4 px-6 text-slate-700 font-semibold truncate">{{ stats.encaissements | number:'1.2-2' }} <span class="text-[10px] opacity-60 ml-0.5">MAD</span></td>
-              <td class="py-4 px-6 text-slate-700 font-semibold truncate">{{ stats.depenses | number:'1.2-2' }} <span class="text-[10px] opacity-60 ml-0.5">MAD</span></td>
-              <td class="py-4 px-6 text-slate-700 font-semibold truncate">{{ stats.reste | number:'1.2-2' }} <span class="text-[10px] opacity-60 ml-0.5">MAD</span></td>
-              <td class="py-4 px-6 font-black text-red-600 text-[15px] text-right truncate">{{ stats.totalDu | number:'1.2-2' }} <span class="text-[10px] opacity-60 ml-0.5">MAD</span></td>
+          <tbody class="syndify-table-tbody">
+            <tr class="syndify-table-tr">
+              <td class="syndify-table-td">{{ stats.budgetTotal | number:'1.2-2' }} <span class="text-[10px] opacity-60 ml-0.5">MAD</span></td>
+              <td class="syndify-table-td">{{ stats.encaissements | number:'1.2-2' }} <span class="text-[10px] opacity-60 ml-0.5">MAD</span></td>
+              <td class="syndify-table-td">{{ stats.depenses | number:'1.2-2' }} <span class="text-[10px] opacity-60 ml-0.5">MAD</span></td>
+              <td class="syndify-table-td">{{ stats.reste | number:'1.2-2' }} <span class="text-[10px] opacity-60 ml-0.5">MAD</span></td>
+              <td class="syndify-table-td">{{ stats.totalDu | number:'1.2-2' }} <span class="text-[10px] opacity-60 ml-0.5">MAD</span></td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-none border border-gray-200 relative flex flex-col flex-1 overflow-visible">
-      <div class="p-6 border-b border-gray-200 flex items-center bg-gray-50/50">
-        <h2 class="text-[18px] font-bold text-syndify-dark tracking-wide">Liste des opérations de l'exercice</h2>
-      </div>
+    <!-- 🟢 Titre Flottant 2 -->
+    <div class="flex items-center gap-2 mb-4 px-2 mt-4">
+      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+      <h2 class="text-[17px] font-bold text-gray-600">Liste des opérations de l'exercice</h2>
+    </div>
 
-      <div class="w-full overflow-visible pb-6">
-        <table class="w-full text-left border-collapse table-fixed">
-          <thead class="bg-gray-50 border-b border-gray-200">
+    <div class="bg-white rounded-xl shadow-none border border-gray-200 relative flex flex-col flex-1 overflow-visible">
+      <div class="syndify-table-container">
+        <table class="syndify-table-tbody">
+          <thead class="syndify-table-thead">
             <tr>
-              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[15%]">Date</th>
-              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[35%]">Libellé</th>
-              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[20%]">Type</th>
-              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[20%]">Montant</th>
-              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[10%] text-center">Action</th>
+              <th class="syndify-table-th">Date</th>
+              <th class="syndify-table-th">Libellé</th>
+              <th class="syndify-table-th">Type</th>
+              <th class="syndify-table-th">Montant</th>
+              <th class="syndify-table-th">Action</th>
             </tr>
           </thead>
-          <tbody class="text-[13px] text-gray-700 font-medium">
+          <tbody class="syndify-table-tbody">
             
-            <tr *ngIf="operations.length === 0">
-                <td colspan="5" class="py-12 text-center text-gray-400 italic">
+            <tr *ngIf="operations.length === 0" class="syndify-table-tr">
+                <td colspan="5" class="syndify-table-td">
                     Aucune opération trouvée pour cet exercice.
                 </td>
             </tr>
 
-            <tr *ngFor="let op of operations" class="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
-              <td class="py-4 px-6 text-slate-700 font-semibold truncate">{{ op.date }}</td>
-              <td class="py-4 px-6 text-slate-700 truncate">{{ op.libelle }}</td>
-              <td class="py-4 px-6 text-slate-500 truncate">{{ op.type }}</td>
-              <td class="py-4 px-6 font-bold truncate" [ngClass]="op.montant > 0 ? 'text-[#10B981]' : 'text-red-500'">
+            <tr *ngFor="let op of operations" class="syndify-table-tr">
+              <td class="syndify-table-td">{{ op.date }}</td>
+              <td class="syndify-table-td">{{ op.libelle }}</td>
+              <td class="syndify-table-td">{{ op.type }}</td>
+              <td class="syndify-table-td" [ngClass]="op.montant > 0 ? 'text-[#10B981]' : 'text-red-500'">
                 {{ op.montant > 0 ? '+' : '' }}{{ op.montant | number:'1.2-2' }} <span class="text-[10px] opacity-60 ml-0.5 font-medium">MAD</span>
               </td>
               
-              <td class="py-4 px-6 text-center relative">
+              <td class="syndify-table-td">
                 <button (click)="toggleMenu(op); $event.stopPropagation()" 
                         class="flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-syndify-dark hover:bg-gray-100 transition-all cursor-pointer mx-auto bg-transparent border-0">
                   <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -167,6 +170,7 @@
   </div>
 
 
+<!-- MODAL NOUVEAU MOUVEMENT -->
 <div *ngIf="isAddModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-[#0B0F24]/60 backdrop-blur-sm p-4">
     
     <div class="bg-white w-full max-w-lg rounded-[16px] shadow-xl overflow-hidden flex flex-col transform transition-all animate-in zoom-in-95 duration-200">
@@ -261,6 +265,7 @@
     </div>
   </div>
 
+<!-- MODAL MODIFIER OPÉRATION -->
   <div *ngIf="isEditModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-[#0B0F24]/60 backdrop-blur-sm p-4">
     
     <div class="bg-white w-full max-w-lg rounded-[16px] shadow-xl overflow-hidden flex flex-col transform transition-all animate-in zoom-in-95 duration-200">

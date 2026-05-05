@@ -30,7 +30,7 @@ newExceptionnel = { title: '', amount: 0, due_date: '', cle_id: '' };
   exerciceInfos : any = null; 
 
   // 🟢 IP Unifiée
-  private baseUrl = 'http://nomade-cloud.com:8085/api';
+  private baseUrl = 'http://51.178.87.234:8085/api';
 
   constructor(
     private http: HttpClient,

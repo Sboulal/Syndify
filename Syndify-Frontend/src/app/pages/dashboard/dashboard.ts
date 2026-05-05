@@ -42,7 +42,7 @@ export class Dashboard implements OnInit {
       role: userRole
     };
 
-    this.http.post('http://nomade-cloud.com:8085/api/dashboard/data', payload).subscribe({
+    this.http.post('http://51.178.87.234:8085/api/dashboard/data', payload).subscribe({
       next: (res: any) => {
         if (res.success) {
           this.residence = res.data.residence;

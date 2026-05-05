@@ -21,7 +21,7 @@ class SyndifyTestDataSeeder extends Seeder
         // 0. VIDER LES TABLES ET DOSSIERS
         // ==========================================
         DB::statement('SET session_replication_role = replica;');
-        DB::statement('TRUNCATE TABLE proprietes, users, user_as_owner, units, user_owner_unit, unit_to_key, exercices, cle_repartitions, encaissements, depenses, depense_for_owner, appels_fonds, appf_to_owner CASCADE;');
+        DB::statement('TRUNCATE TABLE proprietes, users, user_as_owner, units, user_owner_unit, unit_to_key, exercices, cle_repartitions, encaissements, depenses, depense_for_owner, appels_fonds, appf_to_owner, clotures CASCADE;');
         DB::statement('SET session_replication_role = origin;');
 
         $sp_id = 'SP-87248712';
@@ -124,27 +124,78 @@ class SyndifyTestDataSeeder extends Seeder
         }
 
         // ==========================================
-        // 5. CRÉER L'EXERCICE COMPTABLE (🟢 2026 POUR LE DASHBOARD)
+        // 5. CRÉER LES EXERCICES COMPTABLES
         // ==========================================
-        $se_id = 'EX-2026-' . Str::random(5);
+        
+        // 🟢 EXERCICE 1: 2025 (DÉJÀ CLOS - Pour l'historique)
+        $se_id_2025 = 'EX-2025-CLOS';
         DB::table('exercices')->insert([
-            'se_identifier' => $se_id, 'propriete_id' => $sp_id, 
-            'start_date' => '2026-01-01', 'end_date' => '2026-12-31',
-            'status' => 'en cours', 'period' => 'trimestre', 'created_at' => now(), 'updated_at' => now(),
+            'se_identifier' => $se_id_2025, 
+            'propriete_id' => $sp_id, 
+            'start_date' => '2025-01-01', 
+            'end_date' => '2025-12-31',
+            'status' => 'Clos', 
+            'period' => 'trimestre', 
+            'created_at' => now()->subYear(), 
+            'updated_at' => now()->subYear(),
         ]);
         
         DB::table('charges_previsionnelles')->insert([
-            'scp_identifier' => 'SCP-2026-'.Str::random(3), 'se_identifier' => $se_id, 'budget' => 200000,
-            'total_encaissements' => 0, 'total_depenses' => 0
+            'scp_identifier' => 'SCP-2025-'.Str::random(3), 
+            'se_identifier' => $se_id_2025, 
+            'budget' => 150000,
+            'total_encaissements' => 140000, 
+            'total_depenses' => 135000
+        ]);
+
+        // 🟢 EXERCICE 2: 2026 (EN COURS - Pour le Dashboard et la Clôture)
+        $se_id = 'EX-2026-TEST';
+        DB::table('exercices')->insert([
+            'se_identifier' => $se_id, 
+            'propriete_id' => $sp_id, 
+            'start_date' => '2026-01-01', 
+            'end_date' => '2026-12-31',
+            'status' => 'en cours',
+            'period' => 'trimestre', 
+            'created_at' => now(), 
+            'updated_at' => now(),
+        ]);
+        
+        // --- A. BUDGET PRÉVISIONNEL 2026 ---
+        $scp_id = 'SCP-2026-'.Str::random(3);
+        DB::table('charges_previsionnelles')->insert([
+            'scp_identifier' => $scp_id, 
+            'se_identifier' => $se_id, 
+            'budget' => 200000,
+            'total_encaissements' => 180000, 
+            'total_depenses' => 150000
+        ]);
+
+        DB::table('bp_to_key')->insert([
+            'scp_identifier' => $scp_id,
+            'cle_repartition_id' => $cleId,
+            'budget' => 200000,
+            'depenses' => 150000,
+        ]);
+
+        // --- B. BUDGET TRAVAUX 2026 ---
+        $sct_id = 'SCT-2026-'.Str::random(3);
+        DB::table('charges_travaux')->insert([
+            'sct_identifier' => $sct_id, 
+            'se_identifier' => $se_id, 
+            'budget' => 50000,
+            'total_encaissements' => 40000, 
+            'total_depenses' => 35000
         ]);
 
         // ==========================================
-        // 6. APPELS DE FONDS DÉTAILLÉS (4 Trimestres - 2026)
+        // 6. APPELS DE FONDS DÉTAILLÉS (2026)
         // ==========================================
         $appfToOwner = [];
         $budgetAnnuel = 200000;
-        $montantTrimestre = $budgetAnnuel / 4; // 50,000 DH
+        $montantTrimestre = $budgetAnnuel / 4; 
 
+        // 🟢 A. LES APPELS PLANIFIÉS
         $trimestres = [
             ['num' => 1, 'date' => '2026-01-01', 'titre' => 'Appel de fonds Trimestre 1 - 2026'],
             ['num' => 2, 'date' => '2026-04-01', 'titre' => 'Appel de fonds Trimestre 2 - 2026'],
@@ -178,6 +229,35 @@ class SyndifyTestDataSeeder extends Seeder
                 DB::table('user_as_owner')->where('user_id', $uid)->decrement('balance_prev', $montantDu);
             }
         }
+
+        // 🟢 B. NOUVEAU: L'APPEL EXCEPTIONNEL
+        $af_exc_id = 'AF-EXC-' . Str::random(4);
+        $montantExceptionnel = 25000;
+
+        DB::table('appels_fonds')->insert([
+            'af_identifier' => $af_exc_id, 
+            'se_identifier' => $se_id, 
+            'type_charge' => 'previsionnel', 
+            'sub_type' => 'exceptionnel',
+            'title' => 'Appel de fonds Exceptionnel - Réparation urgente', 
+            'amount' => $montantExceptionnel,
+            'due_date' => '2026-05-15',
+            'is_generated' => true, 
+            'is_sent' => false, // Nkhalliweh false bash nshoufou bouton "Envoyer" f l-UI
+            'number_generated' => count($usersIds), 
+            'number_sent' => 0,
+            'created_at' => now(), 'updated_at' => now()
+        ]);
+
+        foreach ($usersIds as $uid) {
+            $montantDu = $montantExceptionnel * ($userTantiemes[$uid] / 10000); 
+            $appfToOwner[] = [
+                'af_identifier' => $af_exc_id, 'user_id' => $uid, 'montant_du' => $montantDu, 'created_at' => now()
+            ];
+            DB::table('user_as_owner')->where('user_id', $uid)->decrement('balance_prev', $montantDu);
+        }
+
+        // Insérer tout dans appf_to_owner
         foreach (array_chunk($appfToOwner, 50) as $chunk) {
             DB::table('appf_to_owner')->insert($chunk);
         }
@@ -224,8 +304,8 @@ class SyndifyTestDataSeeder extends Seeder
         }
         DB::table('depense_for_owner')->insert($depenseForOwnerData);
 
-        // ==========================================
-        // 9. 🟢 GÉNÉRATION DES DOCUMENTS (PDF)
+      // ==========================================
+        // 9. 🟢 GÉNÉRATION DES DOCUMENTS (PDF) AVEC LE NOUVEAU DESIGN
         // ==========================================
         $this->command->info('⏳ Création des Documents PDF en cours...');
 
@@ -235,27 +315,78 @@ class SyndifyTestDataSeeder extends Seeder
         Storage::disk('public')->makeDirectory("{$basePath}/assemblees");
         Storage::disk('public')->makeDirectory("{$basePath}/contrats");
 
-        $createRealPdf = function($path, $title) {
-            $html = "
-                <div style='font-family: Arial, sans-serif; text-align: center; padding: 40px;'>
-                    <h1 style='color: #251b5c;'>Syndify Document</h1>
-                    <h2 style='color: #444;'>{$title}</h2>
-                    <p style='margin-top: 30px; font-size: 14px;'>Document généré automatiquement par le Seeder pour l'exercice 2026.</p>
-                    <hr style='margin-top: 50px; border: 0; border-top: 1px solid #ddd;'>
-                    <p style='color: #888; font-size: 11px;'>Date de génération : " . date('d/m/Y H:i') . "</p>
-                </div>
-            ";
-            $pdf = Pdf::loadHTML($html);
+        // 🟢 Fonction jdida (BLA PLAN B! BLA IF/ELSE!)
+        $createPdfFromView = function($path, $viewName, $data, $fallbackTitle) {
+            
+            if ($viewName === 'generic') {
+                $html = "<div style='font-family: Helvetica, Arial, sans-serif; padding: 40px;'>
+                            <h1 style='color: #1e1b4b; font-size: 28px;'>{$fallbackTitle}</h1>
+                         </div>";
+                $pdf = Pdf::loadHTML($html);
+            } else {
+                $pdf = Pdf::loadView("pdf.{$viewName}", $data);
+            }
+            
             Storage::disk('public')->put($path, $pdf->output());
         };
 
-        $createRealPdf("{$basePath}/appels_fonds/Appel_Fonds_T1_2026.pdf", "Appel de Fonds T1 - 2026"); 
-        $createRealPdf("{$basePath}/appels_fonds/Appel_Fonds_T2_2026.pdf", "Appel de Fonds T2 - 2026"); 
-        $createRealPdf("{$basePath}/reminders/Rappel_Impaye.pdf", "Rappel Impayé - Relance 1"); 
-        $createRealPdf("{$basePath}/encaissements/Recu_Paiement_T1_2026.pdf", "Reçu de Paiement - Cotisation T1 2026"); 
-        $createRealPdf("{$basePath}/assemblees/PV_Assemblee_Generale_2025.pdf", "PV de l'Assemblée Générale 2025"); 
-        $createRealPdf("{$basePath}/contrats/Contrat_Syndic_2026.pdf", "Contrat de Syndic (Exercice 2026)"); 
+        // 1. Générer Appels de Fonds
+        $createPdfFromView("{$basePath}/appels_fonds/Appel_Fonds_T1_2026.pdf", 'appel_fonds', [
+            'reference' => 'SAF-T1-2026',
+            'destinataire' => 'Salma Boulal',
+            'adresse' => 'Angle Boulevard Ghandi et Route de la Corniche',
+            'lots' => 'Appartement A001',
+            'montant' => 1250.00,
+            'date_limite' => '31/01/2026',
+            'telephone' => '06 00 00 00 00',
+            'email' => 'syndic@residence.com',
+            'iban' => 'MA64 007 780 0000000000000000'
+        ], "");
 
-        $this->command->info('🚀 BOOM! Seeder Complet 2026 exécuté avec succès!');
+        $createPdfFromView("{$basePath}/appels_fonds/Appel_Fonds_T2_2026.pdf", 'appel_fonds', [
+            'reference' => 'SAF-T2-2026',
+            'destinataire' => 'Salma Boulal',
+            'adresse' => 'Angle Boulevard Ghandi et Route de la Corniche',
+            'lots' => 'Appartement A001',
+            'montant' => 1250.00,
+            'date_limite' => '30/04/2026',
+            'telephone' => '06 00 00 00 00',
+            'email' => 'syndic@residence.com',
+            'iban' => 'MA64 007 780 0000000000000000'
+        ], "");
+
+        // 2. Générer Reçu d'encaissement
+        $createPdfFromView("{$basePath}/encaissements/Recu_Paiement_T1_2026.pdf", 'recu', [
+            'reference' => 'REC-2026-001',
+            'destinataire' => 'Salma Boulal',
+            'adresse' => 'Angle Boulevard Ghandi et Route de la Corniche',
+            'lots' => 'Appartement A001',
+            'montant' => 1250.00,
+            'date_paiement' => '15/01/2026',
+            'mode_paiement' => 'Virement Bancaire',
+            'periode' => 'Trimestre 1 - 2026',
+            'type_frais' => 'Cotisation Prévisionnelle',
+            'telephone' => '06 00 00 00 00',
+            'email' => 'syndic@residence.com',
+            'iban' => 'MA64 007 780 0000000000000000'
+        ], "");
+
+        // 3. Générer le reste (Rappels, PV, Contrats)
+        $createPdfFromView("{$basePath}/reminders/Rappel_Impaye.pdf", 'appel_fonds', [
+            'reference' => 'RAP-2026-001',
+            'destinataire' => 'Salma Boulal',
+            'adresse' => 'Angle Boulevard Ghandi et Route de la Corniche',
+            'lots' => 'Appartement A001',
+            'montant' => 2500.00,
+            'date_limite' => 'Immédiat',
+            'telephone' => '06 00 00 00 00',
+            'email' => 'syndic@residence.com',
+            'iban' => 'MA64 007 780 0000000000000000'
+        ], "");
+
+        $createPdfFromView("{$basePath}/assemblees/PV_Assemblee_Generale_2025.pdf", 'generic', [], "PV de l'Assemblée Générale 2025");
+        $createPdfFromView("{$basePath}/contrats/Contrat_Syndic_2026.pdf", 'generic', [], "Contrat de Syndic (Exercice 2026)");
+
+        $this->command->info('🚀 BOOM! Seeder Complet (Appels Planifiés + Exceptionnels) exécuté avec succès!');
     }
 }

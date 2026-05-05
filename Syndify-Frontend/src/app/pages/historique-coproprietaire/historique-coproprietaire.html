@@ -5,8 +5,7 @@
     parentPath="Liste des copropriétaires" 
     currentPath="Historique du compte"
     title="Historique du compte"
-    [statsText]="''"
-    [statsSubText]="''">
+    description="Consultez l'historique de votre compte">
     
     <div class="absolute left-6 md:left-8 flex items-center gap-6 md:gap-12">
       
@@ -93,28 +92,28 @@
         <h4 class="text-[15px] font-bold text-syndify-dark">Détails des opérations</h4>
       </div>
 
-      <div class="flex-1 overflow-y-auto custom-scrollbar" style="overflow-x: visible !important;">
-        <table class="w-full text-left min-w-[800px] border-collapse relative">
-          <thead class="bg-white sticky top-0 z-[40] outline outline-1 outline-gray-100">
+      <div class="syndify-table-container">
+        <table class="syndify-table">
+          <thead class="syndify-table-thead">
             <tr>
-              <th class="py-3.5 px-6 font-semibold text-syndify-dark text-[13px] w-[15%]">Date</th>
-              <th class="py-3.5 px-6 font-semibold text-syndify-dark text-[13px] w-[25%]">Type d'opération</th>
-              <th class="py-3.5 px-6 font-semibold text-syndify-dark text-[13px] w-[30%]">Description</th>
-              <th class="py-3.5 px-6 font-semibold text-syndify-dark text-[13px] w-[15%] text-right">Montant</th>
-              <th class="py-3.5 px-6 text-center font-semibold text-syndify-dark text-[13px] w-[15%]">Document</th>
+              <th class="syndify-table-th">Date</th>
+              <th class="syndify-table-th">Type d'opération</th>
+              <th class="syndify-table-th">Description</th>
+              <th class="syndify-table-th text-right">Montant</th>
+              <th class="syndify-table-th text-right">Document</th>
             </tr>
           </thead>
-          <tbody class="text-[13px] text-gray-700 font-medium">
-            <tr *ngIf="isLoading">
-              <td colspan="5" class="py-8 text-center text-syndify-accent">Chargement de l'historique...</td>
+          <tbody class="syndify-table-tbody">
+            <tr *ngIf="isLoading" class="syndify-table-tr">
+              <td colspan="5" class="syndify-table-td">Chargement de l'historique...</td>
             </tr>
             <tr *ngIf="!isLoading && operations.length === 0">
-              <td colspan="5" class="py-8 text-center text-gray-400 italic">Aucune opération trouvée pour cet exercice.</td>
+              <td colspan="5" class="syndify-table-td py-8 text-center text-gray-400 italic">Aucune opération trouvée pour cet exercice.</td>
             </tr>
-            <tr *ngFor="let op of operations" class="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
-              <td class="py-4 px-6 text-slate-500 w-[15%]">{{ op.date | date:'dd/MM/yyyy' }}</td>
+            <tr *ngFor="let op of operations" class="syndify-table-tr border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
+              <td class="syndify-table-td">{{ op.date | date:'dd/MM/yyyy' }}</td>
               
-              <td class="py-4 px-6 w-[25%]">
+              <td class="syndify-table-td w-[25%]">
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-bold" 
                       [ngClass]="op.type === 'Encaissement' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'">
                   <svg *ngIf="op.type === 'Encaissement'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 11l5-5m0 0l5 5m-5-5v12"></path></svg>
@@ -123,13 +122,13 @@
                 </span>
               </td>
               
-              <td class="py-4 px-6 text-slate-700 font-medium w-[30%]">{{ op.description }}</td>
+              <td class="syndify-table-td py-4 px-6 text-slate-700 font-medium w-[30%]">{{ op.description }}</td>
               
-              <td class="py-4 px-6 text-right font-bold w-[15%]" [ngClass]="op.type === 'Encaissement' ? 'text-green-600' : 'text-syndify-dark'">
+              <td class="syndify-table-td py-4 px-6 text-right font-bold w-[15%]" [ngClass]="op.type === 'Encaissement' ? 'text-green-600' : 'text-syndify-dark'">
                 {{ op.type === 'Encaissement' ? '+' : '-' }} {{ op.montant | number:'1.2-2' }} DH
               </td>
               
-              <td class="py-4 px-6 text-center w-[15%]">
+              <td class="syndify-table-td">
                 <button *ngIf="op.document_url" (click)="telechargerDoc(op.document_url)" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 text-gray-500 hover:bg-syndify-accent hover:text-white transition-all cursor-pointer" title="Télécharger le reçu/facture">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                 </button>

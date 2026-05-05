@@ -2,17 +2,16 @@
 
   <app-page-header 
     class="shrink-0"
-   [title]="residenceInfo.nom"
-    [description]="residenceInfo.adresse"
-    parentPath="Ma copropriété" 
+    [parentPath]="residenceInfo.nom"
     currentPath="Clés de répartition"
-    [statsText]="clesList.length + ' clés configurées'">
+    title="Clés de répartition"
+    description="Gérez l'ensemble de vos biens en toute simplicité."
+    >
     
-    <button title="Exporter la liste" class="flex items-center justify-center w-[38px] h-[38px] bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 text-white transition-all cursor-pointer border-0">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-    </button>
 
-    <button (click)="openAddModal()" class="btn-primary text-[13px] font-semibold !bg-syndify-accent !text-white border-0 flex items-center gap-2 cursor-pointer shadow-md">
+
+    <!-- 🟢 Bouton Global Primary -->
+    <button (click)="openAddModal()" class="btn-primary">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
       Nouvelle clé
     </button>
@@ -23,162 +22,159 @@
     <div class="flex items-center gap-8 h-full">
       <button (click)="changerTab('lots')" 
               [ngClass]="currentTab === 'lots' ? 'font-bold text-syndify-dark border-syndify-accent' : 'font-medium text-gray-500 border-transparent hover:text-syndify-dark'" 
-              class="h-full flex items-center text-[14px] border-b-[3px] transition-colors cursor-pointer pt-[3px] bg-transparent border-0">
+              class="h-full flex items-center text-[14px] border-b-[3px] transition-colors cursor-pointer pt-[3px] bg-transparent border-0 outline-none">
         Tantièmes par biens
       </button>
 
       <button (click)="changerTab('coproprietaires')" 
               [ngClass]="currentTab === 'coproprietaires' ? 'font-bold text-syndify-dark border-syndify-accent' : 'font-medium text-gray-500 border-transparent hover:text-syndify-dark'" 
-              class="h-full flex items-center text-[14px] border-b-[3px] transition-colors cursor-pointer pt-[3px] bg-transparent border-0">
+              class="h-full flex items-center text-[14px] border-b-[3px] transition-colors cursor-pointer pt-[3px] bg-transparent border-0 outline-none">
         Tantièmes par copropriétaires
       </button>
     </div>
   </div>
 
   <div class="flex-1 p-6 md:p-8 flex flex-col overflow-visible">
-    <div class="bg-white rounded-xl shadow-none border border-gray-200 relative flex flex-col flex-1 overflow-visible">
+    <div class="syndify-table-container !overflow-visible flex-1">
       
       <div *ngIf="activeDropdown" (click)="closeDropdown()" class="fixed inset-0 z-30 cursor-default"></div>
 
-      <div class="w-full overflow-visible">
-        <table class="w-full text-left border-collapse table-fixed">
-          
-          <thead class="bg-gray-50 border-b border-gray-200">
-            <tr>
-              
-              <ng-container *ngIf="currentTab === 'lots'">
-                <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[15%]">N° du bien</th>
-                <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[25%]">Bien</th>
-                <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[20%]">Copropriétaire</th>
-              </ng-container>
+      <!-- 🟢 Tableau Global -->
+      <table class="syndify-table">
+        
+        <thead class="syndify-table-thead">
+          <tr>
+            
+            <ng-container *ngIf="currentTab === 'lots'">
+              <th class="syndify-table-th">N° du bien</th>
+              <th class="syndify-table-th">Bien</th>
+              <th class="syndify-table-th">Copropriétaire</th>
+            </ng-container>
 
-              <ng-container *ngIf="currentTab === 'coproprietaires'">
-                <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[25%]">Copropriétaire</th>
+            <ng-container *ngIf="currentTab === 'coproprietaires'">
+              <th class="syndify-table-th">Copropriétaire</th>
+              <th class="syndify-table-th">Bien</th>
+            </ng-container>
+            
+            <th *ngFor="let cle of clesList; let last = last" 
+                class="syndify-table-th"
+                [ngClass]="{'z-[60]': activeDropdown === 'cle_' + cle.id}">
+              <div class="flex items-center justify-start gap-1.5 group">
+                <span class="truncate max-w-[80%]">{{ cle.nom }}</span>
                 
-                <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[20%]">Bien</th>
-              </ng-container>
-              
-        <th *ngFor="let cle of clesList; let last = last" 
-                  class="py-4 px-6 font-semibold text-syndify-dark text-[13px]"
-                  [ngClass]="{'z-[60]': activeDropdown === 'cle_' + cle.id}">
-                <div class="flex items-center justify-start gap-1.5 group">
-                  <span class="truncate max-w-[80%]">{{ cle.nom }}</span>
-                  
-                  <!-- 🟢 HNA JAM3NA L-BOUTON W L-MENU F DIV RELATIVE BASH Y-LSSQOU -->
-                  <div class="relative">
+                <div class="relative">
+                  <button (click)="toggleDropdown('cle_' + cle.id, $event)"
+                          [ngClass]="{'bg-syndify-accent/10 text-syndify-accent': activeDropdown === 'cle_' + cle.id}"
+                          class="flex items-center justify-center w-6 h-6 rounded-md text-gray-400 hover:text-syndify-dark hover:bg-gray-100 transition-all cursor-pointer shrink-0 border-0 bg-transparent">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14a2 2 0 100-4 2 2 0 000 4zm-7 0a2 2 0 100-4 2 2 0 000 4zm14 0a2 2 0 100-4 2 2 0 000 4z"></path></svg>
+                  </button>
+
+                  <div *ngIf="activeDropdown === 'cle_' + cle.id" 
+                       class="absolute top-full mt-2 w-48 bg-white rounded-2xl border border-gray-100 py-2 z-[999] shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)] transition-all font-normal"
+                       [ngClass]="last ? 'right-0 origin-top-right' : 'left-0 origin-top-left'">
                     
-                    <button (click)="toggleDropdown('cle_' + cle.id, $event)"
-                            [ngClass]="{'bg-syndify-accent/10 text-syndify-accent': activeDropdown === 'cle_' + cle.id}"
-                            class="flex items-center justify-center w-6 h-6 rounded-md text-gray-400 hover:text-syndify-dark hover:bg-gray-100 transition-all cursor-pointer shrink-0 border-0 bg-transparent">
-                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14a2 2 0 100-4 2 2 0 000 4zm-7 0a2 2 0 100-4 2 2 0 000 4zm14 0a2 2 0 100-4 2 2 0 000 4z"></path></svg>
+                    <button (click)="$event.stopPropagation(); openAddModal(cle)" class="w-full text-left px-4 py-2.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 hover:text-syndify-accent flex items-center gap-3 transition-colors cursor-pointer border-0 bg-transparent group">
+                      <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-syndify-accent group-hover:bg-syndify-accent group-hover:text-white transition-all">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                      </div>
+                      Modifier
                     </button>
-
-                    <!-- 🟢 L-MENU DABA KAY-BDE MN L-BOUTON NICHAN -->
-                    <div *ngIf="activeDropdown === 'cle_' + cle.id" 
-                         class="absolute top-full mt-2 w-48 bg-white rounded-2xl border border-gray-100 py-2 z-[999] shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)] transition-all font-normal"
-                         [ngClass]="last ? 'right-0 origin-top-right' : 'left-0 origin-top-left'">
-                      
-                      <button (click)="$event.stopPropagation(); openAddModal(cle)" class="w-full text-left px-4 py-2.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 hover:text-syndify-accent flex items-center gap-3 transition-colors cursor-pointer border-0 bg-transparent group">
-                        <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-syndify-accent group-hover:bg-syndify-accent group-hover:text-white transition-all">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                        </div>
-                        Modifier
-                      </button>
-                      
-                      <div class="h-px bg-gray-50 my-1 mx-2"></div>
-                      
-                      <button (click)="$event.stopPropagation(); supprimerCle(cle.id)" class="w-full text-left px-4 py-2.5 text-[13px] font-bold text-red-500 hover:bg-red-50 flex items-center gap-3 transition-colors cursor-pointer group border-0 bg-transparent">
-                        <div class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-500 group-hover:bg-red-500 group-hover:text-white transition-all">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </div>
-                        Supprimer
-                      </button>
-                    </div>
+                    
+                    <div class="h-px bg-gray-50 my-1 mx-2"></div>
+                    
+                    <button (click)="$event.stopPropagation(); supprimerCle(cle.id)" class="w-full text-left px-4 py-2.5 text-[13px] font-bold text-red-500 hover:bg-red-50 flex items-center gap-3 transition-colors cursor-pointer group border-0 bg-transparent">
+                      <div class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-500 group-hover:bg-red-500 group-hover:text-white transition-all">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                      </div>
+                      Supprimer
+                    </button>
                   </div>
-                  
                 </div>
-              </th>
-              <th *ngIf="clesList.length === 0" class="py-4 px-6 font-semibold text-gray-400 text-[13px] text-center">
-                Aucune clé
-              </th>
+                
+              </div>
+            </th>
+            
+            <th *ngIf="clesList.length === 0" class="syndify-table-th">
+              Aucune clé
+            </th>
 
-            </tr>
-          </thead>
+          </tr>
+        </thead>
+        
+        <tbody class="syndify-table-tbody">
           
-       <tbody class="text-[13px] text-gray-700 font-medium">
+          <tr *ngIf="isLoading" class="syndify-table-tr" >
+            <td [colSpan]="3 + clesList.length" class="syndify-table-td text-center text-gray-400 italic">
+              Chargement des données...
+            </td>
+          </tr>
+
+          <tr *ngFor="let row of lignesTableau" class="syndify-table-tr">
             
-            <tr *ngIf="isLoading">
-              <td [colSpan]="3 + clesList.length" class="py-12 text-center text-syndify-accent">
-                Chargement des données...
+            <ng-container *ngIf="currentTab === 'lots'">
+              <td class="syndify-table-td">
+                <div class="flex items-center decoration-syndify-accent/30 underline-offset-2">
+                    {{ formatLotId(row.id) }} 
+                </div>
               </td>
-            </tr>
+              <td class="syndify-table-td"></td>
+              <td class="syndify-table-td"></td>
+            </ng-container>
 
-            <tr *ngFor="let row of lignesTableau" class="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
-              
-              <ng-container *ngIf="currentTab === 'lots'">
-                <td class="py-4 px-6 font-semibold text-syndify-dark truncate">
-                  <div class="flex items-center decoration-syndify-accent/30 underline-offset-2">
-                      {{ formatLotId(row.id) }} 
-                  </div>
-                </td>
-                <td class="py-4 px-6 text-slate-700 truncate">{{ row.details }}</td>
-                <td class="py-4 px-6 text-slate-700 font-semibold truncate">{{ row.coproprietaire }}</td>
-              </ng-container>
-
-              <ng-container *ngIf="currentTab === 'coproprietaires'">
-                <td class="py-4 px-6 text-slate-700 font-semibold truncate">{{ row.coproprietaire }}</td>
-               
-                <td class="py-4 px-6 text-slate-700 truncate">{{ row.details }}</td>
-              </ng-container>
-              
-              <td *ngFor="let cle of clesList" class="py-4 px-6 text-slate-500 font-semibold truncate">
-                {{ row.tantiemes[cle.id] || 0 }}
-              </td>
-
-              <td *ngIf="clesList.length === 0" class="py-4 px-6 text-center text-gray-400">
-                --
-              </td>
-            </tr>
-
-            <tr *ngIf="!isLoading && lignesTableau.length === 0">
-              <td [colSpan]="3 + clesList.length" class="py-12 text-center text-gray-400 italic">
-                {{ currentTab === 'lots' ? 'Aucun lot trouvé.' : 'Aucun copropriétaire trouvé.' }}
-              </td>
-            </tr>
+            <ng-container *ngIf="currentTab === 'coproprietaires'">
+              <td class="syndify-table-td"></td>
+              <td class="syndify-table-td"></td>
+            </ng-container>
             
-          </tbody>
-        </table>
-      </div>
+            <td *ngFor="let cle of clesList" class="syndify-table-td">
+              {{ row.tantiemes[cle.id] || 0 }}
+            </td>
 
+            <td *ngIf="clesList.length === 0" class="syndify-table-td text-gray-400">
+              --
+            </td>
+          </tr>
+
+          <tr *ngIf="!isLoading && lignesTableau.length === 0" class="syndify-table-tr">
+            <td [colSpan]="3 + clesList.length" class="syndify-table-td text-center text-gray-400 italic">
+              {{ currentTab === 'lots' ? 'Aucun lot trouvé.' : 'Aucun copropriétaire trouvé.' }}
+            </td>
+          </tr>
+          
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <div *ngIf="isAddModalOpen" class="fixed inset-0 z-[99] flex items-center justify-center bg-[#0B0F24]/50 backdrop-blur-sm transition-opacity p-4">
-    <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col font-['Poppins'] transform transition-all border border-gray-200 shadow-none relative overflow-hidden">
+  <!-- 🟢 Modal Global: Ajouter/Modifier Clé -->
+  <div *ngIf="isAddModalOpen" class="modal-backdrop">
+    <div class="modal-container max-w-2xl max-h-[90vh]">
       
-      <div class="flex justify-between items-center px-6 py-5 border-b border-gray-100 bg-white rounded-t-2xl z-20 shrink-0">
+      <div class="modal-header">
         <div>
-          <h3 class="text-[18px] font-bold text-syndify-dark tracking-tight">{{ cleForm.id ? 'Modifier la clé' : 'Nouvelle clé de répartition' }}</h3>
+          <h3 class="modal-title">{{ cleForm.id ? 'Modifier la clé' : 'Nouvelle clé de répartition' }}</h3>
           <p class="text-[14px] text-gray-500 font-medium mt-1">Définissez la clé et répartissez les tantièmes sur les biens.</p>
         </div>
-        <button (click)="closeAddModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors cursor-pointer border-0">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <button (click)="closeAddModal()" class="text-gray-400 hover:text-red-500 transition-colors cursor-pointer border-0 bg-transparent">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
 
-      <div class="p-6 overflow-y-auto custom-scrollbar flex-1 bg-gray-50/30">
+      <div class="modal-body overflow-y-auto custom-scrollbar bg-gray-50/30">
+        
+        <!-- 🟢 Formulaires Global -->
         <div class="grid grid-cols-2 gap-5 mb-8">
           <div>
-            <label class="text-[13px] font-semibold text-gray-700 block mb-2">Nom de la clé <span class="text-red-500">*</span></label>
-            <input type="text" [(ngModel)]="cleForm.nom_cle" placeholder="Ex: Clé Ascenseur" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 font-medium text-[13px] focus:bg-white focus:border-syndify-accent focus:ring-2 focus:ring-syndify-accent/20 outline-none transition-all shadow-none">
+            <label class="form-label">Nom de la clé <span class="text-red-500">*</span></label>
+            <input type="text" [(ngModel)]="cleForm.nom_cle" placeholder="Ex: Clé Ascenseur" class="form-input">
           </div>
           <div>
-            <label class="text-[13px] font-semibold text-gray-700 block mb-2">Total des tantièmes <span class="text-red-500">*</span></label>
-            <input type="number" step="any" [(ngModel)]="cleForm.tantiemes_total" placeholder="Ex: 10000" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 font-medium text-[13px] focus:bg-white focus:border-syndify-accent focus:ring-2 focus:ring-syndify-accent/20 outline-none transition-all shadow-none">
+            <label class="form-label">Total des tantièmes <span class="text-red-500">*</span></label>
+            <input type="number" step="any" [(ngModel)]="cleForm.tantiemes_total" placeholder="Ex: 10000" class="form-input">
           </div>
           <div class="col-span-2">
-            <label class="text-[13px] font-semibold text-gray-700 block mb-2">Notes (Optionnel)</label>
-            <textarea [(ngModel)]="cleForm.notes" rows="2" placeholder="Ajouter une description..." class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 font-medium text-[13px] focus:bg-white focus:border-syndify-accent focus:ring-2 focus:ring-syndify-accent/20 outline-none transition-all shadow-none resize-none"></textarea>
+            <label class="form-label">Notes (Optionnel)</label>
+            <textarea [(ngModel)]="cleForm.notes" rows="2" placeholder="Ajouter une description..." class="form-input resize-none"></textarea>
           </div>
         </div>
 
@@ -190,28 +186,27 @@
             </span>
           </div>
           
-          <div class="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-none">
-             <table class="w-full text-left">
-                <thead class="bg-gray-50 border-b border-gray-200">
+          <div class="syndify-table-container">
+             <table class="syndify-table">
+                <thead class="syndify-table-thead">
                    <tr>
-                      <th class="py-3 px-4 font-semibold text-syndify-dark text-[12px]">N° Porte / Bâtiment</th>
-                      <th class="py-3 px-4 font-semibold text-syndify-dark text-[12px] w-[180px] text-right">Tantième attribué</th>
+                      <th class="syndify-table-th">N° Porte / Bâtiment</th>
+                      <th class="syndify-table-th text-right">Tantième attribué</th>
                    </tr>
                 </thead>
-                <tbody class="text-[13px] text-gray-700 font-medium">
-                   <tr *ngFor="let u of cleForm.unites" class="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                      <td class="py-2.5 px-4 text-slate-700 font-semibold">
+                <tbody class="syndify-table-tbody">
+                   <tr *ngFor="let u of cleForm.unites" class="syndify-table-tr">
+                      <td class="syndify-table-td">
                         {{ u.type ? u.type : 'Appartement' }} {{ u.numero_porte }}
                         <span *ngIf="u.batiment" class="text-gray-400 font-normal"> /  {{ u.batiment }}</span>
                         <span *ngIf="u.etage" class="text-gray-400 font-normal"> / {{ u.etage }}</span>
                       </td>
-                      
-                      <td class="py-2.5 px-4 text-right">
-                         <input type="number" step="any" [(ngModel)]="u.tantieme_applique" class="w-full px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 font-medium text-[13px] focus:bg-white focus:border-syndify-accent focus:ring-2 focus:ring-syndify-accent/20 outline-none transition-all text-right shadow-none">
+                      <td class="syndify-table-td">
+                         <input type="number" step="any" [(ngModel)]="u.tantieme_applique" class="form-input !py-1.5 !px-3 text-right">
                       </td>
                    </tr>
-                   <tr *ngIf="cleForm.unites?.length === 0">
-                      <td colspan="2" class="py-6 text-center text-gray-400 italic text-[12px]">Aucun lot disponible dans la propriété.</td>
+                   <tr *ngIf="cleForm.unites?.length === 0" class="syndify-table-tr">
+                      <td colspan="2" class="syndify-table-td text-center text-gray-400 italic">Aucun lot disponible.</td>
                    </tr>
                 </tbody>
              </table>
@@ -219,37 +214,35 @@
         </div>
       </div>
 
-      <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-white rounded-b-2xl z-20 shrink-0">
-        <button (click)="closeAddModal()" class="px-5 py-2.5 rounded-xl font-semibold text-[13px] text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer shadow-none border-0">
-          Annuler
-        </button>
-        
-        <button (click)="enregistrerCle()" [disabled]="isSaving || !cleForm.nom_cle || !cleForm.tantiemes_total" class="flex items-center gap-2 text-[13px] font-semibold px-5 py-2.5 rounded-xl bg-syndify-accent text-white hover:brightness-105 transition-all cursor-pointer border-0 shadow-none disabled:opacity-50 disabled:cursor-not-allowed">
+      <div class="modal-footer">
+        <!-- 🟢 Boutons Global -->
+        <button (click)="closeAddModal()" class="btn-outline">Annuler</button>
+        <button (click)="enregistrerCle()" [disabled]="isSaving || !cleForm.nom_cle || !cleForm.tantiemes_total" class="btn-primary disabled:opacity-50 disabled:cursor-not-allowed">
           <svg *ngIf="!isSaving" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
           <span *ngIf="!isSaving">Enregistrer</span>
           <svg *ngIf="isSaving" class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
           <span *ngIf="isSaving">Enregistrement...</span>
         </button>
       </div>
+
     </div>
   </div>
 
-  <div *ngIf="isDeleteModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-[#0B0F24]/50 backdrop-blur-sm transition-opacity p-4">
-    <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden flex flex-col font-['Poppins'] transform transition-all border border-gray-200 shadow-none">
-      <div class="p-6 text-center">
-        <div class="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+  <!-- 🟢 Modal Global: Confirmer la suppression -->
+  <div *ngIf="isDeleteModalOpen" class="modal-backdrop">
+    <div class="modal-container max-w-sm">
+      <div class="modal-body text-center !pt-8">
+        <div class="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-2">
           <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
         </div>
-        <h3 class="text-[18px] font-bold text-syndify-dark mb-2">Confirmer la suppression</h3>
+        <h3 class="modal-title">Confirmer la suppression</h3>
         <p class="text-[13px] text-gray-500 font-medium">Êtes-vous sûr de vouloir supprimer cette clé de répartition ? Cette action est irréversible.</p>
       </div>
-      <div class="flex justify-center gap-3 px-6 py-4 bg-gray-50/50 border-t border-gray-100 shrink-0">
-        <button (click)="closeDeleteModal()" class="w-full px-5 py-2.5 rounded-xl font-semibold text-[13px] text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer shadow-none border-0">
-          Annuler
-        </button>
-        <button (click)="confirmerSuppression()" class="w-full flex items-center justify-center gap-2 text-[13px] font-semibold px-5 py-2.5 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-all cursor-pointer border-0 shadow-none">
-          Supprimer
-        </button>
+      
+      <div class="modal-footer !justify-center">
+        <!-- 🟢 Boutons Global -->
+        <button (click)="closeDeleteModal()" class="btn-outline w-full !justify-center">Annuler</button>
+        <button (click)="confirmerSuppression()" class="btn-danger w-full !justify-center">Supprimer</button>
       </div>
     </div>
   </div>

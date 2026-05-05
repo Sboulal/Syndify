@@ -8,7 +8,7 @@ import { Observable } from 'rxjs';
 export class CoproprietaireService {
   
   // N.B: Bddelt lik l-URL l-IP (51.178...) bach y-b9a cohérent m3a les autres pages
-  private baseUrl = 'http://nomade-cloud.com:8085/api'; 
+  private baseUrl = 'http://51.178.87.234:8085/api'; 
   private apiUrl = `${this.baseUrl}/coproprietaires`;
 
   constructor(private http: HttpClient) {}

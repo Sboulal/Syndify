@@ -8,7 +8,7 @@ import { Observable } from 'rxjs';
 export class CleRepartitionService {
   
   // 🟢 IP Unifiée b7al l-Services l-khrin
-  private baseUrl = 'http://nomade-cloud.com:8085/api';
+  private baseUrl = 'http://51.178.87.234:8085/api';
   private apiUrl = `${this.baseUrl}/cles-repartition`;
 
   constructor(private http: HttpClient) {}

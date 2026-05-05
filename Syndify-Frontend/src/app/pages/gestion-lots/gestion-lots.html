@@ -2,18 +2,15 @@
 
   <app-page-header 
     class="shrink-0"
-   [title]="residenceInfo.nom"
-    [description]="residenceInfo.adresse"
-    parentPath="Ma copropriété" 
-    currentPath="Gestion des lots"
-    >
+    [parentPath]="residenceInfo.nom" 
+    currentPath="Gestion des Biens"
+    title="Gestion des Biens"
+    description="Gérez l'ensemble de vos biens en toute simplicité.">
+
+    
     
     <div class="flex items-center gap-3">
-      <button title="Exporter" class="flex items-center justify-center w-[38px] h-[38px] bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 text-white transition-all cursor-pointer border-0">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-      </button>
-
-      <button (click)="openModal()" class="btn-primary text-[13px] font-semibold !bg-syndify-accent !text-white border-0 flex items-center gap-2 cursor-pointer shadow-md">
+      <button (click)="openModal()" class="btn-primary">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
         Ajouter un bien
       </button>
@@ -26,38 +23,56 @@
       
       <div *ngIf="activeDropdown" (click)="closeDropdown()" class="fixed inset-0 z-30 cursor-default"></div>
 
-      <div class="w-full overflow-visible">
-        <table class="w-full text-left border-collapse table-fixed">
-          <thead class="bg-gray-50 border-b border-gray-200">
+      <div class="syndify-table-container">
+        <table class="syndify-table">
+          <thead class="syndify-table-thead">
             <tr>
-              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[15%]">Identifiant</th>
-              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[20%]">Type du bien</th>
-              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[15%]">N° de porte</th>
-              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[20%]">Bâtiment</th>
-              <th class="py-4 px-6 font-semibold text-syndify-dark text-[13px] w-[15%]">Étage</th>
-              <th class="py-4 px-6 text-right font-semibold text-syndify-dark text-[13px] w-[15%]">Outils</th>
+              <th class="syndify-table-th">Identifiant</th>
+              <th class="syndify-table-th">Type du bien</th>
+              <th class="syndify-table-th">N° de porte</th>
+              <th class="syndify-table-th">Bâtiment</th>
+              <th class="syndify-table-th">Étage</th>
+              <th class="syndify-table-th text-right">Outils</th>
             </tr>
           </thead>
           
-          <tbody class="text-[13px] text-gray-700 font-medium">
-            <tr *ngIf="lots.length === 0">
+          <tbody class="syndify-table-tbody">
+            <tr class="syndify-table-tr" *ngIf="lots.length === 0">
               <td colspan="6" class="py-8 text-center text-gray-400 italic">Aucun lot trouvé.</td>
             </tr>
             
             <tr *ngFor="let lot of lots; let isLast = last" 
-                (click)="openModal(lot)" class="border-b border-gray-100 hover:bg-gray-50/50 transition-colors relative cursor-pointer"
+                (click)="openModal(lot)" class="syndify-table-tr"
                 [ngClass]="{'z-50': activeDropdown === lot.id}">
                 
-              <td class="py-4 px-6 font-semibold text-syndify-accent truncate decoration-syndify-accent/30 underline-offset-2 hover:decoration-syndify-accent">
-                  {{ formatLotId(lot.id) }}
+            <td class="syndify-table-td">
+    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[12px] font-bold bg-blue-50 text-blue-600 border border-blue-100">
+        {{ formatLotId(lot.id) }}
+    </span>
+</td>
+              <td class="syndify-table-td">
+                <div class="text-slate-700 font-semibold truncate">
+                  {{ lot.type }}
+                </div>
               </td>
-              <td class="py-4 px-6 text-slate-700 font-semibold truncate">{{ lot.type }}</td>
-              <td class="py-4 px-6 text-slate-700 truncate">{{ lot.numero_porte }}</td>
-              <td class="py-4 px-6 text-slate-500 italic truncate">{{ lot.batiment || 'Aucun ajouté' }}</td>
-              <td class="py-4 px-6 text-slate-500 truncate">{{ lot.etage || 'Non défini' }}</td>
-              
-              <td class="py-4 px-6 text-right relative">
-                
+              <td class="syndify-table-td">
+                <div class="text-slate-700 truncate">
+                  {{ lot.numero_porte }}
+                </div>
+              </td>
+              <td class="syndify-table-td">
+                <div class="text-slate-500 italic truncate">
+                  {{ lot.batiment || 'Aucun ajouté' }}
+                </div>
+              </td>
+              <td class="syndify-table-td">
+                <div class="text-slate-500 truncate">
+                  {{ lot.etage || 'Non défini' }}
+                </div>
+              </td>
+
+              <td class="syndify-table-td text-right relative">
+
                 <button (click)="$event.stopPropagation(); toggleDropdown(lot.id, $event)" 
                         [ngClass]="{'bg-syndify-accent/10 text-syndify-accent': activeDropdown === lot.id}"
                         class="flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-syndify-dark hover:bg-gray-100 transition-all cursor-pointer ml-auto relative z-40 border-0 bg-transparent">
@@ -153,7 +168,7 @@
         <button (click)="closeModal()" class="px-5 py-2.5 rounded-xl font-semibold text-[13px] text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer shadow-none border-0">
           Annuler
         </button>
-        <button (click)="enregistrerLot()" [disabled]="!lotForm.numero_porte" class="flex items-center gap-2 text-[13px] font-semibold px-5 py-2.5 rounded-xl bg-syndify-accent text-white hover:brightness-105 transition-all cursor-pointer border-0 shadow-none disabled:opacity-50 disabled:cursor-not-allowed">
+        <button (click)="enregistrerLot()" [disabled]="!lotForm.numero_porte" class="btn-primary">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
           Enregistrer
         </button>
@@ -203,10 +218,10 @@
       </div>
       
       <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-white rounded-b-2xl z-20">
-        <button (click)="closeAddOwnerModal()" class="px-5 py-2.5 rounded-xl font-semibold text-[13px] text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer shadow-none border-0">
+        <button (click)="closeAddOwnerModal()" class="btn-secondary">
           Annuler
         </button>
-        <button (click)="ajouterProprietaire()" [disabled]="isAddingOwner || !newOwner.nom || !newOwner.email" class="flex items-center gap-2 text-[13px] font-semibold px-5 py-2.5 rounded-xl bg-syndify-accent text-white transition-all cursor-pointer disabled:cursor-not-allowed border-0 shadow-none hover:brightness-105">
+        <button (click)="ajouterProprietaire()" [disabled]="isAddingOwner || !newOwner.nom || !newOwner.email" class="btn-primary">
           <span *ngIf="!isAddingOwner">Créer et Sélectionner</span>
           <svg *ngIf="isAddingOwner" class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
         </button>

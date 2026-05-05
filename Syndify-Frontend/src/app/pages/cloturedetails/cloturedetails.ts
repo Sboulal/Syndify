@@ -31,7 +31,7 @@ export class Cloturedetails implements OnInit {
     send_reminders_trav: false
   };
 
-  private baseUrl = 'http://nomade-cloud.com:8085/api';
+  private baseUrl = 'http://51.178.87.234:8085/api';
 
   constructor(
     private http: HttpClient,

@@ -78,11 +78,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/appels-fonds/envoyer', [AppelFondsController::class, 'envoyer']);
     Route::post('/appels-fonds/details', [AppelFondsController::class, 'details']);
     Route::post('/appels-fonds/supprimer', [AppelFondsController::class, 'supprimer']);
-
-    Route::post('/clotures/charger', [ClotureController::class, 'charger']);
-    Route::post('/clotures/enregistrer', [ClotureController::class, 'enregistrer']);
-    Route::post('/clotures/finaliser', [ClotureController::class, 'finaliser']);
-
+// ==========================================
+// --- Clôtures ---
+// ==========================================
+Route::post('/clotures/charger', [ClotureController::class, 'charger']);
+Route::post('/clotures/enregistrer', [ClotureController::class, 'enregistrer']);
+Route::post('/clotures/finaliser', [ClotureController::class, 'finaliser']);
     // --- Dashboard ---
     Route::post('/dashboard/data', [DashboardController::class, 'getDashboardData']);  
     Route::post('/impayes/liste', [ImpayeController::class, 'listeImpayes']);

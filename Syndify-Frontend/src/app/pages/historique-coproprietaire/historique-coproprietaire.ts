@@ -24,6 +24,25 @@ export class HistoriqueCoproprietaire implements OnInit {
   totalDepenses: number = 0;
   operations: any[] = [];
 
+  // 🟢==================================================
+  // 🟢 VARIABLES W LES FONCTIONS DYAL L-MENU JDID 
+  // 🟢==================================================
+  isExerciceMenuOpen: boolean = false;
+
+  getAnneeSelectionnee(): string {
+    if (!this.exercicesPasses || this.exercicesPasses.length === 0) return '...';
+    // Kan-9elbou 3la l-exercice lli 3ndo nfs l-id lli m-selectionné
+    const ex = this.exercicesPasses.find((e: any) => e.id == this.exerciceSelectionne);
+    return ex ? ex.annee : 'Choisir...';
+  }
+
+  changerExercice(id: any) {
+    this.exerciceSelectionne = id;
+    this.isExerciceMenuOpen = false; // Knseddou l-menu
+    this.chargerHistorique(); // Kanjbdou data jdida dyal had l-3am
+  }
+  // 🟢==================================================
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -70,7 +89,7 @@ export class HistoriqueCoproprietaire implements OnInit {
     });
   }
 
-  // 🟢 Mlli l-user kay-beddel l-exercice mn l-Dropdown (Select)
+  // 🟢 Mlli l-user kay-beddel l-exercice mn l-Dropdown (Select 9dima - momkin n-khelliwha la bghina)
   onExerciceChange() {
     this.chargerHistorique();
   }
@@ -81,7 +100,7 @@ export class HistoriqueCoproprietaire implements OnInit {
       return;
     }
     // F l-mousta9bal hna ghadi t-diri lien y-t7el f page jdida
-    window.open('http://nomade-cloud.com:8085/storage/' + url, '_blank');
+    window.open('http://51.178.87.234:8085/storage/' + url, '_blank');
   }
 
   retour() {

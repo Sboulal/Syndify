@@ -1,10 +1,10 @@
 <div class="flex flex-col min-h-full font-['Poppins'] bg-syndify-bg overflow-x-hidden">
 
-  <app-page-header 
+ <app-page-header 
     class="shrink-0"
     [parentPath]="residence.nom" 
     currentPath="Tableau de bord"
-    [title]="residence.nom"
+    title="Tableau de bord"
     [description]="residence.adresse">
     
     <div class="flex items-center justify-start w-full gap-8 md:gap-12 overflow-x-auto whitespace-nowrap custom-scrollbar">
@@ -22,9 +22,7 @@
       </div>
     </div>
 
-   
   </app-page-header>
-
   <div class="flex-1 p-6 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
     
     <div class="lg:col-span-2 space-y-8">
@@ -34,21 +32,21 @@
           <h2 class="text-[18px] font-bold text-syndify-dark tracking-wide">Soldes des copropriétaires</h2>
         </div>
         
-        <div class="bg-white rounded-xl border border-gray-200 shadow-none overflow-hidden">
-          <table class="w-full text-left">
-            <thead class="bg-gray-50 border-b border-gray-200">
+        <div class="syndify-table-container">
+          <table class="syndify-table">
+            <thead class="syndify-table-thead">
               <tr>
-                <th class="py-3 px-6 font-semibold text-syndify-dark text-[13px]">Identifiant</th>
-                <th class="py-3 px-6 font-semibold text-syndify-dark text-[13px]">Nom</th>
-                <th class="py-3 px-6 font-semibold text-syndify-dark text-[13px] text-right">Solde</th>
+                <th class="syndify-table-th">Identifiant</th>
+                <th class="syndify-table-th">Nom</th>
+                <th class="syndify-table-th text-right">Solde</th>
               </tr>
             </thead>
-            <tbody class="text-[13px] font-medium">
-              <tr *ngIf="isLoading"><td colspan="3" class="py-10 text-center text-gray-400">Chargement...</td></tr>
-              <tr *ngFor="let s of soldes" class="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                <td class="py-4 px-6 text-gray-500 decoration-syndify-accent/30 underline-offset-2 hover:decoration-syndify-accent">{{ s.id }}</td>
-                <td class="py-4 px-6 text-syndify-dark font-bold">{{ s.nom }}</td>
-                <td class="py-4 px-6 text-right font-extrabold" [ngClass]="s.isNegatif ? 'text-red-500' : 'text-green-600'">
+            <tbody class="syndify-table-tbody">
+              <tr *ngIf="isLoading"><td colspan="3" class="syndify-table-td">Chargement...</td></tr>
+              <tr *ngFor="let s of soldes" class="syndify-table-tr">
+                <td class="syndify-table-td">{{ s.id }}</td>
+                <td class="syndify-table-td">{{ s.nom }}</td>
+                <td class="syndify-table-td text-right font-extrabold" [ngClass]="s.isNegatif ? 'text-red-500' : 'text-green-600'">
                   {{ s.solde }} <span class="text-[10px] opacity-60 ml-0.5">MAD</span>
                 </td>
               </tr>

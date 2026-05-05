@@ -16,6 +16,7 @@ import { AppelsFondsDetails } from './pages/appels-fonds-details/appels-fonds-de
 import { Cloturedetails } from './pages/cloturedetails/cloturedetails';
 import { Impayes } from './pages/impayes/impayes';
 import { Documents } from './pages/documents/documents';
+import { Cloture } from './pages/cloture/cloture';
 
 export const routes: Routes = [
   // ==========================================
@@ -55,6 +56,8 @@ export const routes: Routes = [
 },
       {path : 'impayes', component: Impayes},
       {path : 'documents', component: Documents }, // Lazy load pour la page Documents
+    { path: 'cloture/:se_id', component: Cloture }
+      
       
       
       // { path: 'documents', component: DocumentsComponent },

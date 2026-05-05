@@ -58,7 +58,15 @@ export class Cle implements OnInit {
     // 1. Njbdou l-lots
     this.lotService.getListe().subscribe({
       next: (res: any) => {
-        if (res.success) this.tousLesLots = res.data;
+        if (res.success)
+          {
+
+            this.tousLesLots = res.data;
+            // 🟢 FIX: 7et d-data dyal l-backend f l-variable lli m-liyya m3a l-Heade
+            if (res.residence) {
+              this.residenceInfo = res.residence;
+            }
+          }
       },
       error: (err: any) => console.error('Erreur API Lot :', err)
     });
@@ -219,7 +227,7 @@ formaterTableau() {
   formatLotId(id: any): string {
     if (!id) return '';
     const visualId = Number(id) + 845752; 
-    return 'LOT-' + visualId.toString().padStart(8, '0');
+    return 'BN-' + visualId.toString().padStart(8, '0');
   }
 
   supprimerCle(id: number) {

@@ -25,7 +25,7 @@ export class Login {
   private cdr = inject(ChangeDetectorRef); 
 
   // 🟢 1. We7edna l-IP hna
-  private apiUrl = 'http://nomade-cloud.com:8085/api';
+  private apiUrl = 'http://51.178.87.234:8085/api';
 
   private getSecurityHeaders(): HttpHeaders {
     const secret = "SyndifySecretKey123";

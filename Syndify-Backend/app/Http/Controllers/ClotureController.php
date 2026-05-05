@@ -35,33 +35,35 @@ class ClotureController extends Controller
         
         return $link ? $link->$propOwnerCol : null;
     }
-    // ==========================================
+// ==========================================
     // 1. CHARGEMENT D'UNE CLÔTURE (Calculs)
     // ==========================================
-    public function charger(Request $request)
+    public function charger(Request $request) // 🟢 1. 7iydna $sp_id w $se_id mn hna
     {
+        // 🟢 2. Kan-jbdou l-IDs mn l-Request w l-Auth (Kima drna f l-fonctions lakhrin)
         $request->validate(['se_identifier' => 'required|string']);
-        
+
         $sp_id = $this->getProprieteId($request);
         if (!$sp_id) return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
 
-        $se_id = $request->se_identifier;
-        $propIdCol = Schema::hasColumn('exercices', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
+        $se_id = $request->input('se_identifier');
+
+        $propIdCol = \Illuminate\Support\Facades\Schema::hasColumn('exercices', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
 
         try {
             // 1. Jbed l-Résidence bash n-ssifetouha l-Header dyal Angular
-            $propIdCol_propriete = Schema::hasColumn('proprietes', 'sp_identifier') ? 'sp_identifier' : 'id';
+            $propIdCol_propriete = \Illuminate\Support\Facades\Schema::hasColumn('proprietes', 'sp_identifier') ? 'sp_identifier' : 'id';
             $residence = DB::table('proprietes')->where($propIdCol_propriete, $sp_id)->first();
 
             // 2. Vérification de l'exercice
             $exercice = DB::table('exercices')->where('se_identifier', $se_id)->where($propIdCol, $sp_id)->first();
             if (!$exercice) return response()->json(['success' => false, 'message' => 'Exercice introuvable.'], 404);
 
-            // 🟢 FIX HNA: 7iydna l-IF lli kan kay-bloci l-page !
-            $cloture = DB::table('clotures')->where('se_identifier', $request->se_identifier)->first();
+            // 3. Vérifier si la clôture existe déjà
+            $cloture = DB::table('clotures')->where('se_identifier', $se_id)->first();
             $clotureStatus = $cloture ? $cloture->status : 0; 
 
-            // 3. Chargement des Budgets Planifiés
+            // 4. Chargement des Budgets Planifiés
             $cp = DB::table('charges_previsionnelles')->where('se_identifier', $se_id)->first();
             $ct = DB::table('charges_travaux')->where('se_identifier', $se_id)->first();
 
@@ -77,7 +79,7 @@ class ClotureController extends Controller
             $trav_reste = max(0, $trav_encaissement - $trav_depense);
             $trav_du = max(0, $trav_budget - $trav_encaissement);
 
-            // 4. Chargement par Clé de répartition
+            // 5. Chargement par Clé de répartition
             $cles_prev = [];
             if ($cp) {
                 $cles_prev = DB::table('bp_to_key')
@@ -87,7 +89,7 @@ class ClotureController extends Controller
                     ->get();
             }
 
-            // 5. Exceptionnels
+            // 6. Exceptionnels
             $appels_exceptionnels_prev = DB::table('appels_fonds')
                 ->where('se_identifier', $se_id)->where('type_charge', 'previsionnel')->where('sub_type', 'exceptionnel')->get();
             
@@ -95,7 +97,7 @@ class ClotureController extends Controller
             $exceptionnel_prev_enc = DB::table('encaissements')->where('se_identifier', $se_id)->where('sub_type_charges', 'exceptionnel')->where('type_charges', 'previsionnel')->sum('amount');
             $exceptionnel_prev_dep = DB::table('depenses')->where('se_identifier', $se_id)->where('sub_type_charges', 'exceptionnel')->where('type_charges', 'previsionnel')->sum('amount');
 
-            // 6. Grand Total
+            // 7. Grand Total
             $grand_budget = $prev_budget + $trav_budget + $exceptionnel_prev_budget;
             $grand_encaissement = $prev_encaissement + $trav_encaissement + $exceptionnel_prev_enc;
             $grand_depense = $prev_depense + $trav_depense + $exceptionnel_prev_dep;

@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { PageHeader } from '../../components/page-header/page-header';
 
 @Component({
@@ -11,15 +11,10 @@ import { PageHeader } from '../../components/page-header/page-header';
 })
 export class Documents implements OnInit {
   isLoading = false;
+  residenceInfo = { nom: 'Chargement...', adresse: 'Veuillez patienter' };
   
-  // 🟢 FIX: Zidna residenceInfo l-Header
-  residenceInfo = { nom: 'Résidence', adresse: 'Chargement...' };
-
-  // Data variables
   totalSize: string = '0 B';
   totalSizeBytes: number = 0;
-  maxStorageBytes: number = 16106127360; // 15 GB par défaut
-  maxStorageFormatted: string = '15 GB';
   storagePercentage: number = 0;
   
   recentFiles: any[] = [];
@@ -29,82 +24,50 @@ export class Documents implements OnInit {
   currentPath: string = ''; 
   pathHistory: string[] = []; 
 
-  constructor(
-    private http: HttpClient,
-    private cdr: ChangeDetectorRef
-  ) {}
+  private baseUrl = 'http://51.178.87.234:8085/api/documents';
 
-  ngOnInit() {
-    this.chargerDocuments();
+  constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
+
+  ngOnInit() { this.chargerDocuments(); }
+
+  private getHeaders() {
+    return new HttpHeaders({ 'X-User-Id': localStorage.getItem('user_id') || '1' });
   }
 
   chargerDocuments() {
     this.isLoading = true;
-    const proprieteId = localStorage.getItem('active_propriete_id') || 'SP-87248712';
-
-    this.http.post('http://nomade-cloud.com:8085/api/documents/principal', { propriete_id: proprieteId })
-      .subscribe({
-        next: (res: any) => {
-          if (res.success) {
-            
-            // 🟢 FIX: N-qraw residenceInfo mn l-Backend
-            if (res.residence) {
-               this.residenceInfo = res.residence;
-            }
-
-            this.totalSize = res.data.total_size;
-            this.totalSizeBytes = res.data.total_size_bytes;
-            this.maxStorageBytes = res.data.max_storage_bytes || this.maxStorageBytes;
-            this.maxStorageFormatted = res.data.max_storage_formatted || this.maxStorageFormatted;
-            
-            this.recentFiles = res.data.recent_files;
-            this.folderContent = res.data.content;
-            
-            this.currentPath = ''; 
-            this.pathHistory = [];
-            
-            this.storagePercentage = Math.min((this.totalSizeBytes / this.maxStorageBytes) * 100, 100);
-
-            this.statistics = Object.keys(res.data.statistics).map(key => ({
-              name: key,
-              ...res.data.statistics[key],
-              width: res.data.total_size_bytes > 0 
-                     ? (res.data.statistics[key].size / res.data.total_size_bytes) * 100 
-                     : 0
-            }));
-          }
-          this.isLoading = false;
-          this.cdr.detectChanges();
-        },
-        error: (err) => {
-          console.error("❌ Erreur chargement documents:", err);
-          this.isLoading = false;
-          this.cdr.detectChanges();
-        }
-      });
-  }
-
-  ouvrirDossier(item: any) {
-    if (item.type !== 'folder') return; 
-
-    this.isLoading = true;
-    const proprieteId = localStorage.getItem('active_propriete_id') || 'SP-87248712';
-
-    this.http.post('http://nomade-cloud.com:8085/api/documents/sous-dossier', { 
-      propriete_id: proprieteId,
-      path: item.path 
-    }).subscribe({
+    this.http.post(`${this.baseUrl}/principal`, {}, { headers: this.getHeaders() }).subscribe({
       next: (res: any) => {
         if (res.success) {
-          this.pathHistory.push(this.currentPath); 
-          this.currentPath = item.path; 
-          this.folderContent = res.data; 
+          this.residenceInfo = res.residence;
+          this.totalSize = res.data.total_size;
+          this.totalSizeBytes = res.data.total_size_bytes;
+          this.recentFiles = res.data.recent_files;
+          this.folderContent = res.data.content;
+          this.currentPath = '';
+          this.pathHistory = [];
+          this.storagePercentage = Math.min((this.totalSizeBytes / (15 * 1024 * 1024 * 1024)) * 100, 100);
+          this.statistics = Object.keys(res.data.statistics).map(key => ({
+            name: key, ...res.data.statistics[key],
+            width: res.data.total_size_bytes > 0 ? (res.data.statistics[key].size / res.data.total_size_bytes) * 100 : 0
+          }));
         }
         this.isLoading = false;
         this.cdr.detectChanges();
-      },
-      error: (err) => {
-        alert("Erreur lors de l'ouverture du dossier.");
+      }
+    });
+  }
+
+  ouvrirDossier(item: any) {
+    if (item.type !== 'folder') return;
+    this.isLoading = true;
+    this.http.post(`${this.baseUrl}/sous-dossier`, { path: item.path }, { headers: this.getHeaders() }).subscribe({
+      next: (res: any) => {
+        if (res.success) {
+          this.pathHistory.push(this.currentPath);
+          this.currentPath = item.path;
+          this.folderContent = res.data;
+        }
         this.isLoading = false;
         this.cdr.detectChanges();
       }
@@ -112,48 +75,42 @@ export class Documents implements OnInit {
   }
 
   retour() {
-    if (this.pathHistory.length === 0) return;
-    
-    const previousPath = this.pathHistory.pop();
-    if (!previousPath || previousPath === '') {
-      this.chargerDocuments(); 
-      return;
-    }
+    const prev = this.pathHistory.pop();
+    if (prev === undefined) return;
+    if (prev === '') { this.chargerDocuments(); return; }
+    this.ouvrirDossier({ type: 'folder', path: prev });
+    this.pathHistory.pop(); // Fix double push
+  }
 
-    this.isLoading = true;
-    const proprieteId = localStorage.getItem('active_propriete_id') || 'SP-87248712';
-
-    this.http.post('http://nomade-cloud.com:8085/api/documents/sous-dossier', { 
-      propriete_id: proprieteId,
-      path: previousPath 
-    }).subscribe({
-      next: (res: any) => {
-        if (res.success) {
-          this.currentPath = previousPath;
-          this.folderContent = res.data;
-        }
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      }
-    });
+  getBreadcrumbs() {
+    if (!this.currentPath) return ['Documents'];
+    const parts = this.currentPath.split('/').slice(2); // Skip 'proprietes/SP-ID'
+    return ['Documents', ...parts];
   }
 
   telecharger(path: string, type: string) {
-    console.log(`📥 Téléchargement de: ${path}`);
-    const proprieteId = localStorage.getItem('active_propriete_id') || 'SP-87248712';
+    console.log(`📥 Lancement du téléchargement pour: ${path}`);
     
+    // 🟢 1. Kan-tll3ou l-Loading
     this.isLoading = true; 
     this.cdr.detectChanges();
 
-    this.http.post('http://nomade-cloud.com:8085/api/documents/telecharger', { 
-      propriete_id: proprieteId,
-      path: path 
-    }, { responseType: 'blob' }).subscribe({
+    // 🟢 2. Kan-saybou l-Payload (Zidna propriete_id darori l-sécurité dyal Laravel)
+    const proprieteId = localStorage.getItem('active_propriete_id') || 'SP-87248712';
+    const payload = {
+      path: path,
+      propriete_id: proprieteId
+    };
+
+    // 🟢 3. Kan-ssiftou Request b- responseType: 'blob'
+    this.http.post('http://51.178.87.234:8085/api/documents/telecharger', payload, { 
+      responseType: 'blob', 
+      headers: this.getHeaders() 
+    }).subscribe({
       next: (res: Blob) => {
+        console.log('✅ Fichier reçu avec succès !');
+        
+        // 🟢 4. Kan-9addou l-Format (ZIP awla PDF)
         const mimeType = type === 'folder' ? 'application/zip' : (res.type || 'application/pdf');
         const blob = new Blob([res], { type: mimeType });
         
@@ -162,29 +119,31 @@ export class Documents implements OnInit {
         
         a.style.display = 'none';
         a.href = url;
-        a.target = '_blank'; 
         
+        // 🟢 5. Kan-jbdou Smiya dyal l-fichier
         let fileName = path.split('/').pop() || 'document';
-        if (type === 'folder') {
+        if (type === 'folder' && !fileName.endsWith('.zip')) {
             fileName += '.zip';
         }
         
         a.download = fileName;
         document.body.appendChild(a);
         
+        // 🟢 6. Kan-cliquiw 3lih awtomatiki bash y-tle3 l-téléchargement f l-Navigateur
         a.click(); 
         
+        // 🟢 7. Kan-ms7ou trace w n-7iydou l-Loading
         setTimeout(() => {
             window.URL.revokeObjectURL(url);
             a.remove();
             this.isLoading = false; 
             this.cdr.detectChanges();
-        }, 3000);
-
+        }, 1000);
       },
       error: (err) => {
-        console.error("❌ Erreur téléchargement:", err);
+        console.error("❌ Erreur de téléchargement:", err);
         
+        // 🟢 8. Affichage dyal l-Erreurs lli jayin mn Laravel
         if (err.error instanceof Blob) {
           const reader = new FileReader();
           reader.onload = (e: any) => {
@@ -192,12 +151,12 @@ export class Documents implements OnInit {
               const laravelError = JSON.parse(e.target.result);
               alert("Erreur Serveur: " + laravelError.message);
             } catch (e) {
-              alert("Erreur lors du téléchargement.");
+              alert("Impossible de télécharger ce fichier.");
             }
           };
           reader.readAsText(err.error);
         } else {
-          alert("Erreur lors du téléchargement.");
+          alert("Erreur de connexion avec le serveur.");
         }
         
         this.isLoading = false;

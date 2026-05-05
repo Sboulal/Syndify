@@ -42,7 +42,7 @@ export class MainLayout implements OnInit {
     };
 
     // Kan-3eytou l-nfs l-API dyal Dashboard bash n-jbdou s-smiya
-    this.http.post('http://nomade-cloud.com:8085/api/dashboard/data', payload).subscribe({
+    this.http.post('http://51.178.87.234:8085/api/dashboard/data', payload).subscribe({
       next: (res: any) => {
         if (res.success && res.data && res.data.residence) {
           this.residenceNom = res.data.residence.nom; // 🟢 Cheddina s-Smiya
@@ -83,9 +83,9 @@ export class MainLayout implements OnInit {
       if (currentUrl.includes('/simulation-budget')) this.activeItem = 'simulation-budget';
       this.openMenus['financement'] = true; 
     }
-    else if (currentUrl.includes('/exercice')  || currentUrl.includes('clotures')) {
+    else if (currentUrl.includes('/exercice')  || currentUrl.includes('cloture')) {
       if (currentUrl.includes('/exercice')) this.activeItem = 'exercice';
-      if (currentUrl.includes('exercices/cloture')) this.activeItem = 'cloture';
+      if (currentUrl.includes('cloture')) this.activeItem = 'cloture';
       this.openMenus['Exercice & clôtures'] = true; 
     }
      else if (currentUrl.includes('/documents')) {

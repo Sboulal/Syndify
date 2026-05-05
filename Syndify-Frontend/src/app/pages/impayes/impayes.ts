@@ -32,7 +32,7 @@ export class Impayes implements OnInit {
     this.isLoading = true;
     const proprieteId = localStorage.getItem('active_propriete_id') || 'SP-87248712';
 
-    this.http.post('http://nomade-cloud.com:8085/api/impayes/liste', { propriete_id: proprieteId })
+    this.http.post('http://51.178.87.234:8085/api/impayes/liste', { propriete_id: proprieteId })
       .subscribe({
         next: (res: any) => {
           if (res.success) {
@@ -64,7 +64,7 @@ export class Impayes implements OnInit {
     this.isSending = su_identifier;
     const proprieteId = localStorage.getItem('active_propriete_id') || 'SP-87248712';
 
-    this.http.post('http://nomade-cloud.com:8085/api/impayes/envoyer-rappel', {
+    this.http.post('http://51.178.87.234:8085/api/impayes/envoyer-rappel', {
         propriete_id: proprieteId,
         su_identifier: su_identifier
     }).subscribe({
