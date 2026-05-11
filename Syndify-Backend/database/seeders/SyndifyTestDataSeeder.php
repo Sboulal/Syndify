@@ -324,7 +324,8 @@ class SyndifyTestDataSeeder extends Seeder
                          </div>";
                 $pdf = Pdf::loadHTML($html);
             } else {
-                $pdf = Pdf::loadView("pdf.{$viewName}", $data);
+                $pdf = Pdf::loadView("pdf.{$viewName}", $data)
+                ->setOption(['isRemoteEnabled' => true]);
             }
             
             Storage::disk('public')->put($path, $pdf->output());

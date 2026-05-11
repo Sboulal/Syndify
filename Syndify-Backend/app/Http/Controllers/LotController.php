@@ -10,23 +10,10 @@ use Illuminate\Support\Facades\Log;
 class LotController extends Controller
 {
     
-// ========================================================
-    // 🟢 FONCTION SÉCURISÉE AVEC AUTHENTIFICATION RÉELLE
-    // ========================================================
-    private function getProprieteId(Request $request)
+private function getProprieteId(Request $request)
     {
-        // 1. Priorité l-ID li mssift mn l-Frontend (Angular Payload)
-        if ($request->has('propriete_id') && !empty($request->propriete_id)) {
-            return $request->propriete_id;
-        }
-
-        // 2. Ila Angular masift walo, njbdouh mn l-User li m-connecté (Auth)
         $userId = auth()->id(); 
-        
-        // Ila makanch m-connecté aslan, maymknch y-accéder
-        if (!$userId) {
-            return null; 
-        }
+        if (!$userId) return null; 
 
         $propOwnerCol = \Illuminate\Support\Facades\Schema::hasColumn('user_as_owner', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
         $link = \Illuminate\Support\Facades\DB::table('user_as_owner')->where('user_id', $userId)->first();
@@ -49,7 +36,7 @@ class LotController extends Controller
             ->first();
 
         // 🟢 FIX: N-jbdou ga3 les Lots nichan
-        $lots = DB::table('units')->orderBy('id', 'desc')->get();
+        $lots = DB::table('units')->where('propriete_id', $propriete_id)->orderBy('id', 'desc')->get();
 
         $userPk = Schema::hasColumn('users', 'identifier') ? 'identifier' : 'id';
         $userNameCol = Schema::hasColumn('users', 'full_name') ? 'full_name' : 'name';
@@ -57,7 +44,7 @@ class LotController extends Controller
         foreach ($lots as $lot) {
             try {
                 $lot->owners = DB::table('users')
-                    ->join('user_owner_unit', 'users.' . $userPk, '=', 'user_owner_unit.user_id')
+    ->join('user_owner_unit', 'users.id', '=', 'user_owner_unit.user_id')
                     ->where('user_owner_unit.unit_id', $lot->id)
                     ->select(
                         'users.' . $userPk . ' as user_id', 

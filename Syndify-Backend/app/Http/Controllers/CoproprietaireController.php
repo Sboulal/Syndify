@@ -5,25 +5,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
+
 class CoproprietaireController extends Controller
 {
-// ========================================================
-    // 🟢 FONCTION SÉCURISÉE AVEC AUTHENTIFICATION RÉELLE
-    // ========================================================
-    private function getProprieteId(Request $request)
+ private function getProprieteId(Request $request)
     {
-        // 1. Priorité l-ID li mssift mn l-Frontend (Angular Payload)
-        if ($request->has('propriete_id') && !empty($request->propriete_id)) {
-            return $request->propriete_id;
-        }
-
-        // 2. Ila Angular masift walo, njbdouh mn l-User li m-connecté (Auth)
         $userId = auth()->id(); 
-        
-        // Ila makanch m-connecté aslan, maymknch y-accéder
-        if (!$userId) {
-            return null; 
-        }
+        if (!$userId) return null; 
 
         $propOwnerCol = \Illuminate\Support\Facades\Schema::hasColumn('user_as_owner', 'propriete_id') ? 'propriete_id' : 'sp_identifier';
         $link = \Illuminate\Support\Facades\DB::table('user_as_owner')->where('user_id', $userId)->first();
@@ -201,7 +190,7 @@ class CoproprietaireController extends Controller
         }
     }
 
-    // 4. Historique
+// 4. Historique
     public function historique(Request $request)
     {
         $request->validate([
@@ -215,32 +204,58 @@ class CoproprietaireController extends Controller
         $isOwner = DB::table('user_as_owner')->where('user_id', $request->user_id)->where('propriete_id', $propriete_id)->exists();
         if (!$isOwner) return response()->json(['success' => false, 'message' => 'Copropriétaire introuvable.'], 404);
 
-        $copro = DB::table('users')->where('id', $request->user_id)->select('id', 'full_name as nom', 'email')->first();
+        // 🟢 Jbedna Status (Actif/Inactif) dyal Copropriétaire bash y-ban f l-UI
+        $userStatusData = DB::table('user_as_owner')->where('user_id', $request->user_id)->where('propriete_id', $propriete_id)->value('status');
+        $statusStr = 'Actif';
+        if($userStatusData == 0) $statusStr = 'En attente';
+        if($userStatusData == 2) $statusStr = 'Inactif';
 
-        // Mola7ada: Hna khllit propriete_id ila kant table exercices ba9a hakak. Ila bdltiha 7ta hia, bdliha hna.
+        $copro = DB::table('users')->where('id', $request->user_id)->select('id', 'full_name as nom', 'email')->first();
+        $copro->status = $statusStr;
+
         $exercices = DB::table('exercices')->where('propriete_id', $propriete_id)->orderBy('start_date', 'desc')->get();
         if ($exercices->isEmpty()) return response()->json(['success' => false, 'message' => 'Aucun exercice trouvé.'], 404);
 
         $se_id = $request->se_identifier ?: $exercices->first()->se_identifier;
 
+        // 🟢 1. Jbed les ENCAISSEMENTS
         $encaissements = DB::table('encaissements')
             ->where('se_identifier', $se_id)
             ->where('owner_id', $request->user_id)
             ->select('date', DB::raw("'Encaissement' as type"), 'title as description', 'amount as montant', 'document_url')
             ->get();
 
+        // 🟢 2. Jbed les APPELS DE FONDS (L-s7a7 mashi ghir d-depenses!)
+        $appelsFonds = DB::table('appf_to_owner')
+            ->join('appels_fonds', 'appf_to_owner.af_identifier', '=', 'appels_fonds.af_identifier')
+            ->where('appels_fonds.se_identifier', $se_id)
+            ->where('appf_to_owner.user_id', $request->user_id)
+            ->select('appels_fonds.due_date as date', DB::raw("'Appel de fonds' as type"), 'appels_fonds.title as description', 'appf_to_owner.montant_du as montant', DB::raw("null as document_url"))
+            ->get();
+
+        // 🟢 3. Jbed les DEPENSES
         $depenses = DB::table('depense_for_owner')
             ->join('depenses', 'depense_for_owner.depense_id', '=', 'depenses.id')
             ->where('depenses.se_identifier', $se_id)
             ->where('depense_for_owner.user_id', $request->user_id)
-            ->select('depenses.date', DB::raw("'Appel de fonds' as type"), 'depenses.title as description', 'depense_for_owner.amount_due as montant', DB::raw("null as document_url"))
+            ->select('depenses.date', DB::raw("'Dépense' as type"), 'depenses.title as description', 'depense_for_owner.amount_due as montant', DB::raw("null as document_url"))
             ->get();
 
-        $operations = $encaissements->merge($depenses)->sortByDesc('date')->values();
+        // 🟢 Jme3 kolshi w rtbohom b t-tarix (date)
+        $operations = $encaissements->merge($appelsFonds)->merge($depenses)->sortByDesc('date')->values();
 
+        // 🟢 Sift d-dates s7a7 (start_date, end_date) f blast ghir l-annee bash l-pipe |date f Angular y-khdem
         $exercicesFormat = $exercices->map(function($ex) {
-            return ['id' => $ex->se_identifier, 'annee' => 'Exercice ' . date('Y', strtotime($ex->start_date))];
+            return [
+                'id' => $ex->se_identifier, 
+                'dateDebut' => $ex->start_date, 
+                'dateFin' => $ex->end_date,
+                'annee' => date('Y', strtotime($ex->start_date)) // Khellynaha l-i7tiyat
+            ];
         });
+
+        // 🟢 L-Motalba (Appel de fonds + Depense) hya lli kat-nqes mn l-Compte dyal l-Copropriétaire
+        $totalMotalabat = collect($appelsFonds)->sum('montant') + collect($depenses)->sum('montant');
 
         return response()->json([
             'success' => true,
@@ -249,7 +264,7 @@ class CoproprietaireController extends Controller
                 'exercices' => $exercicesFormat,
                 'exercice_selectionne' => $se_id,
                 'total_encaissements' => collect($encaissements)->sum('montant'),
-                'total_depenses' => collect($depenses)->sum('montant'),
+                'total_depenses' => $totalMotalabat,
                 'operations' => $operations
             ]
         ]);

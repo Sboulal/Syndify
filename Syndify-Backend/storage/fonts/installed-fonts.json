@@ -1,0 +1,9 @@
+{
+    "poppins": {
+        "normal": "\/var\/www\/html\/storage\/fonts\/poppins_normal_41eae6f88194706e4cb26de3ac737d8a",
+        "500": "\/var\/www\/html\/storage\/fonts\/poppins_500_2a496847b9018af565e71324a9cbc097",
+        "600": "\/var\/www\/html\/storage\/fonts\/poppins_600_154dcc58b1e77916e556017f33cbcd2e",
+        "bold": "\/var\/www\/html\/storage\/fonts\/poppins_bold_c611dfa86762dbed0a7fd1e3d5f1a36c",
+        "800": "poppins_800_9f149437ca2ffb987bc0596e97cba3b4"
+    }
+}

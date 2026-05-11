@@ -301,7 +301,8 @@ class BudgetOperationController extends Controller
             'type' => $request->type,
             'exercice' => $se_id,
             'residence' => $residence
-        ]);
+        ])
+        ->setOption(['isRemoteEnabled' => true]);
 
         return $pdf->download("Releve_{$request->type}_{$se_id}.pdf");
     }
